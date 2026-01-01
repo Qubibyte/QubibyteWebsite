@@ -1,0 +1,85 @@
+#introqubicon {
+    text-align: center;
+    font-size: 14rem;
+    color: #FFFFFF;
+    font-weight: bold;
+    font-family: 'Khand', Arial, Helvetica, sans-serif;
+    letter-spacing: 0.4rem;
+}
+#introsubtext {
+    text-align: center;
+    font-size: 3rem;
+    color: #AAAAAA;
+    font-weight: bold;
+    font-family: 'Khand', Arial, Helvetica, sans-serif;
+    letter-spacing: 0.2rem;
+}
+#introsubsubtext {
+    text-align: center;
+    font-size: 2rem;
+    color: #AAAAAA;
+    font-weight: bold;
+    font-family: 'Khand', Arial, Helvetica, sans-serif;
+    letter-spacing: 0.2rem;
+}
+
+@media (max-width: 767.99px) { /* Bootstrap "sm" breakpoint */
+    #introsubtext, #introsubsubtext {
+        font-size:2em;
+    }
+    #introqubicon {
+        font-size:6em;
+    }
+}
+
+.time-slot {
+    flex: 0 0 25%;
+    text-align: left;
+    color: #cdc0f1;
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+
+.event-name {
+    flex: 70%;
+    text-align: left;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.schedule-box {
+    background: #131416;
+    border-radius: 15px;
+    padding: 15px;
+}
+
+.qubicon-gradient {
+  background: linear-gradient(90deg, #4046ff, #7f82e7, #363ce3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtext-gradient {
+  background: linear-gradient(90deg, #edfc80, #e4eda0, #edfc80);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.founder-gradient {
+  background: linear-gradient(90deg, #ebff54, #ebff54, #ebff54);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.odd-background-gradient {
+    background: linear-gradient(90deg,#13171B, #2c0b45, #13171B);
+}
+.even-background-gradient {
+    background: 
+        /* vertical fade: top visible -> bottom solid */
+        linear-gradient(to bottom, rgba(19, 23, 27, 0) 0%, #13171B 100%),
+        /* horizontal color band at top */
+        linear-gradient(90deg, #13171B, #2c0b45, #13171B);
+    background-blend-mode: overlay;
+}

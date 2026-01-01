@@ -1,0 +1,52 @@
+{
+    "ytvid": {
+        "text": "Qubibyte Blog #2: Qubibyte Quadra Design Choices",
+        "link": "https://www.youtube.com/embed/T2_dTNnxYno",
+        "author": "Qubibyte",
+        "date": "July 20th, 2025"
+    },
+    "title": "Qubibyte Blog #2: Qubibyte Quadra Design Choices",
+    "author": "Trent Rosenthal",
+    "date": "July 20th, 2025",
+    "content": [
+        "Hello, I'm Trent Rosenthal, the Founder & CEO of Qubibyte.",
+        "In my first blog post, I announced the initial aim of this company, which is to bring to market an NMR Quantum Computer, the first of its kind to be actively developed in the United States, and the second in the world. Today, I can announce that enough research has been performed in vital subjects for this product that the development phase is now underway. This blog will serve as an introduction for what is to come for this product.",
+        "The interface, at least for the prototyping phase, but possibly for the final design, will be the 7” Raspberry Pi Touch Display 2. This will be accompanied with a Raspberry Pi 5, which is an excellent and reliable choice to compactly give this product the single-board computer that it needs to provide a nice user environment whilst allowing for general purpose input and output pins. SpinQ opted to use an FPGA in their NMR Quantum Computers, which is a fine but costly option. Instead, we can simply include essential external components, such as a waveform generator, which the Raspberry Pi will be able to communicate with. Raspberry Pi's are very strong devices, and I have no doubt that they'd make a fine component to a final product.",
+        {
+            "type": "image",
+            "src": "pi.jpg",
+            "alt": "Raspberry Pi and 7 in. Display."
+        },
+        "For prototyping, I'll be using an Analog Discovery 2 by Digilent as a waveform generator, which ranges from 1 µHz to 25 MHz. Depending on the external magnetic field, this would more than likely be sufficient to write to each of the qubits, however, this device cannot be used in a final design due to certain licensing restrictions. It would've been very convenient to incorporate this device into the final design, but by switching to a simpler board we can also at least shave a few hundred dollars off the production cost of each unit. The software will initially be written in Python with the Tkinter package, but if Python is not sufficient to provide frequent enough commands to the waveform generator, other options will be explored.",
+        {
+            "type": "image",
+            "src": "hmi.png",
+            "alt": "Qubibyte HMI startup."
+        },
+        {
+            "type": "image",
+            "src": "hmi2.png",
+            "alt": "Qubibyte HMI user interface."
+        },
+        "As for the physical design, the Qubibyte Quadra will contain a sample that will be placed between two magnets, which will be at least a few hundred milliteslas of magnetic flux density. The sample itself is planned to be mutable; so that anyone can choose between tens of different samples to purchase and insert into their device. Depending on the sample, a user would expect to have between 1 and 4 usable qubits. Water will be the first tested sample due to its abundance; it has hydrogen so it's able to be used as a single qubit.",
+        {
+            "type": "image",
+            "src": "https://ecampusontario.pressbooks.pub/app/uploads/sites/3009/2023/03/nmr-4.png",
+            "alt": "NMR sample between magnets."
+        },
+        "It's also typical in NMR to use deuterated chloroform as a solvent and TMS as a reference, so those will have to be explored. Four qubits is an artificial limit, although it's difficult to find molecules that are feasible and go beyond 4. It's a common complaint that NMR quantum computers will be obsolete because they are hard to scale, and this is one of those issues.",
+        {
+            "type": "image",
+            "src": "https://ecampusontario.pressbooks.pub/app/uploads/sites/3009/2023/03/nmr-5.png",
+            "alt": "Deteurated chloroform and TMS on NMR spectrum."
+        },
+        "These qubits are just atoms in a molecule that have intrinsic angular momentum, referred to as spin. In spin-½ nuclides, these have two measurable states, spin-up and spin-down, which are viewed as a binary 0 and 1. Until a measurement is performed through free induction decay into the transceiver coil, a qubit can be in a superposition of spin-up and spin-down, which can have different quantum gates applied to it to affect these probabilities. In NMR quantum computing, this is done by applying a pulse that matches the Larmor frequency of that qubit: that is the frequency that the nuclide is precessing at in its given external magnetic field. You can then modulate certain properties like the pulse's duration, amplitude, and phase, to apply different gates to that qubit, as well as quantumly entangling multiple qubits.",
+        {
+            "type": "image",
+            "src": "https://www.researchgate.net/profile/Renju-Rajan/publication/378169484/figure/fig3/AS:11431281223652449@1707830205101/NMR-based-quantum-computing.png",
+            "alt": "NMR quantum computing."
+        },
+        "There's a few Python libraries, like Qiskit, that offer what can be considered a quantum programming language, but none of them really meet the needs for this system. So, I'll be creating a programming language specific to quantum that can be written in and executed as a program on this quantum computer, and hopefully some by other companies as well. I'll also be working on a simulator for NMR quantum computing so that you can adjust certain properties like magnetic field strength and the distance between magnets, which sample molecule is being used and of what quantity, the pulses you send to the qubits, and a few other things. This will allow you to see the output graphically as an NMR spectrum, which can reveal the measured state of the system.",
+        "The Qubibyte Quadra will ultimately provide researchers and academic students with a controlled and robust environment for experimentations with nuclear magnetic resonance and quantum computing. The $5,000 price point is still very much in the picture and it's probably a very high estimate. If you wanted to buy a similar device, you could only do so from SpinQ, and they only offer up to 3 qubits for $50,000. This means they're either producing them very cost-ineffectively or they're taking a very high profit margin. And they're free to charge however much they want, but by doing so they're only incentivizing competition at a lower price. And this is a sector of this industry that has massive potential, and if it scales well we can have accessible commercial quantum computers at room temperature. This only gets expedited through tons of research, which happens much slower when there's only one option and it's expensive. So, I see this as a necessary process to advance this industry and I hope to deliver a great product."
+    ]
+}

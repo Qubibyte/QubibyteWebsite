@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUBICON 2026 | Qubibyte</title>
+    <link rel="icon" type="image/x-icon" href="/images/fav.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="/newindex.css" rel="stylesheet">
+    <link href="qubicon.css" rel="stylesheet">
+</head>
+<body style="background-color: #13171B;">
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top" style="background-color: #13171B;">
+        <div class="container">
+            <a class="navbar-brand" href="../"><img src="/images/logo_white.png" alt="Qubibyte" style="width:100px;"></img></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon" style="filter: invert(100%);"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link text-light" href="javascript:void(0);" onclick="scrollToSection('#Home')">Home</a></li>
+                    <li class="nav-item"><a class="nav-link text-light" href="javascript:void(0);" onclick="scrollToSection('#Schedule')">Schedule</a></li>
+                    <li class="nav-item"><a class="nav-link text-light" href="javascript:void(0);" onclick="scrollToSection('#TBD')">TBD</a></li>
+                    <li class="nav-item"><a class="nav-link text-light" href="javascript:void(0);" onclick="scrollToSection('#TBD')">TBD</a></li>
+                    <li class="nav-item"><a class="nav-link text-light" href="javascript:void(0);" onclick="scrollToSection('#TBD')">TBD</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <script>
+        function scrollToSection(sectionId) {
+            const section = document.querySelector(sectionId);
+            window.scrollTo({
+                top: section.offsetTop,
+                behavior: 'smooth'
+            });
+        }
+    </script>
+
+    <!-- Home Section -->
+    <section id="Home" class="odd-background-gradient">       
+        <br>
+        <br>
+        <br class="hide-on-small">
+        <div class="container-fluid mt-5 text-center">
+            <div class="row">
+                <div class="col-md-1 col-12"></div>
+                <div class="col-md-10 col-12">
+                    <br class="hide-on-small">
+                    <br class="hide-on-small">
+                    <br class="hide-on-small">
+                    <br class="hide-on-small">
+                    <br class="hide-on-small">
+                    <br class="hide-on-small">
+                    <br class="hide-on-small">
+                    <h1 id="introqubicon" class="qubicon-gradient">QUBICON 2026</h1>  
+                    <h2 id="introsubtext" class="subtext-gradient"></h2>
+                    <h2 id="introsubsubtext" class="subtext-gradient"></h2>
+                    <br class="hide-on-small">
+                    <br class="hide-on-small">
+                </div>
+                <div class="col-md-1 col-12"></div>
+            </div>
+        </div>
+        <div class="social-icons" style="filter: invert(100%);">
+            <a href="https://www.linkedin.com/company/qubibyte" target="_blank">
+                <img src="/images/linkedin.png" alt="LinkedIn">
+            </a>
+            <a href="https://twitter.com/qubibyte" target="_blank">
+                <img src="/images/x.png" alt="X">
+            </a>
+            <a href="https://www.youtube.com/@qubibyte" target="_blank">
+                <img src="/images/youtube.png" alt="YouTube">
+            </a>
+        </div>  
+    </section>
+
+    <!-- Schedule Section -->
+    <section id="Schedule" class="text-center py-5 even-background-gradient">
+        <br>
+        <br class="hide-on-small">
+        <div class="container">
+            <h2 class="section-header" style="color:#ffffff">Schedule</h2>
+            <div class="row">
+                <div class="col-md-2 col-12"></div>
+                <div class="col-md-8 col-12">
+                    <!-- Schedule Item 1 -->
+                    <div class="schedule-box d-flex align-items-center mb-3">
+                        <div class="time-slot">
+                            5:00 - 5:30 PM
+                        </div>
+                        <div class="event-name">
+                            INTRODUCTION TO QUANTUM COMPUTING
+                        </div>
+                    </div>
+                    <!-- Schedule Item 2 -->
+                    <div class="schedule-box d-flex align-items-center mb-3">
+                        <div class="time-slot">
+                            5:30 - 5:45 PM
+                        </div>
+                        <div class="event-name">
+                            QUANTUM COMPUTER PHYSICAL DESIGNS
+                        </div>
+                    </div>
+                    <!-- Schedule Item 3 -->
+                    <div class="schedule-box d-flex align-items-center mb-3">
+                        <div class="time-slot">
+                            5:45 - 6:00 PM
+                        </div>
+                        <div class="event-name">
+                            QUANTUM COMPUTING ALGORITHMS
+                        </div>
+                    </div>
+                    <!-- Schedule Item 4 -->
+                    <div class="schedule-box d-flex align-items-center mb-3">
+                        <div class="time-slot">
+                            6:00 - 6:15 PM
+                        </div>
+                        <div class="event-name">
+                            TBD
+                        </div>
+                    </div>
+                    <!-- Schedule Item 5 -->
+                    <div class="schedule-box d-flex align-items-center mb-3">
+                        <div class="time-slot">
+                            6:00 - 6:30 PM
+                        </div>
+                        <div class="event-name">
+                            TBD
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-12"></div>
+            </div>
+        </div>
+    </section>
+</body>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const navItems = document.querySelectorAll(".navbar-nav .nav-link, .navbar-brand");
+        const navbarToggler = document.querySelector(".navbar-toggler");
+        const navbarCollapse = document.querySelector(".navbar-collapse");
+
+        navItems.forEach(function (item) {
+            item.addEventListener("click", function () {
+                // Only collapse if the navbar is open (not already collapsed)
+                if (navbarCollapse.classList.contains("show") && window.innerWidth < 768) {
+                    navbarToggler.click(); // Close the navbar
+                }
+            });
+        });
+    });
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const text2 = "Coming to Valparaiso University, TBD 2026";
+    const text3_part1 = "Presented by ";
+    const text3_part2 = "Founder & CEO";
+    const text3_part3 = " Trent Rosenthal";
+    const element2 = document.getElementById("introsubtext");
+    const element3 = document.getElementById("introsubsubtext");
+
+    element2.textContent = "";
+    element3.innerHTML = "";
+
+    function delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    async function typeText(text, element, speed = 50) {
+        for (let i = 0; i < text.length; i++) {
+            element.textContent += text.charAt(i);
+            await delay(speed);
+        }
+    }
+
+    async function typeText3(speed = 50) {
+        // Step 1: Type the gold part
+        for (let i = 0; i < text3_part1.length; i++) {
+            element3.innerHTML += text3_part1.charAt(i);
+            await delay(speed);
+        }
+
+        // Step 2: Create a span for the purple part
+        const span = document.createElement("span");
+        span.classList.add("founder-gradient");
+        element3.appendChild(span);
+
+        // Step 3: Type the purple gradient part into the span
+        for (let i = 0; i < text3_part2.length; i++) {
+            span.textContent += text3_part2.charAt(i);
+            await delay(speed);
+        }
+
+        // Step 4: Continue with the rest in gold
+        for (let i = 0; i < text3_part3.length; i++) {
+            element3.innerHTML += text3_part3.charAt(i);
+            await delay(speed);
+        }
+    }
+
+    async function typeLines() {
+        await delay(300);
+        await typeText(text2, element2);
+        await typeText3();
+    }
+
+    typeLines();
+});
+</script>
+
+
+    
+    
+
+</html>

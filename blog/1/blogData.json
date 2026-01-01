@@ -1,0 +1,36 @@
+{
+    "ytvid": {
+        "text": "Qubibyte Blog #1: The Declaration of Qubibyte & Announcement of Qubibyte Quadra",
+        "link": "https://www.youtube.com/embed/x17QOpBOsL0",
+        "author": "Qubibyte",
+        "date": "March 7th, 2025"
+    },
+    "title": "The Declaration of Qubibyte & Announcement of Qubibyte Quadra",
+    "author": "Trent Rosenthal",
+    "date": "March 7th, 2025",
+    "content": [
+        "Hello, I'm Trent Rosenthal, the Founder & CEO of Qubibyte.",
+        "Since the early 1980's, many efforts have been made to advance the quantum computing industry. From researchers such as David Deutsch, Peter Shor, and Lov Grover, to major companies such as Microsoft, Google, and IBM, a substantial amount of time and effort has been dedicated towards the engineering of devices and algorithms that will one day reshape the domain of what is possible to compute, as you're already seeing.",
+        "It would be a shame if the future of quantum computing was not in the United States, but rather in a competitor with questionable ethicality such as China. Unfortunately, it may very well be that way. China's public sector is investing over five times as much into this industry as the United States, which leaves no surprise as to why they've amassed over 50% of quantum communication patents, also five times as many as the United States.",
+        {
+            "type": "image",
+            "src": "https://www.globaltimes.cn/Portals/0/attachment/2024/2024-09-05/77f516f6-0160-43d3-99a4-642e6ceac8bd.png",
+            "alt": "Global Quantum Patents By Country"
+        },
+        "We do lead in quantum computing patents, but not quantum communications or quantum sensing, but it may not be for long with strong Chinese competitors such as Origin Quantum, QuantumCTek, SpinQ, and many others.",
+        {
+            "type": "image",
+            "src": "https://quantumconsortium.org/wp-content/uploads/2024/12/Picture14.png",
+            "alt": "Global Statistics On Quantum Patents"
+        },
+        "We'd have a lot at risk if this sort of technology gets into the wrong hands. Your favorite cryptocurrency, Bitcoin, will be totally and utterly obliterated, instantly reaching a near-zero evaluation following the first major attack on it. A consensus is yet to be reached, and is continuously pushed back and deemed “redundant”, towards implementing a quantum-proof algorithm to prevent its complete and total eradication.",
+        "It's not just Bitcoin, however, but anything that uses any modern encryption algorithm or hashing function will be at risk. Your data, your bank accounts, everything, will soon have its security compromised if no change is made.",
+        "Much of your data is already in the hands of bad actors all over the world, and is currently safe only by the protection of these aforementioned security measures, which will be cracked very soon. This is a lost cause, but future data does not have to be this insecure.",
+        "Every security measure we've taken has been based on calculations that are technically possible, but so infeasible that nobody could crack it in the lifetime of the universe. With quantum computing this is no longer the case.",
+        "There's a lot of ambitious people engineering this technology that strive to create the most salient product humanity has ever received, but there's a lot more that are either incompetent, lazy, evil-hearted, whatever it may be, that are a true liability to the quantum computing industry.",
+        "That is why I have taken the initiative to start the Qubibyte company, in the interest of the public sector, that will benefit greatly from such advancements.",
+        "Qubibyte's initial aim is to design a rival to SpinQ's Gemini and Triangulum models. These are quantum computers that utilize the nuclear magnetic resonance technique, NMR, to create devices operable at room temperature, a feature that's imperative to induce a much wider interest in the quantum computing market. These models are being sold for between $10,000 and $50,000, much higher than they cost to produce, and they're barely computationally effective in themselves, definitely not powerful enough for any useful application. They are however useful for the thousands and thousands of brilliant American students that wish to have a convenient way to research different quantum phenomena.",
+        "Qubibyte will aim to create much more powerful, and much less expensive, NMR quantum computing models in an effort to advance this industry, and that's what this is really all about. We will aim to create a design very soon that includes 4 qubits, twice as powerful as the $50,000 SpinQ Triangulum, to be sold for less than one-tenth of the price. Academic institutions will benefit greatly from the availability of this product, and immense interest will immediately unfold. The American market will gather more manpower than any other country in this industry, and we will thus know that the future of data security is in great hands. This device will be named the Qubibyte Quadra, and its release date is currently anticipated for the 3rd quarter of 2026.",
+        "Other aspirations of this company, which will extend to designing quantum algorithms like we've never seen before, quantum programming languages, and software, will follow in pursuit, and maybe even predate the development of this design. I know for sure we will get a quantum circuit simulator under the Resources tab of the website in not too long. We will achieve breakthroughs that assist in the advancement of nuclear fusion reactor design, materials science, pharmaceutical drug development, and many more topics which are currently only limited by our inability to scale our computational power exponentially. So stand by, do not be complacent, and I will see you soon."
+    ]
+}

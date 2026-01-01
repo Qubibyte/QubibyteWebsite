@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Master Quantum Computing with Qubibyte's interactive tutorial. Learn Qubits, Superposition, Entanglement, Gates, and Algorithms like Shor's and Grover's. Get certified today!">
+    <meta name="keywords"
+        content="Quantum Computing, Qubit, Bloch Sphere, Quantum Algorithms, Shor's Algorithm, Grover's Algorithm, Quantum Gates, Qubibyte">
+    <!-- MathJax for rendering equations -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>Quantum Computing Tutorial - Qubibyte</title>
+    <link href="style.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/images/fav.png">
+
+    <!-- Simulator Dependencies for Visuals -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="../simulator/js/quantum.js"></script>
+    <script src="../simulator/js/gateInfo.js"></script>
+    <script src="../simulator/js/visualization.js"></script>
+</head>
+
+<body>
+
+    <div class="sidebar">
+        <!-- Populated by tutorial-engine.js -->
+    </div>
+
+    <div class="main-content" id="content-area">
+        <!-- Populated by tutorial-engine.js -->
+    </div>
+
+    <!-- Tutorial Data (Consolidated) -->
+    <script src="tutorial-data.js"></script>
+    <!-- Logic Engine -->
+    <script src="tutorial-engine.js"></script>
+
+</body>
+
+</html>

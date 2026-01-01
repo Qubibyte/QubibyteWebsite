@@ -1,0 +1,444 @@
+.gates-container {
+    display: flex;
+    gap: 0px;
+    padding: 5px;
+    background-color: #ccc;
+}
+
+h1, h2 {
+    font-family: 'Khand', 'Jockey One', Arial, Helvetica, sans-serif;
+    font-weight: bold;
+    font-size:2.3em;
+    color:black;
+}
+
+
+
+
+/* Styles for the popup box */
+.popup-box {
+    position: absolute;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    display: none;
+    z-index: 100;
+    max-width: 300px;
+    font-family: Arial, sans-serif;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+
+
+/* Add any additional styles for gates if needed */
+.gate:hover {
+    background-color: #f1f1f1;
+}
+
+
+#bloch-sphere {
+    display: flex;            /* Use flexbox for side-by-side layout */
+    justify-content: flex-start; /* Align the elements to the left */
+    gap: 20px;                /* Optional: add space between the Bloch spheres */
+    flex-wrap: wrap;          /* Allow wrapping to the next line if necessary */
+}
+  
+#bloch-sphere div {
+display: inline-block;    /* Ensure each div behaves as an inline block */
+}
+
+
+
+.gate {
+
+    padding: 3px;
+    position: relative;
+    margin: 5px;
+    width: 50px; /* Fixed width */
+    height: 50px; /* Fixed height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5vw; /* Responsive text scaling */
+    text-align: center;
+    border: 1px solid black;
+    background-color: lightgray;
+    cursor: grab;
+    user-select: none;
+}
+
+.gateplaced {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    
+    background-color: lightgray;
+    border: 1px solid black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2vw;
+    box-sizing: border-box;
+    user-select: none;
+    cursor: pointer;
+}
+
+
+
+.gateplaced:hover {
+    filter: brightness(1.5); /* 1.0 = normal, >1 = lighter, <1 = darker */
+}
+
+.gateempty {
+
+    padding: 30px;
+    position: relative;
+    margin: 5px;
+    width: 50px; /* Fixed width */
+    height: 50px; /* Fixed height */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5vw; /* Responsive text scaling */
+    text-align: center;
+    border: 1px solid black;
+    background-color: lightgray;
+    user-select: none;
+    opacity: 0.2;
+}
+
+@media (max-width: 767.99px) {
+    .gate, .gateplaced, .gateempty {
+        font-size: 6vw; /* Increase text size for smaller screens */
+    }
+}
+
+
+
+#widgetarea-left-top {
+    height: 66.67vh;
+    overflow: auto;
+}
+
+#widgetarea-left-bottom {
+    height: 33.33vh;
+    overflow: auto;
+}
+#widgetarea-right-top {
+    height: 66.67vh;
+    overflow: auto;
+}
+
+#widgetarea-right-bottom {
+    height: 33.33vh;
+    overflow: auto;
+}
+
+
+
+#widget-circuit {
+    height: 100%;
+    overflow: hidden;
+    background-color: aliceblue;
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    grid-template-columns: auto 1fr;
+}
+
+#widget-gates {
+    height: 100%;
+    overflow: auto;
+    display: flex;
+    background-color: aliceblue;
+}
+
+#gates {
+    width:50%;
+    padding: 2%;
+    height: 100%;
+    overflow: auto;
+    background-color: aliceblue;
+}
+
+#gateinfo {
+    width:50%;
+    padding: 2%;
+    height: 100%;
+    overflow: auto;
+    background-color: aliceblue;
+}
+
+.classic-border {
+    border-style: solid;
+    border-color: black;
+    border-width: 1px;
+}
+
+#widget-data {
+    height: 100%;
+    overflow: auto;
+    display: flex;
+    background-color: aliceblue;
+}
+
+#circuitframe {
+    overflow: hidden;
+    width:90%;
+    height:90%;
+    left: 5%;
+    top: 5%;
+    position: absolute;
+    grid-row: 2;
+    grid-column: 2;
+    background-color: rgb(237, 237, 240)
+}
+
+#myChart {
+    aspect-ratio: 1 / 1; /* always square */
+    width: 100%;         /* fill container width */
+    height: auto;        /* height calculated from aspect-ratio */
+}
+
+#chartgraphic {
+    width:60%;
+    height: 100%;
+    overflow: hidden;
+    background-color: aliceblue;
+}
+
+#probandsettings {
+    width:40%;
+    height: 100%;
+    overflow: auto;
+    background-color: aliceblue;
+}
+
+#probabilitytable {
+    width:100%;
+    height: 90%;
+    overflow: auto;
+    background-color: aliceblue;
+}
+
+#settings {
+    width:100%;
+    height: 10%;
+    overflow: auto;
+    background-color: aliceblue;
+}
+
+/* Make headers look clickable */
+th {
+cursor: pointer;
+position: relative;
+user-select: none;
+}
+
+/* Sort arrow container */
+th::after {
+content: '⇅'; /* default up/down arrows */
+font-size: 0.7em;
+position: absolute;
+right: 8px;
+top: 50%;
+transform: translateY(-50%);
+color: #ccc;
+transition: color 0.2s;
+}
+
+/* When sorted ascending */
+th.tablesort-header--asc::after {
+content: '↑';
+color: #000;
+}
+
+/* When sorted descending */
+th.tablesort-header--desc::after {
+content: '↓';
+color: #000;
+}
+
+.circuitprobability {
+    font-weight: bold;
+    display: flex;
+    align-items:  center;
+    justify-content:  center;
+}
+
+@media (max-width: 767.99px) {
+    .circuitprobability {
+        font-size: 3vw;
+    }
+}
+
+@media (min-width: 767.99px) {
+    .circuitprobability {
+        font-size: 1.5vw;
+    }
+}
+
+
+#widget-code {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: auto;
+    background-color: aliceblue;
+}
+
+.code-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Allow to grow/shrink to fill space */
+}
+
+/* Code editor style */
+.code-editor {
+    flex: 1; /* Make it take all remaining space */
+    width: 100%;
+    font-family: monospace;
+    font-size: 1.2em;
+    background-color: rgb(237, 237, 240);
+    color: #000000;
+    border: none;
+    outline: none;
+    padding: 10px;
+    line-height: 1.4;
+    resize: none; /* No manual resize */
+    box-sizing: border-box;
+    border-radius: 4px;
+    overflow: auto;
+    white-space: pre;
+    caret-color: black;
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+label[for="code"] {
+    font-family: monospace;
+    color: #000;
+    margin-bottom: 5px;
+}
+
+.container-fluid.row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.code-form label p,
+.code-form label button {
+    display: inline-block;
+    margin: 0;
+    vertical-align: middle;
+}
+
+
+#blochDiv {
+    display: flex;
+    justify-content: center; /* horizontal centering */
+    align-items: center;     /* vertical centering */
+    width: 100%;
+    height: 100%; /* or a fixed height if you prefer */
+}
+#blochDiv canvas {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* Common styles */
+  .slider-container {
+    position: relative;
+  }
+
+  .slider {
+    position: absolute;
+    background: #ddd;
+    border-radius: 5px;
+  }
+
+  .range-track {
+    position: absolute;
+    border-radius: 5px;
+    z-index: 1;
+  }
+
+  .thumb {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  /* === Qubit slider (Vertical, Purple) === */
+  #qubitSlider {
+    height: 80%;
+    width: 0%;
+    grid-row: 2;
+    grid-column: 1;
+    position: absolute;
+    left: 1%;
+    top: 10%;
+  }
+
+  #qubitSlider .slider {
+    width: 5px;
+    margin: 100%;
+    height: 100%;
+    transform: translateX(-50%);
+  }
+
+  #qubitSlider .range-track {
+    width: 5px;
+    margin: 100%;
+    transform: translateX(-50%);
+    background: #6f42c1;
+  }
+
+  #qubitSlider .thumb {
+    margin: 100%;
+    transform: translateX(-50%);
+    background: #6f42c1;
+  }
+
+  /* === Time slider (Horizontal, Green) === */
+  #timeSlider {
+    width: 80%;
+    grid-row: 1;
+    grid-column: 2;
+    position: absolute;
+    left: 10%;
+    top: 1%;
+  }
+
+  #timeSlider .slider {
+    height: 5px;
+    width: 100%;
+    transform: translateY(-50%);
+  }
+
+  #timeSlider .range-track {
+    height: 5px;
+    transform: translateY(-50%);
+    background: #28a745;
+  }
+
+  #timeSlider .thumb {
+    transform: translateY(-50%);
+    background: #28a745;
+  }

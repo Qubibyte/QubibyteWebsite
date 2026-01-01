@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Circuit Simulator</title>
+    <link rel="icon" type="image/x-icon" href="/images/fav.png">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="title-section">
+                <a href="../../">
+                    <img src="logo_white.png" alt="Qubibyte" class="logo">
+                </a>
+                <h1 class="title">Quantum Circuit Simulator</h1>
+            </div>
+            <div class="header-controls">
+                <button id="clearBtn" class="btn btn-secondary">Clear Circuit</button>
+                <button id="resetBtn" class="btn btn-secondary">Reset</button>
+                <button id="exportBtn" class="btn btn-secondary">Export</button>
+                <button id="runBtn" class="btn btn-primary">Run Circuit</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Sidebar - Gate Palette -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <div class="sidebar-header-buttons">
+                        <button id="algorithmsBtn" class="btn btn-small">Examples</button>
+                        <button id="settingsBtn" class="btn btn-small">Settings</button>
+                    </div>
+                </div>
+                <div class="gate-palette">
+                    <div class="gate-category">
+                        <h3 class="category-title">Single Qubit Gates</h3>
+                        <div class="gate-list">
+                            <div class="gate-item" data-gate="H" draggable="true">
+                                <span class="gate-symbol">H</span>
+                                <span class="gate-name">Hadamard</span>
+                                <button class="gate-info-icon" data-gate="H" title="Gate Information">ℹ</button>
+                            </div>
+                            <div class="gate-item" data-gate="X" draggable="true">
+                                <span class="gate-symbol">X</span>
+                                <span class="gate-name">Pauli-X</span>
+                                <button class="gate-info-icon" data-gate="X" title="Gate Information">ℹ</button>
+                            </div>
+                            <div class="gate-item" data-gate="Y" draggable="true">
+                                <span class="gate-symbol">Y</span>
+                                <span class="gate-name">Pauli-Y</span>
+                                <button class="gate-info-icon" data-gate="Y" title="Gate Information">ℹ</button>
+                            </div>
+                            <div class="gate-item" data-gate="Z" draggable="true">
+                                <span class="gate-symbol">Z</span>
+                                <span class="gate-name">Pauli-Z</span>
+                                <button class="gate-info-icon" data-gate="Z" title="Gate Information">ℹ</button>
+                            </div>
+                            <div class="gate-item" data-gate="S" draggable="true">
+                                <span class="gate-symbol">S</span>
+                                <span class="gate-name">Phase</span>
+                                <button class="gate-info-icon" data-gate="S" title="Gate Information">ℹ</button>
+                            </div>
+                            <div class="gate-item" data-gate="T" draggable="true">
+                                <span class="gate-symbol">T</span>
+                                <span class="gate-name">T Gate</span>
+                                <button class="gate-info-icon" data-gate="T" title="Gate Information">ℹ</button>
+                            </div>
+                            <div class="gate-item" data-gate="RX" draggable="true">
+                                <span class="gate-symbol">RX</span>
+                                <span class="gate-name">Rotation X</span>
+                                <button class="gate-info-icon" data-gate="RX" title="Gate Information">ℹ</button>
+                            </div>
+                            <div class="gate-item" data-gate="RY" draggable="true">
+                                <span class="gate-symbol">RY</span>
+                                <span class="gate-name">Rotation Y</span>
+                                <button class="gate-info-icon" data-gate="RY" title="Gate Information">ℹ</button>
+                            </div>
+                            <div class="gate-item" data-gate="RZ" draggable="true">
+                                <span class="gate-symbol">RZ</span>
+                                <span class="gate-name">Rotation Z</span>
+                                <button class="gate-info-icon" data-gate="RZ" title="Gate Information">ℹ</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gate-category">
+                        <h3 class="category-title">Multi Qubit Gates</h3>
+                        <div class="gate-list">
+                            <div class="gate-item" data-gate="CX" draggable="true">
+                                <span class="gate-symbol">CX</span>
+                                <span class="gate-name">Controlled-X</span>
+                                <button class="gate-info-icon" data-gate="CX" title="Gate Information">ℹ</button>
+                            </div>
+                            <div class="gate-item" data-gate="CY" draggable="true">
+                                <span class="gate-symbol">CY</span>
+                                <span class="gate-name">Controlled-Y</span>
+                                <button class="gate-info-icon" data-gate="CY" title="Gate Information">ℹ</button>
+                            </div>
+                            <div class="gate-item" data-gate="CZ" draggable="true">
+                                <span class="gate-symbol">CZ</span>
+                                <span class="gate-name">Controlled-Z</span>
+                                <button class="gate-info-icon" data-gate="CZ" title="Gate Information">ℹ</button>
+                            </div>
+                            <div class="gate-item" data-gate="SWAP" draggable="true">
+                                <span class="gate-symbol">⇄</span>
+                                <span class="gate-name">SWAP</span>
+                                <button class="gate-info-icon" data-gate="SWAP" title="Gate Information">ℹ</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gate-category">
+                        <h3 class="category-title">Measurement</h3>
+                        <div class="gate-list">
+                            <div class="gate-item" data-gate="MEASURE" draggable="true">
+                                <span class="gate-symbol">M</span>
+                                <span class="gate-name">Measure</span>
+                                <button class="gate-info-icon" data-gate="MEASURE" title="Gate Information">ℹ</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gate-category">
+                        <h3 class="category-title">Control Flow</h3>
+                        <div class="gate-list">
+                            <div class="gate-item" data-gate="REPEAT" draggable="true">
+                                <span class="gate-symbol gate-control-flow">↻</span>
+                                <span class="gate-name">Repeat</span>
+                            </div>
+                            <div class="gate-item" data-gate="END" draggable="true">
+                                <span class="gate-symbol gate-control-flow">⊣</span>
+                                <span class="gate-name">End</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center - Circuit Builder and NMR Simulator -->
+            <main class="circuit-area">
+                <!-- Top Section: Tabs for Circuit Builder / NMR Simulator -->
+                <div class="main-editor-section">
+                    <div class="circuit-controls">
+                        <div class="qubit-controls">
+                            <button id="removeQubitBtn" class="btn btn-small">-</button>
+                            <input type="text" id="qubitCount" value="2 Qubits" class="input-number qubit-count-input">
+                            <button id="addQubitBtn" class="btn btn-small">+</button>
+                        </div>
+                        <div class="zoom-controls">
+                            <button id="zoomOutBtn" class="btn btn-small" title="Zoom Out">−</button>
+                            <span id="zoomLevel">100%</span>
+                            <button id="zoomInBtn" class="btn btn-small" title="Zoom In">+</button>
+                            <button id="resetZoomBtn" class="btn btn-small" title="Reset Zoom">Reset</button>
+                        </div>
+                        <div class="circuit-info">
+                            <span id="circuitDepth">Depth: 0</span>
+                            <span id="gateCount">Gates: 0</span>
+                            <span id="stepInfo">Step: 0/0</span>
+                        </div>
+                    </div>
+                    <div class="editor-tabs">
+                        <button class="tab-btn active" data-tab="circuit">Circuit Builder</button>
+                        <button class="tab-btn" data-tab="nmr">NMR Simulator</button>
+                    </div>
+                    <div id="circuitEditor" class="editor-panel active">
+                        <div class="circuit-canvas-wrapper">
+                            <div id="circuitCanvas" class="circuit-canvas"></div>
+                        </div>
+                        <div id="stepTimeline" class="step-timeline"></div>
+                    </div>
+                    <div id="nmrEditor" class="editor-panel">
+                        <div class="nmr-content">
+                            <div class="nmr-placeholder">
+                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
+                                <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                                <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Section: Visualization Content -->
+                <div class="visualization-section" id="visualizationSection">
+                    <!-- Region 1: Measurement Results / State Vector (Tabs) -->
+                    <div class="viz-region viz-region-1">
+                        <div class="viz-tabs">
+                            <button class="viz-tab-btn active" data-viz-tab="measurement">Measurement Results</button>
+                            <button class="viz-tab-btn" data-viz-tab="state">State Vector</button>
+                        </div>
+                        <div id="measurementPanel" class="viz-panel active">
+                            <div id="measurementResults" class="results-display">
+                                <p class="placeholder">Run circuit to see results</p>
+                            </div>
+                        </div>
+                        <div id="statePanel" class="viz-panel">
+                            <div id="stateVector" class="state-vector"></div>
+                        </div>
+                    </div>
+
+                    <!-- Region 2: Probability Graphs (Bar/Pie Chart) -->
+                    <div class="viz-region viz-region-2">
+                        <div id="probabilityGraphs" class="probability-graphs"></div>
+                    </div>
+
+                    <!-- Region 3: Bloch Spheres -->
+                    <div class="viz-region viz-region-3">
+                        <div id="qubitVisualization" class="qubit-visualization"></div>
+                    </div>
+                </div>
+
+                <!-- Toggle button for visualization section -->
+                <button id="toggleVizSectionBtn" class="viz-section-toggle" title="Toggle Visualization Panel">
+                    <span class="toggle-icon">▼</span>
+                </button>
+            </main>
+
+            <!-- Right Sidebar - Qubi Code Editor -->
+            <aside class="code-sidebar">
+                <div class="sidebar-header">
+                    <h3 class="sidebar-title">Qubi Code Editor</h3>
+                </div>
+                <div id="qubiEditor" class="editor-panel active">
+                    <div class="editor-toolbar">
+                        <button id="clearQubiBtn" class="btn btn-small">Clear</button>
+                        <span class="toolbar-separator"></span>
+                        <button id="saveQubiFileBtn" class="btn btn-small" title="Save as .qubi file">Save File</button>
+                        <button id="loadQubiFileBtn" class="btn btn-small" title="Load from .qubi file">Load File</button>
+                        <input type="file" id="qubiFileInput" accept=".qubi" style="display: none;">
+                    </div>
+                    <div class="code-editor-container">
+                        <div class="line-numbers" id="lineNumbers"></div>
+                        <div class="code-editor-wrapper">
+                            <pre class="code-highlight" id="codeHighlight" aria-hidden="true"></pre>
+                            <textarea id="qubiCode" class="code-editor" spellcheck="false" placeholder="Enter Qubi code here..."></textarea>
+                        </div>
+                    </div>
+                    <div id="qubiErrors" class="error-display"></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Gate Parameter Modal -->
+    <div id="parameterModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Set Gate Parameters</h3>
+            <div id="parameterInputs"></div>
+            <div class="modal-buttons">
+                <button id="confirmParamBtn" class="btn btn-primary">Confirm</button>
+                <button id="cancelParamBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Target Qubit Selection Modal -->
+    <div id="targetModal" class="modal">
+        <div class="modal-content">
+            <h3 id="targetModalTitle">Select Control Qubit</h3>
+            <div id="targetQubitList" class="target-qubit-list"></div>
+            <div class="modal-buttons">
+                <button id="confirmTargetBtn" class="btn btn-primary">Confirm</button>
+                <button id="cancelTargetBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gate Info Modal -->
+    <div id="gateInfoModal" class="modal">
+        <div class="modal-content large-modal">
+            <h3 id="gateInfoTitle">Gate Information</h3>
+            <div id="gateInfoContent"></div>
+            <div class="modal-buttons">
+                <button id="closeGateInfoBtn" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Examples Modal -->
+    <div id="algorithmsModal" class="modal">
+        <div class="modal-content large-modal">
+            <h3>Quantum Examples</h3>
+            <div class="algorithm-options">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="includeCommentsCheckbox">
+                    <span>Include explanatory comments in code</span>
+                </label>
+            </div>
+            <div id="algorithmsList" class="algorithms-list"></div>
+            <div id="algorithmParams" class="algorithm-params" style="display:none;">
+                <h4>Parameters</h4>
+                <div id="algorithmParamInputs"></div>
+                <div class="modal-buttons">
+                    <button id="confirmAlgorithmBtn" class="btn btn-primary">Load Example</button>
+                    <button id="cancelAlgorithmBtn" class="btn btn-secondary">Cancel</button>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="closeAlgorithmsBtn" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content large-modal">
+            <h3>Settings</h3>
+            <div id="settingsContent" class="settings-content"></div>
+            <div class="modal-buttons">
+                <button id="saveSettingsBtn" class="btn btn-primary">Save Settings</button>
+                <button id="closeSettingsBtn" class="btn btn-secondary">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Repeat Count Modal -->
+    <div id="repeatModal" class="modal">
+        <div class="modal-content">
+            <h3 id="repeatModalTitle">Set Repeat Count</h3>
+            <div class="parameter-group">
+                <label for="repeatCountInput">Number of repetitions:</label>
+                <input type="number" id="repeatCountInput" value="2" min="1" max="1000" class="input-number">
+            </div>
+            <div class="modal-buttons">
+                <button id="confirmRepeatBtn" class="btn btn-primary">Confirm</button>
+                <button id="cancelRepeatBtn" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content large-modal">
+            <h3>Export Circuit</h3>
+            
+            <!-- Format Selection View -->
+            <div id="exportFormatSelection">
+                <p class="export-description">Choose an export format to preview.</p>
+                <div class="export-options">
+                    <button id="exportPngBtn" class="export-option-btn" data-format="png">
+                        <span class="export-icon">🖼️</span>
+                        <span class="export-label">PNG</span>
+                        <span class="export-hint">High-quality image</span>
+                    </button>
+                    <button id="exportSvgBtn" class="export-option-btn" data-format="svg">
+                        <span class="export-icon">📐</span>
+                        <span class="export-label">SVG</span>
+                        <span class="export-hint">Scalable vector</span>
+                    </button>
+                    <button id="exportPdfBtn" class="export-option-btn" data-format="pdf">
+                        <span class="export-icon">📄</span>
+                        <span class="export-label">PDF</span>
+                        <span class="export-hint">Document format</span>
+                    </button>
+                </div>
+                <div class="modal-buttons">
+                    <button id="closeExportBtn" class="btn btn-secondary">Close</button>
+                </div>
+            </div>
+            
+            <!-- Preview View -->
+            <div id="exportPreviewView" class="export-preview-view" style="display: none;">
+                <div class="export-preview-header">
+                    <button id="exportBackBtn" class="btn btn-small">← Back</button>
+                    <span id="exportFormatTitle" class="export-format-title">PNG Preview</span>
+                </div>
+                <div id="exportPreviewContainer" class="export-preview-container">
+                    <div id="exportPreviewLoading" class="export-preview-loading">Generating preview...</div>
+                    <img id="exportPreviewImage" class="export-preview-image" style="display: none;" alt="Export preview">
+                </div>
+                <div class="export-settings">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="exportIncludeBackground" checked>
+                        <span>Include background</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="exportHighRes" checked>
+                        <span>High resolution (2x)</span>
+                    </label>
+                </div>
+                <div class="modal-buttons">
+                    <button id="cancelExportBtn" class="btn btn-secondary">Cancel</button>
+                    <button id="confirmExportBtn" class="btn btn-primary">Export</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/quantum.js"></script>
+    <script src="js/circuit.js"></script>
+    <script src="js/visualization.js"></script>
+    <script src="js/qubi.js"></script>
+    <script src="js/gateInfo.js"></script>
+    <script src="js/algorithms.js"></script>
+    <script src="js/graphs.js"></script>
+    <script src="js/syntaxHighlight.js"></script>
+    <script src="js/ui.js"></script>
+</body>
+</html>
+

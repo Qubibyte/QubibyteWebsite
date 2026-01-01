@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qubibyte</title>
+    <link rel="icon" type="image/x-icon" href="/images/fav.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="newindex.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top"">
+        <div class=" container">
+        <a class="navbar-brand" href="javascript:void(0);" onclick="scrollToSection('#Home')"><img
+                src="images/logo_white.png" alt="Qubibyte" style="width:100px;"></img></a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="javascript:void(0);"
+                        onclick="scrollToSection('#Products')">Products</a></li>
+                <li class="nav-item"><a class="nav-link" href="javascript:void(0);"
+                        onclick="scrollToSection('#Blog')">Blog</a></li>
+                <li class="nav-item"><a class="nav-link" href="javascript:void(0);"
+                        onclick="scrollToSection('#Company')">Company</a></li>
+                <li class="nav-item"><a class="nav-link" href="javascript:void(0);"
+                        onclick="scrollToSection('#Career')">Career</a></li>
+            </ul>
+        </div>
+        </div>
+    </nav>
+
+    <script>
+        function scrollToSection(sectionId) {
+            const section = document.querySelector(sectionId);
+            if (section) {
+                const offsetTop = section.offsetTop - 80; // Account for fixed navbar
+                window.scrollTo({
+                    top: offsetTop,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // Add scroll effect to navbar
+        window.addEventListener('scroll', function () {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+    </script>
+
+    <!-- Home Section -->
+    <section id="Home">
+        <div class="home-content">
+            <div class="container-fluid">
+                <div class="row align-items-start" style="min-height: 100vh; padding-top: 0;">
+                    <div class="col-lg-6 col-12 order-lg-1 order-1">
+                        <div class="hero-text-container">
+                            <div class="hero-badge">Welcome to Qubibyte</div>
+                            <h1 id="introeverywhere" class="hero-text">EVERYWHERE,</h1>
+                            <h2 id="introallatonce" class="hero-text">ALL AT ONCE.</h2>
+                            <p class="hero-subtitle">Pioneering the future of quantum computing</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-6 col-12 order-lg-2 order-2">
+                        <div class="mission-container">
+                            <div class="mission-card">
+                                <p id="introourmission">OUR MISSION</p>
+                                <p id="intropar">Qubibyte's mission is to design quantum computing architecture,
+                                    programming
+                                    languages, and software that is suitable with the rising demand for an
+                                    implementation
+                                    into the realms of nuclear fusion reactor design, materials science, pharmaceutical
+                                    drug
+                                    development, protocol security, and beyond.</p>
+                                <div class="audio-wrapper">
+                                    <audio id="missionAudio" preload="metadata">
+                                        <source src="audios/audio2.mp3" type="audio/mpeg">
+                                        Your browser does not support the audio element.
+                                    </audio>
+                                    <div class="custom-audio-player">
+                                        <button class="audio-play-btn" id="audioPlayBtn" aria-label="Play audio">
+                                            <span class="play-icon">▶︎</span>
+                                            <span class="pause-icon" style="display: none;">❚❚</span>
+                                        </button>
+                                        <div class="audio-progress-container">
+                                            <div class="audio-progress-bar" id="audioProgressBar">
+                                                <div class="audio-progress-fill" id="audioProgressFill"></div>
+                                            </div>
+                                            <div class="audio-time">
+                                                <span class="audio-current-time" id="audioCurrentTime">0:00</span>
+                                                <span class="audio-separator">/</span>
+                                                <span class="audio-duration" id="audioDuration">0:00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="social-icons">
+                <a href="https://www.linkedin.com/company/qubibyte" target="_blank" aria-label="LinkedIn">
+                    <img src="images/linkedin.png" alt="LinkedIn">
+                </a>
+                <a href="https://twitter.com/qubibyte" target="_blank" aria-label="X (Twitter)">
+                    <img src="images/x.png" alt="X">
+                </a>
+                <a href="https://www.youtube.com/@qubibyte" target="_blank" aria-label="YouTube">
+                    <img src="images/youtube.png" alt="YouTube">
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section id="Products" class="text-center py-5">
+        <div class="container">
+            <h2 class="section-header">Products</h2>
+            <div class="row g-4 mt-4 justify-content-center">
+                <!-- Qubibyte Quadra Product -->
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="product-card card fade-in-up">
+                        <div class="product-image-container">
+                            <img src="images/QuadraAssemblyImage.png" class="product-image" alt="Quadra Assembly Image">
+                        </div>
+                        <div class="card-body">
+                            <h3 class="product-title">Qubibyte Quadra</h3>
+                            <p class="product-subtitle">Expected Release: Q3 2026</p>
+                            <div class="product-details">
+                                <div class="product-detail-item">
+                                    <span class="detail-label">Description:</span>
+                                    <span class="detail-value">4-Qubit Portable Liquid-State NMR Quantum Computer @
+                                        &lt;$5,000</span>
+                                </div>
+                                <div class="product-detail-item">
+                                    <span class="detail-label">Physical Dimensions:</span>
+                                    <span class="detail-value">8 in. x 8 in. x 6 in.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Quantum Circuit Simulator Product -->
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="product-card card fade-in-up" style="animation-delay: 0.2s;">
+                        <div class="product-image-container simulator-container">
+                            <div class="simulator-preview">
+                                <div class="simulator-icon">⚛️</div>
+                                <h4 class="simulator-title">Quantum Circuit Simulator</h4>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="product-title">Quantum Circuit Simulator</h3>
+                            <p class="product-subtitle">Interactive Tool</p>
+                            <div class="product-details">
+                                <div class="product-detail-item">
+                                    <span class="detail-label">Features:</span>
+                                    <span class="detail-value">Visualize quantum circuits, probability distributions,
+                                        and
+                                        Bloch spheres</span>
+                                </div>
+                                <div class="product-detail-item">
+                                    <span class="detail-label">Capabilities:</span>
+                                    <span class="detail-value">8-qubit quantum circuits, Qubi programming environment,
+                                        real-time simulation</span>
+                                </div>
+                            </div>
+                            <a href="/simulator" target="_blank" class="product-link-btn">Launch Simulator
+                                →</a>
+                        </div>
+                    </div>
+                </div>
+                <!-- Quantum Computing Tutorial Product -->
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="product-card card fade-in-up" style="animation-delay: 0.4s;">
+                        <div class="product-image-container tutorial-container">
+                            <div class="simulator-preview"
+                                style="background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);">
+                                <div class="simulator-icon">📚</div>
+                                <h4 class="simulator-title">Quantum Computing Tutorial</h4>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h3 class="product-title">Quantum Computing Tutorial</h3>
+                            <p class="product-subtitle">Educational Resource</p>
+                            <div class="product-details">
+                                <div class="product-detail-item">
+                                    <span class="detail-label">Features:</span>
+                                    <span class="detail-value">Comprehensive guide to quantum concepts, gates, and
+                                        algorithms</span>
+                                </div>
+                                <div class="product-detail-item">
+                                    <span class="detail-label">Level:</span>
+                                    <span class="detail-value">Beginner to Intermediate, Interactive examples</span>
+                                </div>
+                            </div>
+                            <a href="/tutorial" class="product-link-btn">Start Learning →</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blog Section -->
+    <section id="Blog" class="text-center py-5">
+        <br>
+        <div class="container">
+            <h2 class="section-header">Blog</h2>
+            <div class="card mx-auto fade-in-up" style="max-width: 800px; min-height:500px; border-radius: 1rem;">
+                <div id="blogsCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner" id="carouselContentBlogs"></div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#blogsCarousel"
+                        style="filter: invert(1);" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#blogsCarousel"
+                        style="filter: invert(1);" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <h5 id="blogCaption" class="card-title"></h5>
+                    <p id="blogAuthor" class="card-text3 text-muted"></p>
+                    <p id="blogDate" class="card-text3 text-muted"></p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Company Section -->
+    <section id="Company" class="text-center py-5">
+        <div class="container">
+            <h2 class="section-header">Company</h2>
+            <div class="row g-4 mt-4 justify-content-center">
+
+                <!-- Executive -->
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="team-card fade-in-up">
+                        <div class="team-card-header"
+                            style="background-image: url('images/rosenthal_banner_image.jpg'); background-size: cover; background-position: center;">
+                            <div class="team-leader-img-container">
+                                <img src="images/photoshoot_square_transparent.png" class="team-leader-img"
+                                    alt="Trent Rosenthal">
+                            </div>
+                        </div>
+                        <div class="team-card-body">
+                            <h3 class="team-leader-name"><a href="https://trent-rosenthal.com" target="_blank">Trent
+                                    Rosenthal</a></h3>
+                            <p class="team-leader-role">Chief Executive Officer</p>
+                            <p class="team-leader-tenure">Since January 1st, 2025</p>
+                            <div class="team-divider"></div>
+                            <h4 class="team-dept-title">Executive</h4>
+                            <p class="team-dept-desc">Leading strategic direction and overall vision for Qubibyte. The
+                                executive team ensures alignment across all departments.</p>
+                            <a href="departments/executive/" class="team-link">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Operations -->
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="team-card fade-in-up" style="animation-delay: 0.1s;">
+                        <div class="team-card-header">
+                            <div class="team-leader-img-container">
+                                <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal">
+                            </div>
+                        </div>
+                        <div class="team-card-body">
+                            <h3 class="team-leader-name">Trent Rosenthal</h3>
+                            <p class="team-leader-role">Chief Operating Officer</p>
+                            <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
+                            <div class="team-divider"></div>
+                            <h4 class="team-dept-title">Operations</h4>
+                            <p class="team-dept-desc">Managing day-to-day operations, supply chains, and production
+                                processes. Ensuring efficient execution of business strategies.</p>
+                            <a href="departments/operations/" class="team-link">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Financial -->
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="team-card fade-in-up" style="animation-delay: 0.2s;">
+                        <div class="team-card-header">
+                            <div class="team-leader-img-container">
+                                <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal">
+                            </div>
+                        </div>
+                        <div class="team-card-body">
+                            <h3 class="team-leader-name">Trent Rosenthal</h3>
+                            <p class="team-leader-role">Chief Financial Officer</p>
+                            <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
+                            <div class="team-divider"></div>
+                            <h4 class="team-dept-title">Financial</h4>
+                            <p class="team-dept-desc">Overseeing financial planning, accounting, budgeting, and investor
+                                relations. Ensuring fiscal responsibility and sustainable growth.</p>
+                            <a href="departments/financial/" class="team-link">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technology -->
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="team-card fade-in-up" style="animation-delay: 0.3s;">
+                        <div class="team-card-header">
+                            <div class="team-leader-img-container">
+                                <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal">
+                            </div>
+                        </div>
+                        <div class="team-card-body">
+                            <h3 class="team-leader-name">Trent Rosenthal</h3>
+                            <p class="team-leader-role">Chief Technology Officer</p>
+                            <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
+                            <div class="team-divider"></div>
+                            <h4 class="team-dept-title">Technology</h4>
+                            <p class="team-dept-desc">Driving innovation in quantum computing architecture and software.
+                                Building the cutting-edge technology that powers our solutions.</p>
+                            <a href="departments/technology/" class="team-link">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Marketing -->
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="team-card fade-in-up" style="animation-delay: 0.4s;">
+                        <div class="team-card-header">
+                            <div class="team-leader-img-container">
+                                <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal">
+                            </div>
+                        </div>
+                        <div class="team-card-body">
+                            <h3 class="team-leader-name">Trent Rosenthal</h3>
+                            <p class="team-leader-role">Chief Marketing Officer</p>
+                            <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
+                            <div class="team-divider"></div>
+                            <h4 class="team-dept-title">Marketing</h4>
+                            <p class="team-dept-desc">Building brand awareness, engaging with customers, and driving
+                                market growth. Communicating Qubibyte's innovative solutions.</p>
+                            <a href="departments/marketing/" class="team-link">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legal -->
+                <div class="col-lg-4 col-md-6 col-12">
+                    <div class="team-card fade-in-up" style="animation-delay: 0.5s;">
+                        <div class="team-card-header">
+                            <div class="team-leader-img-container">
+                                <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal">
+                            </div>
+                        </div>
+                        <div class="team-card-body">
+                            <h3 class="team-leader-name">Trent Rosenthal</h3>
+                            <p class="team-leader-role">Chief Legal Officer</p>
+                            <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
+                            <div class="team-divider"></div>
+                            <h4 class="team-dept-title">Legal</h4>
+                            <p class="team-dept-desc">Ensuring compliance, managing intellectual property, and
+                                contracts. Protecting Qubibyte's interests and maintaining legal integrity.</p>
+                            <a href="departments/legal/" class="team-link">Learn More</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- Career Section -->
+    <section id="Career" class="text-center py-5">
+        <div class="container">
+            <h2 class="section-header">Join Our Team</h2>
+            <div class="career-content">
+                <div class="career-intro">
+                    <p class="career-lead">Shape the Future of Quantum Computing</p>
+                    <p class="career-description">At Qubibyte, we're building the next generation of quantum computing
+                        solutions. We're looking for passionate individuals who want to make a meaningful impact in
+                        technology, science, and innovation.</p>
+                </div>
+                <div class="career-highlights">
+                    <div class="career-highlight-item">
+                        <div class="highlight-icon">🚀</div>
+                        <h3>Innovation First</h3>
+                        <p>Work on cutting-edge quantum computing projects that push the boundaries of what's possible
+                        </p>
+                    </div>
+                    <div class="career-highlight-item">
+                        <div class="highlight-icon">🌍</div>
+                        <h3>Global Impact</h3>
+                        <p>Contribute to solutions that will transform industries from healthcare to energy</p>
+                    </div>
+                    <div class="career-highlight-item">
+                        <div class="highlight-icon">💡</div>
+                        <h3>Growth Opportunities</h3>
+                        <p>Join a dynamic team where your ideas matter and your career can flourish</p>
+                    </div>
+                </div>
+                <div class="career-cta">
+                    <p class="career-contact-text">Ready to be part of something extraordinary?</p>
+                    <a href="mailto:qubibyteorg@gmail.com" class="career-email-btn">
+                        Get in Touch →
+                    </a>
+                    <p class="career-note">Reach out to Founder & CEO Trent Rosenthal to learn more about opportunities
+                        at Qubibyte</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer style="background: linear-gradient(135deg, #554A9E 0%, #0687C9 100%); color: white; padding: 60px 0 30px;">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 col-12 mb-4">
+                    <img src="images/logo_white.png" alt="Qubibyte" style="width:120px; margin-bottom: 20px;">
+                    <p style="font-family: 'Khand', Arial, sans-serif; font-size: 1.1em; opacity: 0.9;">
+                        Everywhere, all at once.
+                    </p>
+                </div>
+                <div class="col-md-4 col-12 mb-4">
+                    <h5 style="font-family: 'Khand', Arial, sans-serif; font-weight: bold; margin-bottom: 20px;">Quick
+                        Links</h5>
+                    <ul style="list-style: none; padding: 0;">
+                        <li style="margin-bottom: 10px;"><a href="#Products"
+                                style="color: white; text-decoration: none; font-family: 'Khand', Arial, sans-serif; opacity: 0.9; transition: opacity 0.3s;"
+                                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">Products</a>
+                        </li>
+                        <li style="margin-bottom: 10px;"><a href="#Blog"
+                                style="color: white; text-decoration: none; font-family: 'Khand', Arial, sans-serif; opacity: 0.9; transition: opacity 0.3s;"
+                                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">Blog</a></li>
+                        <li style="margin-bottom: 10px;"><a href="#Company"
+                                style="color: white; text-decoration: none; font-family: 'Khand', Arial, sans-serif; opacity: 0.9; transition: opacity 0.3s;"
+                                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">Company</a>
+                        </li>
+                        <li style="margin-bottom: 10px;"><a href="#Career"
+                                style="color: white; text-decoration: none; font-family: 'Khand', Arial, sans-serif; opacity: 0.9; transition: opacity 0.3s;"
+                                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">Career</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-4 col-12 mb-4">
+                    <h5 style="font-family: 'Khand', Arial, sans-serif; font-weight: bold; margin-bottom: 20px;">Connect
+                    </h5>
+                    <div class="social-icons" style="position: relative; top: auto; right: auto; left: auto;">
+                        <a href="https://www.linkedin.com/company/qubibyte" target="_blank" style="filter: invert(1);">
+                            <img src="images/linkedin.png" alt="LinkedIn">
+                        </a>
+                        <a href="https://twitter.com/qubibyte" target="_blank" style="filter: invert(1);">
+                            <img src="images/x.png" alt="X">
+                        </a>
+                        <a href="https://www.youtube.com/@qubibyte" target="_blank" style="filter: invert(1);">
+                            <img src="images/youtube.png" alt="YouTube">
+                        </a>
+                    </div>
+                    <p style="font-family: 'Khand', Arial, sans-serif; margin-top: 20px; opacity: 0.9;">
+                        <a href="mailto:qubibyteorg@gmail.com"
+                            style="color: white; text-decoration: none;">qubibyteorg@gmail.com</a>
+                    </p>
+                </div>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.2); margin: 40px 0 20px;">
+            <p style="text-align: center; font-family: 'Khand', Arial, sans-serif; opacity: 0.8; margin: 0;">
+                &copy; 2025 Qubibyte. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <script type="text/javascript" src="blogs.js"></script>
+</body>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const navItems = document.querySelectorAll(".navbar-nav .nav-link, .navbar-brand");
+        const navbarToggler = document.querySelector(".navbar-toggler");
+        const navbarCollapse = document.querySelector(".navbar-collapse");
+
+        navItems.forEach(function (item) {
+            item.addEventListener("click", function () {
+                // Only collapse if the navbar is open (not already collapsed)
+                if (navbarCollapse.classList.contains("show") && window.innerWidth < 768) {
+                    navbarToggler.click(); // Close the navbar
+                }
+            });
+        });
+    });
+</script>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const text1 = "EVERYWHERE,";
+        const text2 = "ALL AT ONCE.";
+        const element1 = document.getElementById("introeverywhere");
+        const element2 = document.getElementById("introallatonce");
+        const missionElement = document.getElementById("introourmission");
+        const missionPar = document.getElementById("intropar");
+        const heroBadge = document.querySelector(".hero-badge");
+        const heroSubtitle = document.querySelector(".hero-subtitle");
+
+        // Hide elements initially
+        element1.style.opacity = "0";
+        element2.style.opacity = "0";
+        missionElement.style.opacity = "0";
+        missionPar.style.opacity = "0";
+        if (heroBadge) heroBadge.style.opacity = "0";
+        if (heroSubtitle) heroSubtitle.style.opacity = "0";
+        element1.textContent = text1;
+        element2.textContent = text2;
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function animateEntrance() {
+            // Animate badge first
+            if (heroBadge) {
+                heroBadge.style.transition = "all 0.5s ease-out";
+                heroBadge.style.opacity = "1";
+                heroBadge.style.transform = "translateY(0)";
+            }
+
+            await delay(300);
+
+            // Animate "EVERYWHERE," and "OUR MISSION" - slide and fade in from left
+            element1.style.transform = "translateX(-100px)";
+            element1.style.transition = "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)";
+            element1.style.opacity = "1";
+            element1.style.transform = "translateX(0)";
+
+            missionElement.style.transition = "opacity 0.6s ease-in";
+            missionElement.style.opacity = "1";
+
+            await delay(200);
+
+            // Animate "ALL AT ONCE." and mission paragraph - slide and fade in from right
+            element2.style.transform = "translateX(100px)";
+            element2.style.transition = "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)";
+            element2.style.opacity = "1";
+            element2.style.transform = "translateX(0)";
+
+            missionPar.style.transition = "opacity 0.6s ease-in";
+            missionPar.style.opacity = "1";
+
+            await delay(200);
+
+            // Animate subtitle
+            if (heroSubtitle) {
+                heroSubtitle.style.transition = "opacity 0.6s ease-in";
+                heroSubtitle.style.opacity = "1";
+            }
+        }
+
+        animateEntrance();
+    });
+</script>
+
+
+
+
+<script>
+    // Custom Audio Player Controls
+    document.addEventListener("DOMContentLoaded", function () {
+        const audio = document.getElementById('missionAudio');
+        const playBtn = document.getElementById('audioPlayBtn');
+        const playIcon = playBtn.querySelector('.play-icon');
+        const pauseIcon = playBtn.querySelector('.pause-icon');
+        const progressBar = document.getElementById('audioProgressBar');
+        const progressFill = document.getElementById('audioProgressFill');
+        const currentTimeEl = document.getElementById('audioCurrentTime');
+        const durationEl = document.getElementById('audioDuration');
+
+        // Format time in MM:SS
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Update duration when metadata loads
+        audio.addEventListener('loadedmetadata', function () {
+            durationEl.textContent = formatTime(audio.duration);
+        });
+
+        // Play/Pause toggle
+        playBtn.addEventListener('click', function () {
+            if (audio.paused) {
+                audio.play();
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'inline';
+            } else {
+                audio.pause();
+                playIcon.style.display = 'inline';
+                pauseIcon.style.display = 'none';
+            }
+        });
+
+        // Update progress bar
+        audio.addEventListener('timeupdate', function () {
+            const progress = (audio.currentTime / audio.duration) * 100;
+            progressFill.style.width = progress + '%';
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+        });
+
+        // Click on progress bar to seek
+        progressBar.addEventListener('click', function (e) {
+            const rect = progressBar.getBoundingClientRect();
+            const percent = (e.clientX - rect.left) / rect.width;
+            audio.currentTime = percent * audio.duration;
+        });
+
+        // Reset when audio ends
+        audio.addEventListener('ended', function () {
+            playIcon.style.display = 'inline';
+            pauseIcon.style.display = 'none';
+            progressFill.style.width = '0%';
+            currentTimeEl.textContent = '0:00';
+        });
+    });
+</script>
+
+</html>
