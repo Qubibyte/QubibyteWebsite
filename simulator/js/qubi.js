@@ -317,33 +317,35 @@ class QubiExecutor {
             ...Object.keys(controlFlowByColumn).map(Number)
         ])].sort((a, b) => a - b);
         
-        // Extract comments from existing code
-        let instructionIndex = 0;
-        for (let i = 0; i < existingLines.length; i++) {
-            const line = existingLines[i].trim();
-            if (!line) {
-                // Empty line - preserve it
-                if (instructionIndex < allColumns.length) {
-                    if (!commentMap.has(instructionIndex)) {
-                        commentMap.set(instructionIndex, []);
+        // Extract comments from existing code (skip if existingCode is empty/whitespace only)
+        if (existingCode.trim().length > 0) {
+            let instructionIndex = 0;
+            for (let i = 0; i < existingLines.length; i++) {
+                const line = existingLines[i].trim();
+                if (!line) {
+                    // Empty line - preserve it
+                    if (instructionIndex < allColumns.length) {
+                        if (!commentMap.has(instructionIndex)) {
+                            commentMap.set(instructionIndex, []);
+                        }
+                        commentMap.get(instructionIndex).push('');
+                    } else {
+                        standaloneComments.push('');
                     }
-                    commentMap.get(instructionIndex).push('');
-                } else {
-                    standaloneComments.push('');
-                }
-            } else if (line.startsWith('//')) {
-                // Comment line - preserve it
-                if (instructionIndex < allColumns.length) {
-                    if (!commentMap.has(instructionIndex)) {
-                        commentMap.set(instructionIndex, []);
+                } else if (line.startsWith('//')) {
+                    // Comment line - preserve it
+                    if (instructionIndex < allColumns.length) {
+                        if (!commentMap.has(instructionIndex)) {
+                            commentMap.set(instructionIndex, []);
+                        }
+                        commentMap.get(instructionIndex).push(existingLines[i]); // Preserve original formatting
+                    } else {
+                        standaloneComments.push(existingLines[i]);
                     }
-                    commentMap.get(instructionIndex).push(existingLines[i]); // Preserve original formatting
                 } else {
-                    standaloneComments.push(existingLines[i]);
+                    // Instruction line - move to next instruction
+                    instructionIndex++;
                 }
-            } else {
-                // Instruction line - move to next instruction
-                instructionIndex++;
             }
         }
         
