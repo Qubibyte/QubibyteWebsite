@@ -13,6 +13,11 @@ class CircuitUI {
         this.visualizer = qubitVizContainer ? new QubitVisualizer('qubitVisualization') : null;
         this.graphVisualizer = graphContainer ? new ProbabilityGraphs('probabilityGraphs') : null;
         
+        // Initialize NMR Simulator (will be created when tab is first opened)
+        this.nmrSimulator = null;
+        this.nmrInitialized = false;
+        this.resourcesInitialized = false;
+        
         this.qubiExecutor = new QubiExecutor(this.circuit);
         this.selectedGate = null;
         this.draggedGate = null;
@@ -1393,6 +1398,11 @@ class CircuitUI {
         if (this.graphVisualizer) {
             this.graphVisualizer.update(this.circuit.state, vizSettings);
         }
+        
+        // Update NMR simulator if it's been initialized
+        if (this.nmrSimulator && this.nmrInitialized) {
+            this.nmrSimulator.onCircuitChanged(this.circuit, this.circuit.state);
+        }
     }
 
     updateCircuitInfo() {
@@ -1419,6 +1429,100 @@ class CircuitUI {
         }
         if (editorPanel) {
             editorPanel.classList.add('active');
+        }
+        
+        // Initialize NMR simulator when NMR tab is first opened
+        if (tab === 'nmr' && !this.nmrInitialized) {
+            this.initializeNMRSimulator();
+        }
+        
+        // Update NMR when switching to that tab
+        if (tab === 'nmr' && this.nmrSimulator) {
+            this.nmrSimulator.onCircuitChanged(this.circuit, this.circuit.state);
+        }
+        
+        // Initialize resources tab when first opened
+        if (tab === 'resources' && !this.resourcesInitialized) {
+            this.initializeResourcesTab();
+        }
+        
+        // Update resources when switching to that tab
+        if (tab === 'resources' && this.nmrSimulator) {
+            this.nmrSimulator.updateDensityMatrix();
+        }
+    }
+    
+    /**
+     * Initialize the Resources tab content
+     */
+    initializeResourcesTab() {
+        const resourcesContainer = document.getElementById('resourcesContainer');
+        if (!resourcesContainer) {
+            console.warn('Resources container not found');
+            return;
+        }
+        
+        // If NMR simulator exists, use it to render resources
+        if (this.nmrSimulator) {
+            this.nmrSimulator.renderResourcesContent('resourcesContainer');
+            this.resourcesInitialized = true;
+        } else {
+            // Initialize NMR simulator first if needed
+            this.initializeNMRSimulator();
+            if (this.nmrSimulator) {
+                this.nmrSimulator.renderResourcesContent('resourcesContainer');
+                this.resourcesInitialized = true;
+            }
+        }
+    }
+    
+    /**
+     * Initialize the NMR Simulator UI
+     */
+    initializeNMRSimulator() {
+        const nmrContainer = document.getElementById('nmrSimulatorContainer');
+        if (!nmrContainer) {
+            console.warn('NMR simulator container not found');
+            return;
+        }
+        
+        try {
+            // Check if NMRSimulatorUI is available
+            if (typeof NMRSimulatorUI === 'undefined') {
+                console.error('NMRSimulatorUI class not loaded');
+                nmrContainer.innerHTML = `
+                    <div class="nmr-error">
+                        <p>NMR Simulator failed to load. Please refresh the page.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            this.nmrSimulator = new NMRSimulatorUI('nmrSimulatorContainer');
+            this.nmrInitialized = true;
+            
+            // Sync current circuit state
+            if (this.circuit && this.circuit.state) {
+                this.nmrSimulator.onCircuitChanged(this.circuit, this.circuit.state);
+            }
+            
+            console.log('NMR Simulator initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize NMR Simulator:', error);
+            nmrContainer.innerHTML = `
+                <div class="nmr-error">
+                    <p>Error initializing NMR Simulator: ${error.message}</p>
+                </div>
+            `;
+        }
+    }
+    
+    /**
+     * Update NMR simulator with current state
+     */
+    updateNMRSimulator() {
+        if (this.nmrSimulator && this.circuit) {
+            this.nmrSimulator.onCircuitChanged(this.circuit, this.circuit.state);
         }
     }
 
@@ -1456,6 +1560,21 @@ class CircuitUI {
             if (isCollapsed) {
                 vizSection.classList.remove('collapsed');
                 localStorage.setItem('vizSectionCollapsed', 'false');
+                
+                // Wait for CSS transition to complete, then force re-render Bloch sphere
+                // This fixes the stretching issue when expanding from hidden state
+                setTimeout(() => {
+                    requestAnimationFrame(() => {
+                        // Force complete re-render of Bloch sphere with correct dimensions
+                        if (this.visualizer) {
+                            this.visualizer.forceRerender();
+                        }
+                        // Also update probability graphs
+                        if (this.graphManager && this.quantumState) {
+                            this.graphManager.update(this.quantumState);
+                        }
+                    });
+                }, 350); // Wait for CSS transition (0.3s) plus buffer
             } else {
                 vizSection.classList.add('collapsed');
                 localStorage.setItem('vizSectionCollapsed', 'true');

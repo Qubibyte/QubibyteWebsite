@@ -761,6 +761,37 @@ class QubitVisualizer {
         this.sphereGroup = null;
         this.stateArrow = null;
     }
+    
+    // Resize the Bloch sphere to fit the container properly
+    resizeBlochSphere() {
+        const container = document.getElementById('blochSphere3D');
+        if (!container || !this.blochRenderer || !this.blochCamera) return;
+        
+        const width = container.clientWidth;
+        const height = container.clientHeight;
+        
+        if (width <= 0 || height <= 0) return;
+        
+        // Update camera aspect ratio
+        this.blochCamera.aspect = width / height;
+        this.blochCamera.updateProjectionMatrix();
+        
+        // Update renderer size
+        this.blochRenderer.setSize(width, height);
+        
+        // Force a render
+        if (this.blochScene) {
+            this.blochRenderer.render(this.blochScene, this.blochCamera);
+        }
+    }
+    
+    // Force re-render of Bloch sphere (called when visualization section is expanded)
+    forceRerender() {
+        if (this.quantumState) {
+            // Re-render content which will recreate the Bloch sphere with correct dimensions
+            this.renderQubitContent(this.selectedQubit || 0, this.quantumState);
+        }
+    }
 
     createProbabilityBar(label, probability) {
         const precision = this.settings.precision;

@@ -504,27 +504,20 @@ body {
     display: flex;
 }
 
-.nmr-content {
+/* NMR and Resources wrappers */
+.nmr-simulator-wrapper,
+.resources-wrapper {
     flex: 1;
-    overflow-y: auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.nmr-error {
     padding: 1.5rem;
-}
-
-.nmr-placeholder {
-    padding: 1.5rem;
-    background: var(--background);
-    border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-}
-
-.nmr-placeholder p {
-    margin-bottom: 1rem;
-}
-
-.nmr-placeholder p:last-child {
-    margin-bottom: 0;
+    color: var(--error-color, #ef4444);
+    text-align: center;
 }
 
 .circuit-controls {

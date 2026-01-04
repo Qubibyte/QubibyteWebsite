@@ -7,6 +7,7 @@
     <link rel="icon" type="image/x-icon" href="/images/fav.png">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/nmr.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -166,6 +167,7 @@
                     <div class="editor-tabs">
                         <button class="tab-btn active" data-tab="circuit">Circuit Builder</button>
                         <button class="tab-btn" data-tab="nmr">NMR Simulator</button>
+                        <button class="tab-btn" data-tab="resources">Other Resources</button>
                     </div>
                     <div id="circuitEditor" class="editor-panel active">
                         <div class="circuit-canvas-wrapper">
@@ -174,12 +176,13 @@
                         <div id="stepTimeline" class="step-timeline"></div>
                     </div>
                     <div id="nmrEditor" class="editor-panel">
-                        <div class="nmr-content">
-                            <div class="nmr-placeholder">
-                                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
-                                <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-                                <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
-                            </div>
+                        <div id="nmrSimulatorContainer" class="nmr-simulator-wrapper">
+                            <!-- NMR Simulator UI will be dynamically rendered here -->
+                        </div>
+                    </div>
+                    <div id="resourcesEditor" class="editor-panel">
+                        <div id="resourcesContainer" class="resources-wrapper">
+                            <!-- Resources content will be dynamically rendered here -->
                         </div>
                     </div>
                 </div>
@@ -398,6 +401,8 @@
     <script src="js/algorithms.js"></script>
     <script src="js/graphs.js"></script>
     <script src="js/syntaxHighlight.js"></script>
+    <script src="js/nmr.js"></script>
+    <script src="js/nmr-ui.js"></script>
     <script src="js/ui.js"></script>
 </body>
 </html>
