@@ -142,9 +142,16 @@ class NMRSimulatorUI {
         const select = document.getElementById('nmr-sample-select');
         if (!select) return;
         
-        // Sort samples by qubit count (ascending)
+        // Sort samples by qubit count (ascending), then by nucleus commonality
         const sortedSamples = Object.entries(NMRSamples)
-            .sort((a, b) => a[1].nuclei.length - b[1].nuclei.length);
+            .sort((a, b) => {
+                // Primary sort: qubit count
+                const qubitDiff = a[1].nuclei.length - b[1].nuclei.length;
+                if (qubitDiff !== 0) return qubitDiff;
+                
+                // Secondary sort: nucleus commonality (lower rarity score = more common)
+                return this.getSampleRarityScore(a[1]) - this.getSampleRarityScore(b[1]);
+            });
         
         sortedSamples.forEach(([key, sample]) => {
             const option = document.createElement('option');
@@ -158,6 +165,45 @@ class NMRSimulatorUI {
         });
     }
     
+    /**
+     * Calculate a rarity score for a sample based on its nuclei.
+     * Lower score = more common nuclei (should appear first).
+     */
+    getSampleRarityScore(sample) {
+        // Nucleus commonality ranking (lower = more common/preferred)
+        const rarityRank = {
+            '1H':  1,   // Proton - most common, used in almost all NMR
+            '19F': 2,   // Fluorine - very sensitive, 100% abundant
+            '31P': 3,   // Phosphorus - common in biochem
+            '13C': 4,   // Carbon - very common
+            '15N': 5,   // Nitrogen - common in biochem
+            '29Si': 6,  // Silicon - fairly common
+            '11B': 7,   // Boron - less common
+            '2H':  8,   // Deuterium - specialized
+            // All spin-1/2 heavy metals are uncommon
+            '77Se': 10,
+            '119Sn': 11,
+            '117Sn': 11,
+            '115Sn': 11,
+            '129Xe': 12,
+            '125Te': 12,
+            '123Te': 12,
+            '195Pt': 15,
+            '199Hg': 15,
+            '207Pb': 15,
+            '203Tl': 15,
+            '205Tl': 15,
+        };
+        
+        // Sum rarity scores for all nuclei in the sample
+        let totalScore = 0;
+        for (const nucleus of sample.nuclei) {
+            const element = nucleus.element;
+            totalScore += rarityRank[element] || 20; // Unknown nuclei get high score
+        }
+        return totalScore;
+    }
+    
     attachEventListeners() {
         // Sample selection
         document.getElementById('nmr-sample-select')?.addEventListener('change', (e) => {
@@ -165,6 +211,10 @@ class NMRSimulatorUI {
             this.nmrEngine.setSample(this.selectedSample);
             this.spectrumZoom = 1.0;
             this.spectrumPanX = 0;
+            // Re-apply current quantum state to the new sample
+            if (this.quantumState) {
+                this.nmrEngine.updateFromQuantumState(this.quantumState);
+            }
             this.updateAllVisualizations();
         });
         
@@ -275,7 +325,42 @@ class NMRSimulatorUI {
             specCanvas.addEventListener('mouseleave', () => this.spectrumDragging = false);
             specCanvas.addEventListener('wheel', (e) => {
                 e.preventDefault();
-                this.spectrumZoom = Math.max(0.5, Math.min(10, this.spectrumZoom * (e.deltaY > 0 ? 0.9 : 1.1)));
+                
+                // Calculate cursor position relative to canvas
+                const rect = specCanvas.getBoundingClientRect();
+                const cursorX = e.clientX - rect.left;
+                
+                // Get current view parameters
+                const marginLeft = 55;
+                const marginRight = 20;
+                const plotWidth = specCanvas.width - marginLeft - marginRight;
+                
+                // Only zoom if cursor is within plot area
+                if (cursorX >= marginLeft && cursorX <= marginLeft + plotWidth) {
+                    // Calculate cursor position as fraction of plot width (0 to 1)
+                    const cursorFraction = (cursorX - marginLeft) / plotWidth;
+                    
+                    // Store old zoom
+                    const oldZoom = this.spectrumZoom;
+                    
+                    // Apply new zoom
+                    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+                    this.spectrumZoom = Math.max(0.5, Math.min(10, this.spectrumZoom * zoomFactor));
+                    
+                    // Adjust pan to keep the cursor position stable
+                    // The idea: the point under cursor should stay in the same place
+                    if (oldZoom !== this.spectrumZoom) {
+                        const zoomRatio = this.spectrumZoom / oldZoom;
+                        // Adjust pan so cursor position stays put
+                        // Pan is in data units, so we need to convert cursor position
+                        const cursorOffset = (cursorFraction - 0.5) * plotWidth;
+                        this.spectrumPanX = this.spectrumPanX * zoomRatio + cursorOffset * (1 - zoomRatio) / this.spectrumZoom;
+                    }
+                } else {
+                    // Cursor outside plot - just zoom from center
+                    this.spectrumZoom = Math.max(0.5, Math.min(10, this.spectrumZoom * (e.deltaY > 0 ? 0.9 : 1.1)));
+                }
+                
                 this.updateSpectrum();
             });
             
@@ -322,19 +407,20 @@ class NMRSimulatorUI {
         this.fullscreenElement = element;
         element.classList.add('nmr-fullscreen');
         
+        // Transform the fullscreen button into a close button
+        const fullscreenBtn = element.querySelector('.nmr-fullscreen-btn');
+        if (fullscreenBtn) {
+            fullscreenBtn.innerHTML = '✕';
+            fullscreenBtn.title = 'Exit Fullscreen';
+            fullscreenBtn.classList.add('nmr-close-mode');
+        }
+        
         // Create overlay
         const overlay = document.createElement('div');
         overlay.id = 'nmr-fullscreen-overlay';
         overlay.className = 'nmr-fullscreen-overlay';
         overlay.addEventListener('click', () => this.exitFullscreen());
         document.body.appendChild(overlay);
-        
-        // Add close button
-        const closeBtn = document.createElement('button');
-        closeBtn.className = 'nmr-fullscreen-close';
-        closeBtn.innerHTML = '✕';
-        closeBtn.addEventListener('click', () => this.exitFullscreen());
-        element.appendChild(closeBtn);
         
         // Update visualizations for new size
         requestAnimationFrame(() => {
@@ -350,8 +436,14 @@ class NMRSimulatorUI {
         if (!this.fullscreenElement) return;
         
         this.fullscreenElement.classList.remove('nmr-fullscreen');
-        const closeBtn = this.fullscreenElement.querySelector('.nmr-fullscreen-close');
-        if (closeBtn) closeBtn.remove();
+        
+        // Transform close button back to fullscreen button
+        const fullscreenBtn = this.fullscreenElement.querySelector('.nmr-fullscreen-btn');
+        if (fullscreenBtn) {
+            fullscreenBtn.innerHTML = '⛶';
+            fullscreenBtn.title = 'Fullscreen';
+            fullscreenBtn.classList.remove('nmr-close-mode');
+        }
         
         const overlay = document.getElementById('nmr-fullscreen-overlay');
         if (overlay) overlay.remove();
@@ -385,9 +477,9 @@ class NMRSimulatorUI {
             return;
         }
         
-        // Find closest peak
+        // Find closest peak - use larger detection radius for easier clicking
         let closestPeak = null;
-        let closestDist = 25; // Max distance in pixels to consider a click
+        let closestDist = 40; // Increased max distance in pixels for easier clicking
         
         this.spectrumData.dataPoints.forEach(peak => {
             const dist = Math.abs(peak.x - clickX);
@@ -510,8 +602,9 @@ class NMRSimulatorUI {
         html += '<table class="nmr-nuclei-table"><thead><tr><th>Q</th><th>Nucleus</th><th>δ ppm</th><th>ω MHz</th></tr></thead><tbody>';
         
         nuclei.forEach((n, i) => {
-            html += `<tr>
-                <td>${i}</td>
+            // Make qubit number clickable to focus on that peak
+            html += `<tr class="nmr-nuclei-row" data-qubit="${i}" title="Click to focus on Q${i} peak">
+                <td class="nmr-qubit-focus">${i}</td>
                 <td><span class="nmr-badge">${n.element}</span></td>
                 <td>${(n.chemicalShift || 0).toFixed(1)}</td>
                 <td>${(n.larmorFreq / 1e6).toFixed(2)}</td>
@@ -533,6 +626,65 @@ class NMRSimulatorUI {
         }
         
         listEl.innerHTML = html;
+        
+        // Add click handlers to qubit rows
+        listEl.querySelectorAll('.nmr-nuclei-row').forEach(row => {
+            row.addEventListener('click', () => {
+                const qubitIndex = parseInt(row.dataset.qubit);
+                this.focusOnQubitPeak(qubitIndex);
+            });
+        });
+    }
+    
+    /**
+     * Focus the spectrum view on a specific qubit's peak
+     * Zooms in and pans to center on that qubit's chemical shift
+     */
+    focusOnQubitPeak(qubitIndex) {
+        if (!this.nmrEngine.sample || qubitIndex >= this.nmrEngine.sample.nuclei.length) return;
+        
+        const nucleus = this.nmrEngine.sample.nuclei[qubitIndex];
+        const chemicalShift = nucleus.chemicalShift || 0;
+        
+        // Get mode (ppm or frequency)
+        const mode = document.getElementById('nmr-spectrum-mode')?.value || 'ppm';
+        
+        // Set zoom level to focus on peak (moderate zoom)
+        this.spectrumZoom = 3.0;
+        
+        // Calculate pan to center on this peak
+        // In ppm mode, we need to calculate the offset to center on chemicalShift
+        if (mode === 'ppm') {
+            // Get all chemical shifts to determine the data range
+            const shifts = this.nmrEngine.sample.nuclei.map(n => n.chemicalShift || 0);
+            const minShift = Math.min(...shifts);
+            const maxShift = Math.max(...shifts);
+            const center = (minShift + maxShift) / 2;
+            
+            // Pan offset to center on target chemical shift
+            // Pan is in display units, positive moves view right (shows lower ppm)
+            this.spectrumPanX = (center - chemicalShift) * 20;  // Scale factor for sensitivity
+        } else {
+            // Frequency mode - similar logic
+            const freq = this.nmrEngine.getLarmorFrequency(qubitIndex);
+            const freqs = this.nmrEngine.sample.nuclei.map((_, i) => this.nmrEngine.getLarmorFrequency(i));
+            const minFreq = Math.min(...freqs);
+            const maxFreq = Math.max(...freqs);
+            const center = (minFreq + maxFreq) / 2;
+            
+            this.spectrumPanX = (freq - center) / 1e6 * 20;
+        }
+        
+        this.updateSpectrum();
+        
+        // Highlight the focused row briefly
+        const rows = document.querySelectorAll('.nmr-nuclei-row');
+        rows.forEach(r => r.classList.remove('nmr-focused'));
+        const targetRow = document.querySelector(`.nmr-nuclei-row[data-qubit="${qubitIndex}"]`);
+        if (targetRow) {
+            targetRow.classList.add('nmr-focused');
+            setTimeout(() => targetRow.classList.remove('nmr-focused'), 1500);
+        }
     }
     
     updateMolecule() {
@@ -907,16 +1059,54 @@ class NMRSimulatorUI {
         if (peaks.length > 0) {
             const avgT2 = this.nmrEngine.T2.reduce((a, b) => a + b, 0) / this.nmrEngine.T2.length;
             const lw = (mode === 'ppm' ? 0.08 : 3) / this.spectrumZoom;
-            const maxI = Math.max(...peaks.map(p => p.intensity), 0.1);
             
-            // Gradient for spectrum fill
-            const gradient = ctx.createLinearGradient(0, marginTop, 0, baseline);
-            gradient.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
-            gradient.addColorStop(0.5, 'rgba(99, 102, 241, 0.2)');
-            gradient.addColorStop(1, 'rgba(99, 102, 241, 0.05)');
+            // Check for negative intensities (inverted peaks from X gate, etc.)
+            const intensities = dataPoints.map(d => d.intensity);
+            const hasNegative = intensities.some(i => i < 0);
+            const hasPositive = intensities.some(i => i > 0);
             
+            // Use maximum ABSOLUTE intensity for scaling
+            const maxAbsI = Math.max(...intensities.map(i => Math.abs(i)), 0.1);
+            
+            // Adjust baseline position if we have both positive and negative peaks
+            let dynamicBaseline = baseline;
+            let halfHeight = (plotHeight - 10) / 2;
+            if (hasNegative && hasPositive) {
+                // Center baseline for mixed signals
+                dynamicBaseline = marginTop + plotHeight / 2;
+                halfHeight = (plotHeight - 20) / 2;
+            } else if (hasNegative && !hasPositive) {
+                // All negative - baseline at top
+                dynamicBaseline = marginTop + 20;
+                halfHeight = plotHeight - 30;
+            }
+            // else: all positive - keep baseline at bottom (default)
+            
+            // Draw baseline reference line
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
             ctx.beginPath();
-            ctx.moveTo(marginLeft, baseline);
+            ctx.moveTo(marginLeft, dynamicBaseline);
+            ctx.lineTo(marginLeft + plotWidth, dynamicBaseline);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Gradient for positive peaks (upward, blue)
+            const gradientPos = ctx.createLinearGradient(0, dynamicBaseline - halfHeight, 0, dynamicBaseline);
+            gradientPos.addColorStop(0, 'rgba(99, 102, 241, 0.4)');
+            gradientPos.addColorStop(0.5, 'rgba(99, 102, 241, 0.2)');
+            gradientPos.addColorStop(1, 'rgba(99, 102, 241, 0.05)');
+            
+            // Gradient for negative peaks (downward, red/orange - inverted signal)
+            const gradientNeg = ctx.createLinearGradient(0, dynamicBaseline, 0, dynamicBaseline + halfHeight);
+            gradientNeg.addColorStop(0, 'rgba(239, 68, 68, 0.05)');
+            gradientNeg.addColorStop(0.5, 'rgba(239, 68, 68, 0.2)');
+            gradientNeg.addColorStop(1, 'rgba(239, 68, 68, 0.4)');
+            
+            // First pass: fill positive regions
+            ctx.beginPath();
+            ctx.moveTo(marginLeft, dynamicBaseline);
             
             for (let px = 0; px <= plotWidth; px++) {
                 const v = mode === 'ppm' 
@@ -929,18 +1119,53 @@ class NMRSimulatorUI {
                     intensity += d.intensity * (lw * lw) / (delta * delta + lw * lw);
                 });
                 
-                // Clamp intensity to max 100%
-                const scaledIntensity = Math.min(1.0, (intensity / maxI) * Math.min(this.spectrumZoom, 3));
-                const y = Math.max(marginTop + 2, baseline - scaledIntensity * (plotHeight - 10));
+                // Scale intensity, preserving sign
+                const scaledIntensity = Math.min(1.0, Math.max(-1.0, 
+                    (intensity / maxAbsI) * Math.min(this.spectrumZoom, 3)));
+                
+                // Only draw positive part in this pass
+                const posIntensity = Math.max(0, scaledIntensity);
+                const y = dynamicBaseline - posIntensity * halfHeight;
                 ctx.lineTo(marginLeft + px, y);
             }
             
-            ctx.lineTo(marginLeft + plotWidth, baseline);
+            ctx.lineTo(marginLeft + plotWidth, dynamicBaseline);
             ctx.closePath();
-            ctx.fillStyle = gradient;
+            ctx.fillStyle = gradientPos;
             ctx.fill();
             
-            // Draw spectrum line on top
+            // Second pass: fill negative regions (if any)
+            if (hasNegative) {
+                ctx.beginPath();
+                ctx.moveTo(marginLeft, dynamicBaseline);
+                
+                for (let px = 0; px <= plotWidth; px++) {
+                    const v = mode === 'ppm' 
+                        ? viewMax - (px / plotWidth) * (viewMax - viewMin)
+                        : viewMin + (px / plotWidth) * (viewMax - viewMin);
+                    
+                    let intensity = 0;
+                    dataPoints.forEach(d => {
+                        const delta = v - d.val;
+                        intensity += d.intensity * (lw * lw) / (delta * delta + lw * lw);
+                    });
+                    
+                    const scaledIntensity = Math.min(1.0, Math.max(-1.0, 
+                        (intensity / maxAbsI) * Math.min(this.spectrumZoom, 3)));
+                    
+                    // Only draw negative part
+                    const negIntensity = Math.min(0, scaledIntensity);
+                    const y = dynamicBaseline - negIntensity * halfHeight;  // Negative goes down
+                    ctx.lineTo(marginLeft + px, y);
+                }
+                
+                ctx.lineTo(marginLeft + plotWidth, dynamicBaseline);
+                ctx.closePath();
+                ctx.fillStyle = gradientNeg;
+                ctx.fill();
+            }
+            
+            // Draw spectrum line on top (both positive and negative)
             ctx.beginPath();
             for (let px = 0; px <= plotWidth; px++) {
                 const v = mode === 'ppm' 
@@ -953,14 +1178,16 @@ class NMRSimulatorUI {
                     intensity += d.intensity * (lw * lw) / (delta * delta + lw * lw);
                 });
                 
-                // Clamp intensity to max 100%
-                const scaledIntensity = Math.min(1.0, (intensity / maxI) * Math.min(this.spectrumZoom, 3));
-                const y = Math.max(marginTop + 2, baseline - scaledIntensity * (plotHeight - 10));
+                const scaledIntensity = Math.min(1.0, Math.max(-1.0, 
+                    (intensity / maxAbsI) * Math.min(this.spectrumZoom, 3)));
+                const y = dynamicBaseline - scaledIntensity * halfHeight;
+                
                 if (px === 0) ctx.moveTo(marginLeft + px, y);
                 else ctx.lineTo(marginLeft + px, y);
             }
-            ctx.strokeStyle = '#818cf8';
-            ctx.lineWidth = 1.5;
+            // Use different color based on whether signal is predominantly positive or negative
+            ctx.strokeStyle = hasNegative && !hasPositive ? '#ef4444' : '#818cf8';
+            ctx.lineWidth = 2.0;  // Thicker line to prevent sub-pixel rendering glitches
             ctx.stroke();
             
             // Store peak positions for click detection and draw labels
@@ -1048,21 +1275,82 @@ class NMRSimulatorUI {
         ctx.fillText('Intensity', 0, 0);
         ctx.restore();
         
-        // Y-axis ticks
+        // Y-axis ticks - check for negative peaks to adjust labels
+        const peakIntensities = peaks.map(p => p.intensity);
+        const hasNegativePeaks = peakIntensities.some(i => i < 0);
+        const hasPositivePeaks = peakIntensities.some(i => i > 0);
+        
         ctx.fillStyle = '#64748b';
         ctx.font = '9px sans-serif';
         ctx.textAlign = 'right';
-        for (let i = 0; i <= intensityTicks; i++) {
-            const y = baseline - (plotHeight * i / intensityTicks);
-            const val = (i / intensityTicks * 100).toFixed(0);
-            ctx.fillText(val + '%', marginLeft - 8, y + 3);
+        
+        if (hasNegativePeaks && hasPositivePeaks) {
+            // Mixed positive/negative: show -100% to +100% scale
+            const centerY = marginTop + plotHeight / 2;
+            const halfTicks = Math.floor(intensityTicks / 2);
             
+            // Draw center (0%) line label
+            ctx.fillText('0%', marginLeft - 8, centerY + 3);
             ctx.strokeStyle = '#475569';
             ctx.lineWidth = 1;
             ctx.beginPath();
-            ctx.moveTo(marginLeft - 4, y);
-            ctx.lineTo(marginLeft, y);
+            ctx.moveTo(marginLeft - 4, centerY);
+            ctx.lineTo(marginLeft, centerY);
             ctx.stroke();
+            
+            // Positive ticks (upward)
+            for (let i = 1; i <= halfTicks; i++) {
+                const y = centerY - (plotHeight / 2) * (i / halfTicks);
+                const val = (i / halfTicks * 100).toFixed(0);
+                ctx.fillText('+' + val + '%', marginLeft - 8, y + 3);
+                ctx.beginPath();
+                ctx.moveTo(marginLeft - 4, y);
+                ctx.lineTo(marginLeft, y);
+                ctx.stroke();
+            }
+            
+            // Negative ticks (downward)
+            for (let i = 1; i <= halfTicks; i++) {
+                const y = centerY + (plotHeight / 2) * (i / halfTicks);
+                const val = (i / halfTicks * 100).toFixed(0);
+                ctx.fillStyle = '#ef4444';  // Red for negative
+                ctx.fillText('-' + val + '%', marginLeft - 8, y + 3);
+                ctx.fillStyle = '#64748b';
+                ctx.beginPath();
+                ctx.moveTo(marginLeft - 4, y);
+                ctx.lineTo(marginLeft, y);
+                ctx.stroke();
+            }
+        } else if (hasNegativePeaks && !hasPositivePeaks) {
+            // All negative: show 0% at top to -100% at bottom
+            for (let i = 0; i <= intensityTicks; i++) {
+                const y = marginTop + (plotHeight * i / intensityTicks);
+                const val = (i / intensityTicks * 100).toFixed(0);
+                ctx.fillStyle = i === 0 ? '#64748b' : '#ef4444';
+                ctx.fillText(i === 0 ? '0%' : '-' + val + '%', marginLeft - 8, y + 3);
+                ctx.fillStyle = '#64748b';
+                
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(marginLeft - 4, y);
+                ctx.lineTo(marginLeft, y);
+                ctx.stroke();
+            }
+        } else {
+            // All positive (default): show 0% at bottom to 100% at top
+            for (let i = 0; i <= intensityTicks; i++) {
+                const y = baseline - (plotHeight * i / intensityTicks);
+                const val = (i / intensityTicks * 100).toFixed(0);
+                ctx.fillText(val + '%', marginLeft - 8, y + 3);
+                
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(marginLeft - 4, y);
+                ctx.lineTo(marginLeft, y);
+                ctx.stroke();
+            }
         }
         
         // Info overlay
@@ -1207,25 +1495,25 @@ class NMRSimulatorUI {
     
     autoSelectSampleForQubitCount(numQubits) {
         // Find samples with exact qubit count match
-        const exactMatches = Object.entries(NMRSamples).filter(
-            ([key, sample]) => sample.nuclei.length === numQubits && key !== 'custom'
-        );
+        const exactMatches = Object.entries(NMRSamples)
+            .filter(([key, sample]) => sample.nuclei.length === numQubits && key !== 'custom')
+            .sort((a, b) => this.getSampleRarityScore(a[1]) - this.getSampleRarityScore(b[1]));
         
         if (exactMatches.length > 0) {
-            // Use the first exact match
+            // Use the most common exact match (lowest rarity score)
             const [sampleKey] = exactMatches[0];
             this.selectedSample = sampleKey;
             this.nmrEngine.setSample(sampleKey);
         } else {
-            // No exact match, find the closest one (prefer samples with fewer qubits)
+            // No exact match, find the closest one (prefer samples with fewer qubits, then by commonality)
             const allSamples = Object.entries(NMRSamples)
                 .filter(([key]) => key !== 'custom')
                 .sort((a, b) => {
                     const diffA = Math.abs(a[1].nuclei.length - numQubits);
                     const diffB = Math.abs(b[1].nuclei.length - numQubits);
                     if (diffA !== diffB) return diffA - diffB;
-                    // If same difference, prefer the one with fewer qubits (more common/simpler)
-                    return a[1].nuclei.length - b[1].nuclei.length;
+                    // If same difference, prefer more common nuclei
+                    return this.getSampleRarityScore(a[1]) - this.getSampleRarityScore(b[1]);
                 });
             
             if (allSamples.length > 0) {
@@ -1320,18 +1608,40 @@ class NMRSimulatorUI {
                 </div>
                 
                 <div class="nmr-res-section">
-                    <h4>Gyromagnetic Ratios (MHz/T)</h4>
-                    <table class="nmr-gamma-table">
-                        <tr><td><span class="nmr-badge">¹H</span></td><td>42.58</td></tr>
-                        <tr><td><span class="nmr-badge">¹⁹F</span></td><td>40.05</td></tr>
-                        <tr><td><span class="nmr-badge">³¹P</span></td><td>17.24</td></tr>
-                        <tr><td><span class="nmr-badge">¹¹B</span></td><td>13.66</td></tr>
-                        <tr><td><span class="nmr-badge">¹³C</span></td><td>10.71</td></tr>
-                        <tr><td><span class="nmr-badge">²⁹Si</span></td><td>−8.47</td></tr>
-                        <tr><td><span class="nmr-badge">²H</span></td><td>6.54</td></tr>
-                        <tr><td><span class="nmr-badge">¹⁷O</span></td><td>−5.77</td></tr>
-                        <tr><td><span class="nmr-badge">¹⁵N</span></td><td>−4.32</td></tr>
-                    </table>
+                    <h4>Spin-½ Gyromagnetic Ratios (MHz/T)</h4>
+                    <div class="nmr-gamma-scroll">
+                        <table class="nmr-gamma-table">
+                            <tr><td><span class="nmr-badge">¹H</span></td><td>42.577</td></tr>
+                            <tr><td><span class="nmr-badge">¹⁹F</span></td><td>40.052</td></tr>
+                            <tr><td><span class="nmr-badge">³He</span></td><td>−32.434</td></tr>
+                            <tr><td><span class="nmr-badge">²⁰⁵Tl</span></td><td>24.816</td></tr>
+                            <tr><td><span class="nmr-badge">²⁰³Tl</span></td><td>24.567</td></tr>
+                            <tr><td><span class="nmr-badge">³¹P</span></td><td>17.235</td></tr>
+                            <tr><td><span class="nmr-badge">¹¹⁹Sn</span></td><td>−15.867</td></tr>
+                            <tr><td><span class="nmr-badge">¹¹⁷Sn</span></td><td>−15.166</td></tr>
+                            <tr><td><span class="nmr-badge">¹¹⁵Sn</span></td><td>−13.882</td></tr>
+                            <tr><td><span class="nmr-badge">¹²⁵Te</span></td><td>−13.507</td></tr>
+                            <tr><td><span class="nmr-badge">¹²⁹Xe</span></td><td>−11.777</td></tr>
+                            <tr><td><span class="nmr-badge">¹²³Te</span></td><td>−11.195</td></tr>
+                            <tr><td><span class="nmr-badge">¹³C</span></td><td>10.705</td></tr>
+                            <tr><td><span class="nmr-badge">¹⁹⁵Pt</span></td><td>9.151</td></tr>
+                            <tr><td><span class="nmr-badge">¹¹¹Cd</span></td><td>−9.028</td></tr>
+                            <tr><td><span class="nmr-badge">²⁰⁷Pb</span></td><td>8.878</td></tr>
+                            <tr><td><span class="nmr-badge">²⁹Si</span></td><td>−8.465</td></tr>
+                            <tr><td><span class="nmr-badge">⁷⁷Se</span></td><td>8.131</td></tr>
+                            <tr><td><span class="nmr-badge">¹⁹⁹Hg</span></td><td>7.641</td></tr>
+                            <tr><td><span class="nmr-badge">¹⁷¹Yb</span></td><td>7.533</td></tr>
+                            <tr><td><span class="nmr-badge">¹⁵N</span></td><td>−4.316</td></tr>
+                            <tr><td><span class="nmr-badge">¹⁶⁹Tm</span></td><td>−3.508</td></tr>
+                            <tr><td><span class="nmr-badge">⁸⁹Y</span></td><td>−2.086</td></tr>
+                            <tr><td><span class="nmr-badge">¹⁰⁹Ag</span></td><td>−1.982</td></tr>
+                            <tr><td><span class="nmr-badge">¹⁸³W</span></td><td>1.774</td></tr>
+                            <tr><td><span class="nmr-badge">¹⁰⁷Ag</span></td><td>−1.723</td></tr>
+                            <tr><td><span class="nmr-badge">⁵⁷Fe</span></td><td>1.377</td></tr>
+                            <tr><td><span class="nmr-badge">¹⁰³Rh</span></td><td>−1.340</td></tr>
+                            <tr><td><span class="nmr-badge">¹⁸⁷Os</span></td><td>0.979</td></tr>
+                        </table>
+                    </div>
                 </div>
                 
                 <div class="nmr-res-section">
@@ -1341,14 +1651,17 @@ class NMRSimulatorUI {
             </div>
         `;
         
-        // Populate samples (sorted by qubit count)
+        // Populate samples (sorted by qubit count, then by nucleus commonality)
         const grid = document.getElementById('nmr-samples-grid');
         if (grid) {
             let html = '';
-            // Sort samples by qubit count (ascending)
             const sortedSamples = Object.entries(NMRSamples)
                 .filter(([key]) => key !== 'custom')
-                .sort((a, b) => a[1].nuclei.length - b[1].nuclei.length);
+                .sort((a, b) => {
+                    const qubitDiff = a[1].nuclei.length - b[1].nuclei.length;
+                    if (qubitDiff !== 0) return qubitDiff;
+                    return this.getSampleRarityScore(a[1]) - this.getSampleRarityScore(b[1]);
+                });
             
             sortedSamples.forEach(([key, sample]) => {
                 html += `<div class="nmr-sample-card">

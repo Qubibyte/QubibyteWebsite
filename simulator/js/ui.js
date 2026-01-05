@@ -632,6 +632,8 @@ class CircuitUI {
 
         // Single qubit gate
         this.circuit.addGate(type, qubit, column);
+        // Invalidate state so it gets recomputed with the new gate
+        this.circuit.state = null;
         this.renderCircuit();
         this.updateVisualization();
         this.syncCircuitToCode();
@@ -828,6 +830,8 @@ class CircuitUI {
                 }
             }
             
+            // Invalidate state so it gets recomputed
+            this.circuit.state = null;
             this.renderCircuit();
             this.updateVisualization();
             this.syncCircuitToCode();
@@ -911,6 +915,8 @@ class CircuitUI {
             this.circuit.removeGate(qubit, column);
         }
         
+        // Invalidate state so it gets recomputed without this gate
+        this.circuit.state = null;
         this.renderCircuit();
         this.updateVisualization();
         this.syncCircuitToCode();
@@ -969,6 +975,8 @@ class CircuitUI {
             this.circuit.addGate(gateType, qubit, column, null, { angle });
         }
         
+        // Invalidate state so it gets recomputed
+        this.circuit.state = null;
         modal.classList.remove('active');
         this.renderCircuit();
         this.updateVisualization();
@@ -1379,7 +1387,18 @@ class CircuitUI {
     }
 
     updateVisualization() {
-        if (!this.circuit || !this.circuit.state) return;
+        if (!this.circuit) return;
+        
+        // Auto-compute circuit state if it doesn't exist
+        // This allows real-time updates when gates are added (before clicking Run)
+        if (!this.circuit.state) {
+            this.circuit.state = new QuantumState(this.circuit.numQubits, this.circuit.useOptimizedGates);
+            // Execute all gates in sequence to compute current state
+            const executionSequence = this.circuit.buildExecutionSequence();
+            for (const gate of executionSequence) {
+                this.circuit.executeGate(gate);
+            }
+        }
         
         const settings = this.getSettings();
         const vizSettings = {

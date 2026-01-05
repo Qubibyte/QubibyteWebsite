@@ -24,30 +24,78 @@ const NMRConstants = {
     // Planck's constant (J·s)
     HBAR: 1.054571817e-34,
     
-    // Gyromagnetic ratios (MHz/T) - γ/(2π)
+    // Gyromagnetic ratios (MHz/T) - γ/(2π) for SPIN-1/2 NUCLEI ONLY
+    // These are the ONLY nuclei suitable for NMR quantum computing qubits
     GAMMA: {
-        '1H':  42.577478518,   // Proton
-        '13C': 10.7084,        // Carbon-13
-        '15N': -4.316,         // Nitrogen-15 (negative γ)
-        '19F': 40.052,         // Fluorine-19
-        '31P': 17.235,         // Phosphorus-31
-        '2H':  6.536,          // Deuterium
-        '29Si': -8.465,        // Silicon-29
-        '11B': 13.663,         // Boron-11
-        '17O': -5.774,         // Oxygen-17
+        // Common spin-1/2 nuclei
+        '1H':   42.577478518,  // Proton - most sensitive
+        '3He':  -32.434,       // Helium-3 (negative γ)
+        '13C':  10.7084,       // Carbon-13
+        '15N':  -4.316,        // Nitrogen-15 (negative γ)
+        '19F':  40.052,        // Fluorine-19 - very sensitive
+        '29Si': -8.465,        // Silicon-29 (negative γ)
+        '31P':  17.235,        // Phosphorus-31
+        
+        // Transition metals (spin-1/2)
+        '57Fe': 1.382,         // Iron-57 - low γ
+        '77Se': 8.157,         // Selenium-77
+        '89Y':  -2.095,        // Yttrium-89 (negative γ)
+        '103Rh': -1.348,       // Rhodium-103 (negative γ)
+        '107Ag': -1.723,       // Silver-107 (negative γ)
+        '109Ag': -1.981,       // Silver-109 (negative γ)
+        '111Cd': -9.069,       // Cadmium-111 (negative γ)
+        '113Cd': -9.487,       // Cadmium-113 (negative γ)
+        
+        // Heavy metals (spin-1/2)
+        '115Sn': -14.007,      // Tin-115 (negative γ)
+        '117Sn': -15.261,      // Tin-117 (negative γ)
+        '119Sn': -15.966,      // Tin-119 (negative γ)
+        '123Te': -11.235,      // Tellurium-123 (negative γ)
+        '125Te': -13.545,      // Tellurium-125 (negative γ)
+        '129Xe': -11.860,      // Xenon-129 (negative γ)
+        '169Tm': -3.531,       // Thulium-169 (negative γ)
+        '171Yb': 7.526,        // Ytterbium-171
+        '183W':  1.795,        // Tungsten-183
+        '187Os': 0.987,        // Osmium-187
+        '195Pt': 9.289,        // Platinum-195
+        '199Hg': 7.712,        // Mercury-199
+        '203Tl': 24.570,       // Thallium-203
+        '205Tl': 24.816,       // Thallium-205
+        '207Pb': 9.034,        // Lead-207
     },
     
-    // Natural abundance (%)
+    // Natural abundance (%) for spin-1/2 nuclei
     ABUNDANCE: {
-        '1H':  99.985,
-        '13C': 1.109,
-        '15N': 0.366,
-        '19F': 100.0,
-        '31P': 100.0,
-        '2H':  0.0156,
+        '1H':   99.985,
+        '3He':  0.000137,
+        '13C':  1.109,
+        '15N':  0.366,
+        '19F':  100.0,
         '29Si': 4.685,
-        '11B': 80.1,
-        '17O': 0.038,
+        '31P':  100.0,
+        '57Fe': 2.119,
+        '77Se': 7.63,
+        '89Y':  100.0,
+        '103Rh': 100.0,
+        '107Ag': 51.839,
+        '109Ag': 48.161,
+        '111Cd': 12.80,
+        '113Cd': 12.22,
+        '115Sn': 0.34,
+        '117Sn': 7.68,
+        '119Sn': 8.59,
+        '123Te': 0.89,
+        '125Te': 7.07,
+        '129Xe': 26.44,
+        '169Tm': 100.0,
+        '171Yb': 14.28,
+        '183W':  14.31,
+        '187Os': 1.96,
+        '195Pt': 33.83,
+        '199Hg': 16.87,
+        '203Tl': 29.52,
+        '205Tl': 70.48,
+        '207Pb': 22.1,
     },
     
     // Reference chemical shifts (ppm) for common environments
@@ -74,16 +122,33 @@ const NMRConstants = {
 };
 
 // ============================================================================
-// NMR SAMPLE PRESETS - EXTENSIVE LIBRARY
+// NMR SAMPLE PRESETS - EXTENSIVE LIBRARY FOR QUANTUM COMPUTING
 // ============================================================================
 
 /**
- * NMR Sample definitions with physical parameters
- * Each sample defines nuclei with their chemical environments and J-couplings
+ * NMR Sample definitions with physical parameters for NMR Quantum Computing
  * 
- * IMPORTANT: Same element atoms in DIFFERENT chemical environments have
- * different chemical shifts, making them distinguishable as separate qubits.
- * This is the basis of liquid-state NMR quantum computing.
+ * IMPORTANT - SPIN-1/2 NUCLEI ONLY:
+ * All samples in this library use ONLY spin-1/2 nuclei, which are the only
+ * nuclei suitable for NMR quantum computing qubits. Spin-1/2 nuclei have
+ * exactly two energy levels (|0⟩ and |1⟩) making them ideal two-level systems.
+ * 
+ * Supported spin-1/2 nuclei:
+ * - Common: ¹H, ¹³C, ¹⁵N, ¹⁹F, ²⁹Si, ³¹P
+ * - Transition metals: ⁵⁷Fe, ⁷⁷Se, ⁸⁹Y, ¹⁰³Rh, ¹⁰⁷Ag, ¹⁰⁹Ag, ¹¹¹Cd
+ * - Heavy metals: ¹¹⁵Sn, ¹¹⁷Sn, ¹¹⁹Sn, ¹²³Te, ¹²⁵Te, ¹²⁹Xe, ¹⁹⁵Pt, ¹⁹⁹Hg, ²⁰⁷Pb
+ * - Others: ³He, ¹⁶⁹Tm, ¹⁷¹Yb, ¹⁸³W, ¹⁸⁷Os, ²⁰³Tl, ²⁰⁵Tl
+ * 
+ * NOT included (not spin-1/2):
+ * - ²H (deuterium, spin-1), ¹¹B (spin-3/2), ¹⁷O (spin-5/2), etc.
+ * 
+ * KEY PHYSICS:
+ * - Same element atoms in DIFFERENT chemical environments have different
+ *   chemical shifts, making them distinguishable as separate qubits
+ * - J-coupling between nuclei enables multi-qubit gates
+ * - This is the basis of liquid-state NMR quantum computing
+ * 
+ * Samples are organized by qubit count (ascending)
  */
 const NMRSamples = {
     // ========== SINGLE QUBIT SYSTEMS ==========
@@ -192,6 +257,167 @@ const NMRSamples = {
     },
     
     // ========== TWO QUBIT SYSTEMS ==========
+    
+    'pt_phosphine': {
+        name: '¹⁹⁵Pt-³¹P Complex (2Q)',
+        description: '¹⁹⁵Pt-³¹P heteronuclear 2-qubit system - phosphine platinum complex',
+        formula: 'cis-[Pt(PMe₃)₂Cl₂]',
+        nuclei: [
+            { id: 0, element: '195Pt', label: 'Pt', chemicalShift: -4200.0,
+              environment: 'Pt(II) with phosphine ligands' },
+            { id: 1, element: '31P', label: 'P', chemicalShift: -22.0,
+              environment: 'Phosphine P coordinated to Pt' }
+        ],
+        jCouplings: [
+            { nuclei: [0, 1], J: 3500.0, type: '¹J(Pt-P)' }  // Very large coupling!
+        ],
+        structure: {
+            atoms: [
+                { element: 'Pt', x: 0, y: 0, qubit: 0 },
+                { element: 'P', x: -40, y: -25, qubit: 1 },
+                { element: 'P', x: 40, y: -25 },
+                { element: 'Cl', x: -40, y: 25 },
+                { element: 'Cl', x: 40, y: 25 }
+            ],
+            bonds: [[0,1], [0,2], [0,3], [0,4]]
+        },
+        defaultT1: 1.0,
+        defaultT2: 0.2
+    },
+    
+    'hg_carbon': {
+        name: '¹⁹⁹Hg-¹³C Complex (2Q)',
+        description: '¹⁹⁹Hg-¹³C heteronuclear 2-qubit system - organomercury',
+        formula: '(¹³CH₃)₂¹⁹⁹Hg',
+        nuclei: [
+            { id: 0, element: '199Hg', label: 'Hg', chemicalShift: -780.0,
+              environment: 'Linear Hg(II) with methyl groups' },
+            { id: 1, element: '13C', label: 'C', chemicalShift: 5.0,
+              environment: 'Methyl carbon bonded to Hg' }
+        ],
+        jCouplings: [
+            { nuclei: [0, 1], J: 687.0, type: '¹J(Hg-C)' }
+        ],
+        structure: {
+            atoms: [
+                { element: 'Hg', x: 0, y: 0, qubit: 0 },
+                { element: '13C', x: -45, y: 0, qubit: 1 },
+                { element: 'C', x: 45, y: 0 }
+            ],
+            bonds: [[0,1], [0,2]]
+        },
+        defaultT1: 2.0,
+        defaultT2: 0.5
+    },
+    
+    'sn_carbon': {
+        name: '¹¹⁹Sn-¹³C Complex (2Q)',
+        description: '¹¹⁹Sn-¹³C heteronuclear 2-qubit system - organotin',
+        formula: '(¹³CH₃)₄¹¹⁹Sn',
+        nuclei: [
+            { id: 0, element: '119Sn', label: 'Sn', chemicalShift: 0.0,
+              environment: 'Tetrahedral Sn(IV) center' },
+            { id: 1, element: '13C', label: 'C', chemicalShift: -9.0,
+              environment: 'Methyl carbon bonded to Sn' }
+        ],
+        jCouplings: [
+            { nuclei: [0, 1], J: 340.0, type: '¹J(Sn-C)' }
+        ],
+        structure: {
+            atoms: [
+                { element: 'Sn', x: 0, y: 0, qubit: 0 },
+                { element: '13C', x: -35, y: -25, qubit: 1 },
+                { element: 'C', x: 35, y: -25 },
+                { element: 'C', x: -35, y: 25 },
+                { element: 'C', x: 35, y: 25 }
+            ],
+            bonds: [[0,1], [0,2], [0,3], [0,4]]
+        },
+        defaultT1: 10.0,
+        defaultT2: 3.0
+    },
+    
+    'pb_proton': {
+        name: '²⁰⁷Pb-¹H Complex (2Q)',
+        description: '²⁰⁷Pb-¹H heteronuclear 2-qubit system - plumbane derivative',
+        formula: '(CH₃)₄²⁰⁷Pb',
+        nuclei: [
+            { id: 0, element: '207Pb', label: 'Pb', chemicalShift: 0.0,
+              environment: 'Tetrahedral Pb(IV) center' },
+            { id: 1, element: '1H', label: 'H', chemicalShift: 0.3,
+              environment: 'Methyl protons on Pb' }
+        ],
+        jCouplings: [
+            { nuclei: [0, 1], J: 64.0, type: '²J(Pb-H)' }
+        ],
+        structure: {
+            atoms: [
+                { element: 'Pb', x: 0, y: 0, qubit: 0 },
+                { element: 'C', x: -35, y: -25 },
+                { element: 'C', x: 35, y: -25 },
+                { element: 'C', x: -35, y: 25 },
+                { element: 'C', x: 35, y: 25 },
+                { element: 'H', x: -55, y: -35, qubit: 1 }
+            ],
+            bonds: [[0,1], [0,2], [0,3], [0,4], [1,5]]
+        },
+        defaultT1: 1.0,
+        defaultT2: 0.2
+    },
+    
+    'se_proton': {
+        name: '⁷⁷Se-¹H Complex (2Q)',
+        description: '⁷⁷Se-¹H heteronuclear 2-qubit system - selenol',
+        formula: 'C₆H₅⁷⁷SeH',
+        nuclei: [
+            { id: 0, element: '77Se', label: 'Se', chemicalShift: 150.0,
+              environment: 'Benzeneselenol Se' },
+            { id: 1, element: '1H', label: 'H', chemicalShift: 2.1,
+              environment: 'Se-H proton' }
+        ],
+        jCouplings: [
+            { nuclei: [0, 1], J: 45.0, type: '¹J(Se-H)' }
+        ],
+        structure: {
+            atoms: [
+                { element: 'Se', x: 0, y: 0, qubit: 0 },
+                { element: 'H', x: 30, y: 20, qubit: 1 },
+                { element: 'C', x: -40, y: 0 },
+                { element: 'C', x: -60, y: -25 },
+                { element: 'C', x: -60, y: 25 }
+            ],
+            bonds: [[0,1], [0,2], [2,3], [2,4]]
+        },
+        defaultT1: 5.0,
+        defaultT2: 1.0
+    },
+    
+    'xe_129_proton': {
+        name: '¹²⁹Xe-¹H van der Waals (2Q)',
+        description: '¹²⁹Xe-¹H weakly coupled 2-qubit system in cryptophane cage',
+        formula: '¹²⁹Xe@cryptophane-A',
+        nuclei: [
+            { id: 0, element: '129Xe', label: 'Xe', chemicalShift: 60.0,
+              environment: 'Encapsulated Xe in cage' },
+            { id: 1, element: '1H', label: 'H', chemicalShift: 4.5,
+              environment: 'Cryptophane methine H' }
+        ],
+        jCouplings: [
+            { nuclei: [0, 1], J: 0.5, type: 'Through-space' }  // Very weak vdW coupling
+        ],
+        structure: {
+            atoms: [
+                { element: 'Xe', x: 0, y: 0, qubit: 0 },
+                { element: 'C', x: -40, y: -25 },
+                { element: 'C', x: 40, y: -25 },
+                { element: 'C', x: 0, y: 40 },
+                { element: 'H', x: -60, y: -35, qubit: 1 }
+            ],
+            bonds: [[1,2], [2,3], [3,1]]
+        },
+        defaultT1: 30.0,
+        defaultT2: 10.0
+    },
     
     'chloroform': {
         name: 'Chloroform ¹³CHCl₃',
@@ -364,6 +590,101 @@ const NMRSamples = {
     },
     
     // ========== THREE QUBIT SYSTEMS ==========
+    
+    'pt_phosphine_carbon': {
+        name: '¹⁹⁵Pt-³¹P-¹³C Complex (3Q)',
+        description: '3-qubit heteronuclear system with heavy metal',
+        formula: '[¹⁹⁵Pt(¹³CO)(P(¹³CH₃)₃)Cl₂]',
+        nuclei: [
+            { id: 0, element: '195Pt', label: 'Pt', chemicalShift: -4500.0,
+              environment: 'Pt(II) center' },
+            { id: 1, element: '31P', label: 'P', chemicalShift: 5.0,
+              environment: 'Phosphine trans to CO' },
+            { id: 2, element: '13C', label: 'CO', chemicalShift: 175.0,
+              environment: 'Carbonyl carbon' }
+        ],
+        jCouplings: [
+            { nuclei: [0, 1], J: 3200.0, type: '¹J(Pt-P)' },
+            { nuclei: [0, 2], J: 1200.0, type: '¹J(Pt-C)' },
+            { nuclei: [1, 2], J: 8.0, type: '²J(P-C)' }
+        ],
+        structure: {
+            atoms: [
+                { element: 'Pt', x: 0, y: 0, qubit: 0 },
+                { element: 'P', x: -45, y: 0, qubit: 1 },
+                { element: 'C', x: 45, y: 0, qubit: 2 },
+                { element: 'O', x: 75, y: 0 },
+                { element: 'Cl', x: 0, y: -40 },
+                { element: 'Cl', x: 0, y: 40 }
+            ],
+            bonds: [[0,1], [0,2], [2,3,'triple'], [0,4], [0,5]]
+        },
+        defaultT1: 1.0,
+        defaultT2: 0.15
+    },
+    
+    'sn_fluorine_carbon': {
+        name: '¹¹⁹Sn-¹⁹F-¹³C Complex (3Q)',
+        description: '3-qubit system with tin, fluorine and carbon',
+        formula: '(¹³CH₃)₃¹¹⁹SnF',
+        nuclei: [
+            { id: 0, element: '119Sn', label: 'Sn', chemicalShift: 45.0,
+              environment: 'Tetrahedral Sn with F' },
+            { id: 1, element: '19F', label: 'F', chemicalShift: -180.0,
+              environment: 'Fluorine on Sn' },
+            { id: 2, element: '13C', label: 'C', chemicalShift: -5.0,
+              environment: 'Methyl carbon' }
+        ],
+        jCouplings: [
+            { nuclei: [0, 1], J: 1850.0, type: '¹J(Sn-F)' },
+            { nuclei: [0, 2], J: 380.0, type: '¹J(Sn-C)' },
+            { nuclei: [1, 2], J: 3.0, type: '³J(F-C)' }
+        ],
+        structure: {
+            atoms: [
+                { element: 'Sn', x: 0, y: 0, qubit: 0 },
+                { element: 'F', x: 0, y: -40, qubit: 1 },
+                { element: '13C', x: -35, y: 25, qubit: 2 },
+                { element: 'C', x: 35, y: 25 },
+                { element: 'C', x: 0, y: 45 }
+            ],
+            bonds: [[0,1], [0,2], [0,3], [0,4]]
+        },
+        defaultT1: 8.0,
+        defaultT2: 2.0
+    },
+    
+    'hg_phosphorus_proton': {
+        name: '¹⁹⁹Hg-³¹P-¹H Complex (3Q)',
+        description: '3-qubit mercury phosphine system',
+        formula: '[¹⁹⁹Hg(PH₃)₂]²⁺',
+        nuclei: [
+            { id: 0, element: '199Hg', label: 'Hg', chemicalShift: -1200.0,
+              environment: 'Linear Hg(II) center' },
+            { id: 1, element: '31P', label: 'P', chemicalShift: -95.0,
+              environment: 'Phosphine P' },
+            { id: 2, element: '1H', label: 'H', chemicalShift: 4.5,
+              environment: 'P-H proton' }
+        ],
+        jCouplings: [
+            { nuclei: [0, 1], J: 11000.0, type: '¹J(Hg-P)' },  // Very large!
+            { nuclei: [1, 2], J: 350.0, type: '¹J(P-H)' },
+            { nuclei: [0, 2], J: 150.0, type: '²J(Hg-H)' }
+        ],
+        structure: {
+            atoms: [
+                { element: 'Hg', x: 0, y: 0, qubit: 0 },
+                { element: 'P', x: -50, y: 0, qubit: 1 },
+                { element: 'P', x: 50, y: 0 },
+                { element: 'H', x: -70, y: -20, qubit: 2 },
+                { element: 'H', x: -70, y: 20 },
+                { element: 'H', x: -50, y: -35 }
+            ],
+            bonds: [[0,1], [0,2], [1,3], [1,4], [1,5]]
+        },
+        defaultT1: 0.5,
+        defaultT2: 0.1
+    },
     
     'trifluoroethylene': {
         name: 'Iodotrifluoroethylene (SpinQ Triangulum)',
@@ -1497,109 +1818,175 @@ const NMRSamples = {
         defaultT2: 5.0
     },
     
-    'sodium_borohydride': {
-        name: 'Sodium Borohydride (2Q)',
-        description: '¹¹B and ¹H 2-qubit system',
-        formula: 'NaBH₄',
+    // === PLATINUM-195 COMPOUNDS (spin-1/2, 33.8% abundance) ===
+    
+    'cisplatin': {
+        name: 'Cisplatin (¹⁹⁵Pt)',
+        description: '¹⁹⁵Pt single qubit - anticancer drug with NMR-active platinum',
+        formula: 'cis-[Pt(NH₃)₂Cl₂]',
         nuclei: [
-            { id: 0, element: '11B', label: 'B', chemicalShift: -41.0,
-              environment: 'Borohydride boron (I=3/2)' },
-            { id: 1, element: '1H', label: 'H', chemicalShift: -0.4,
-              environment: 'B-H hydride (4H equivalent)' }
+            { id: 0, element: '195Pt', label: 'Pt', chemicalShift: -2100.0,
+              environment: 'Pt(II) square planar coordination' }
         ],
-        jCouplings: [
-            { nuclei: [0, 1], J: 81.0, type: '¹J(B-H)' }
-        ],
+        jCouplings: [],
         structure: {
             atoms: [
-                { element: 'B', x: 0, y: 0, qubit: 0 },
-                { element: 'H', x: -30, y: -20, qubit: 1 },
-                { element: 'H', x: 30, y: -20 },
-                { element: 'H', x: -30, y: 20 },
-                { element: 'H', x: 30, y: 20 },
-                { element: 'Na', x: 0, y: -50 }
+                { element: 'Pt', x: 0, y: 0, qubit: 0 },
+                { element: 'N', x: -35, y: -25 },
+                { element: 'N', x: 35, y: -25 },
+                { element: 'Cl', x: -35, y: 25 },
+                { element: 'Cl', x: 35, y: 25 }
             ],
             bonds: [[0,1], [0,2], [0,3], [0,4]]
         },
         defaultT1: 0.5,
-        defaultT2: 0.01
+        defaultT2: 0.1
     },
     
-    'trimethyl_borate': {
-        name: 'Trimethyl Borate (4Q)',
-        description: '¹¹B, ¹³C, ¹H heteronuclear 4-qubit system',
-        formula: 'B(O¹³CH₃)₃',
-        nuclei: [
-            { id: 0, element: '11B', label: 'B', chemicalShift: 18.0,
-              environment: 'Trigonal boron center' },
-            { id: 1, element: '13C', label: 'C1', chemicalShift: 52.0,
-              environment: 'Methoxy carbon' },
-            { id: 2, element: '13C', label: 'C2', chemicalShift: 52.1,
-              environment: 'Methoxy carbon' },
-            { id: 3, element: '1H', label: 'H', chemicalShift: 3.5,
-              environment: 'Methoxy protons' }
-        ],
-        jCouplings: [
-            { nuclei: [1, 3], J: 145.0, type: '¹J(C-H)' },
-            { nuclei: [2, 3], J: 145.0, type: '¹J(C-H)' }
-        ],
-        structure: {
-            atoms: [
-                { element: 'B', x: 0, y: 0, qubit: 0 },
-                { element: 'O', x: -35, y: 0 },
-                { element: 'O', x: 17, y: -30 },
-                { element: 'O', x: 17, y: 30 },
-                { element: '13C', x: -60, y: 15, qubit: 1 },
-                { element: '13C', x: 40, y: -45, qubit: 2 },
-                { element: 'C', x: 40, y: 45 },
-                { element: 'H', x: -75, y: -5, qubit: 3 }
-            ],
-            bonds: [[0,1], [0,2], [0,3], [1,4], [2,5], [3,6], [4,7]]
-        },
-        defaultT1: 1.0,
-        defaultT2: 0.05
-    },
+    // === SELENIUM-77 COMPOUNDS (spin-1/2, 7.6% abundance) ===
     
-    'deuterium_water': {
-        name: 'D₂O (Deuterium)',
-        description: 'Deuterium (²H) single qubit - often used as NMR lock',
-        formula: 'D₂O',
+    'selenomethionine': {
+        name: 'Selenomethionine (⁷⁷Se)',
+        description: '⁷⁷Se single qubit - selenium amino acid used in protein NMR',
+        formula: 'CH₃-⁷⁷Se-CH₂-CH₂-CH(NH₂)-COOH',
         nuclei: [
-            { id: 0, element: '2H', label: 'D', chemicalShift: 4.8,
-              environment: 'Deuterium in heavy water (I=1)' }
+            { id: 0, element: '77Se', label: 'Se', chemicalShift: 50.0,
+              environment: 'Selenomethionine Se atom' }
         ],
         jCouplings: [],
         structure: {
             atoms: [
-                { element: 'O', x: 0, y: 0 },
-                { element: 'H', x: -30, y: 20, qubit: 0 },
-                { element: 'H', x: 30, y: 20 }
+                { element: 'Se', x: 0, y: 0, qubit: 0 },
+                { element: 'C', x: -40, y: 0 },
+                { element: 'C', x: 40, y: 0 },
+                { element: 'C', x: 80, y: 0 },
+                { element: 'C', x: 120, y: 0 },
+                { element: 'N', x: 120, y: -35 },
+                { element: 'C', x: 160, y: 0 }
+            ],
+            bonds: [[0,1], [0,2], [2,3], [3,4], [4,5], [4,6]]
+        },
+        defaultT1: 5.0,
+        defaultT2: 1.0
+    },
+    
+    // === TIN-119 COMPOUNDS (spin-1/2, 8.6% abundance) ===
+    
+    'tetramethyltin': {
+        name: 'Tetramethyltin (¹¹⁹Sn)',
+        description: '¹¹⁹Sn single qubit - organometallic tin reference compound',
+        formula: 'Sn(CH₃)₄',
+        nuclei: [
+            { id: 0, element: '119Sn', label: 'Sn', chemicalShift: 0.0,
+              environment: 'Tetrahedral Sn(IV) - reference at 0 ppm' }
+        ],
+        jCouplings: [],
+        structure: {
+            atoms: [
+                { element: 'Sn', x: 0, y: 0, qubit: 0 },
+                { element: 'C', x: -35, y: -25 },
+                { element: 'C', x: 35, y: -25 },
+                { element: 'C', x: -35, y: 25 },
+                { element: 'C', x: 35, y: 25 }
+            ],
+            bonds: [[0,1], [0,2], [0,3], [0,4]]
+        },
+        defaultT1: 10.0,
+        defaultT2: 3.0
+    },
+    
+    // === MERCURY-199 COMPOUNDS (spin-1/2, 16.9% abundance) ===
+    
+    'dimethylmercury': {
+        name: 'Dimethylmercury (¹⁹⁹Hg)',
+        description: '¹⁹⁹Hg single qubit - linear organomercury compound',
+        formula: '(CH₃)₂Hg',
+        nuclei: [
+            { id: 0, element: '199Hg', label: 'Hg', chemicalShift: -780.0,
+              environment: 'Linear Hg(II) with methyl groups' }
+        ],
+        jCouplings: [],
+        structure: {
+            atoms: [
+                { element: 'Hg', x: 0, y: 0, qubit: 0 },
+                { element: 'C', x: -45, y: 0 },
+                { element: 'C', x: 45, y: 0 }
             ],
             bonds: [[0,1], [0,2]]
         },
-        defaultT1: 0.4,
+        defaultT1: 2.0,
+        defaultT2: 0.5
+    },
+    
+    // === LEAD-207 COMPOUNDS (spin-1/2, 22.1% abundance) ===
+    
+    'tetramethyllead': {
+        name: 'Tetramethyllead (²⁰⁷Pb)',
+        description: '²⁰⁷Pb single qubit - organolead compound',
+        formula: 'Pb(CH₃)₄',
+        nuclei: [
+            { id: 0, element: '207Pb', label: 'Pb', chemicalShift: 0.0,
+              environment: 'Tetrahedral Pb(IV) - reference compound' }
+        ],
+        jCouplings: [],
+        structure: {
+            atoms: [
+                { element: 'Pb', x: 0, y: 0, qubit: 0 },
+                { element: 'C', x: -35, y: -25 },
+                { element: 'C', x: 35, y: -25 },
+                { element: 'C', x: -35, y: 25 },
+                { element: 'C', x: 35, y: 25 }
+            ],
+            bonds: [[0,1], [0,2], [0,3], [0,4]]
+        },
+        defaultT1: 1.0,
         defaultT2: 0.3
     },
     
-    'oxygen_water': {
-        name: 'H₂¹⁷O (¹⁷O-enriched)',
-        description: '¹⁷O single qubit - enriched oxygen-17 water',
-        formula: 'H₂¹⁷O',
+    // === XENON-129 (spin-1/2, 26.4% abundance) ===
+    
+    'xenon_gas': {
+        name: 'Hyperpolarized ¹²⁹Xe',
+        description: '¹²⁹Xe single qubit - noble gas used in MRI and quantum sensing',
+        formula: '¹²⁹Xe (gas)',
         nuclei: [
-            { id: 0, element: '17O', label: 'O', chemicalShift: 0.0,
-              environment: 'Oxygen-17 in water (I=5/2, reference)' }
+            { id: 0, element: '129Xe', label: 'Xe', chemicalShift: 0.0,
+              environment: 'Gas phase xenon reference' }
         ],
         jCouplings: [],
         structure: {
             atoms: [
-                { element: 'O', x: 0, y: 0, qubit: 0 },
-                { element: 'H', x: -30, y: 20 },
-                { element: 'H', x: 30, y: 20 }
+                { element: 'Xe', x: 0, y: 0, qubit: 0 }
             ],
-            bonds: [[0,1], [0,2]]
+            bonds: []
         },
-        defaultT1: 0.03,
-        defaultT2: 0.01
+        defaultT1: 60.0,  // Very long T1 when hyperpolarized
+        defaultT2: 20.0
+    },
+    
+    // === THALLIUM-205 COMPOUNDS (spin-1/2, 70.5% abundance) ===
+    
+    'thallium_nitrate': {
+        name: 'Thallium Nitrate (²⁰⁵Tl)',
+        description: '²⁰⁵Tl single qubit - highest sensitivity heavy metal',
+        formula: 'TlNO₃ (aq)',
+        nuclei: [
+            { id: 0, element: '205Tl', label: 'Tl', chemicalShift: 0.0,
+              environment: 'Tl(I) aqueous reference' }
+        ],
+        jCouplings: [],
+        structure: {
+            atoms: [
+                { element: 'Tl', x: 0, y: 0, qubit: 0 },
+                { element: 'N', x: 40, y: 0 },
+                { element: 'O', x: 60, y: -25 },
+                { element: 'O', x: 60, y: 25 },
+                { element: 'O', x: 80, y: 0 }
+            ],
+            bonds: [[1,2], [1,3], [1,4,'double']]
+        },
+        defaultT1: 0.1,
+        defaultT2: 0.05
     },
     
     // ========== EDUCATIONAL/CUSTOM ==========
@@ -2218,7 +2605,14 @@ class NMRPhysicsEngine {
     /**
      * Get expected NMR peaks based on current quantum state
      * Each nucleus contributes peaks at its Larmor frequency
-     * Intensity based on transverse magnetization (coherence)
+     * 
+     * PHYSICS OF NMR SIGNAL:
+     * - The NMR signal (FID) comes from transverse magnetization (Mxy) precessing
+     * - In an actual measurement, a 90° pulse converts Mz to Mxy before detection
+     * - The SIGN of the peak reflects the population difference:
+     *   - Positive peak: excess population in |0⟩ (spin up, Mz > 0)
+     *   - Negative peak: excess population in |1⟩ (spin down, Mz < 0, after X gate)
+     * - This is physically accurate for NMR quantum computing readout
      */
     getExpectedPeaks() {
         if (!this.sample || !this.sample.nuclei) return [];
@@ -2237,13 +2631,39 @@ class NMRPhysicsEngine {
             const baseFreq = this.getLarmorFrequency(i);
             const bloch = this.blochVectors[i] || { x: 0, y: 0, z: 1 };
             
-            // Transverse magnetization gives NMR signal
-            // Mxy = sqrt(Mx² + My²)
+            // Calculate signal intensity with proper sign for NMR quantum computing
+            // 
+            // In NMR QC, measurement involves:
+            // 1. Apply 90° pulse to convert Mz → Mxy (or My, depending on phase)
+            // 2. Detect the precessing Mxy as FID
+            // 3. FFT to get spectrum
+            //
+            // The sign of the detected signal depends on:
+            // - If Mz > 0 (|0⟩ state): 90°x pulse gives +My → positive peak
+            // - If Mz < 0 (|1⟩ state): 90°x pulse gives -My → negative peak
+            //
+            // For visualization, we show what the spectrum would look like after readout:
+            
             const Mxy = Math.sqrt(bloch.x * bloch.x + bloch.y * bloch.y);
             
-            // Also include some intensity from z-magnetization (for visualization)
-            // In real NMR, we detect Mxy after a 90° pulse converts Mz to Mxy
-            const intensity = Math.max(Mxy, Math.abs(bloch.z) * 0.3);
+            // Determine intensity with sign preserved
+            // The sign comes from Mz (population difference between |0⟩ and |1⟩)
+            let intensity;
+            if (Mxy > 0.1) {
+                // Significant transverse magnetization exists (superposition state)
+                // Use Mxy magnitude, but preserve sign from dominant z-component if present
+                intensity = Mxy;
+                // For superpositions, check if there's also a z-component that indicates bias
+                if (Math.abs(bloch.z) > 0.1) {
+                    intensity = Math.sign(bloch.z) * Math.max(Mxy, Math.abs(bloch.z) * 0.5);
+                }
+            } else {
+                // Mostly longitudinal magnetization (pure |0⟩ or |1⟩ state)
+                // After 90° readout pulse, Mz converts to Mxy with sign preserved
+                // Mz > 0 (|0⟩) → positive signal
+                // Mz < 0 (|1⟩) → negative signal (inverted peak)
+                intensity = bloch.z;
+            }
             
             // Add J-coupling splitting
             const couplings = (this.sample.jCouplings || []).filter(c => c.nuclei.includes(i));
@@ -2253,7 +2673,7 @@ class NMRPhysicsEngine {
                     nucleus: nucleus.label,
                     element: nucleus.element,
                     freq: baseFreq,
-                    intensity: Math.max(0.1, intensity),  // Minimum intensity for visibility
+                    intensity: intensity,  // Sign preserved for accurate NMR QC display
                     type: 'singlet',
                     environment: nucleus.environment || ''
                 });
@@ -2282,11 +2702,13 @@ class NMRPhysicsEngine {
                                       offsets.length === 4 ? 'quartet' : 'multiplet';
                 
                 Object.entries(freqCounts).forEach(([offset, count]) => {
+                    // Preserve sign of intensity for multiplet peaks
+                    const peakIntensity = intensity * count / offsets.length;
                     peaks.push({
                         nucleus: nucleus.label,
                         element: nucleus.element,
                         freq: baseFreq + parseFloat(offset),
-                        intensity: Math.max(0.1, intensity * count / offsets.length),
+                        intensity: peakIntensity,  // Sign preserved for NMR QC
                         type: multipletType,
                         environment: nucleus.environment || ''
                     });
