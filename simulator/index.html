@@ -1,9 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+    <script src="/js/theme-boot-inline.js"></script>
+    <script src="/js/software-mode-boot-inline.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Circuit Simulator</title>
+    <title>Quantum Circuit Simulator | Qubibyte</title>
+    <meta name="description"
+        content="Build and simulate quantum circuits interactively with Qubibyte's drag-and-drop quantum circuit simulator. Visualize state vectors, Bloch spheres, and measurement probabilities in real time.">
+    <meta name="keywords"
+        content="quantum circuit simulator, quantum computing, Qubibyte, qubit, Bloch sphere, quantum gates, Hadamard, CNOT, quantum programming, Qubi language">
+    <meta name="author" content="Qubibyte">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Quantum Circuit Simulator | Qubibyte">
+    <meta property="og:description"
+        content="Build and simulate quantum circuits interactively. Drag-and-drop gates, visualize state vectors and Bloch spheres, export to Qiskit and QASM.">
+    <meta property="og:image" content="/images/logo.png">
+    <meta property="og:url" content="https://qubibyte.org/simulator/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Quantum Circuit Simulator | Qubibyte">
+    <meta name="twitter:description"
+        content="Build and simulate quantum circuits interactively. Drag-and-drop gates, visualize state vectors and Bloch spheres.">
+    <meta name="twitter:image" content="/images/logo.png">
+    <link rel="canonical" href="https://qubibyte.org/simulator/">
     <link rel="icon" type="image/x-icon" href="/images/fav.png">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/components.css">
@@ -11,14 +32,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="/css/themes.css">
+    <script src="/js/theme.js"></script>
+    <script src="/js/software-mode.js"></script>
 </head>
+
 <body>
     <div class="app-container">
         <!-- Header -->
         <header class="header">
             <div class="title-section">
-                <a href="../../">
-                    <img src="logo_white.png" alt="Qubibyte" class="logo">
+                <a href="/">
+                    <img src="/images/logo_white.png" alt="Qubibyte" class="logo">
                 </a>
                 <h1 class="title">Quantum Circuit Simulator</h1>
             </div>
@@ -40,6 +65,7 @@
                         <button id="settingsBtn" class="btn btn-small">Settings</button>
                     </div>
                 </div>
+                <p class="mobile-gate-hint">Tap a gate, then tap a slot on the circuit to place it</p>
                 <div class="gate-palette">
                     <div class="gate-category">
                         <h3 class="category-title">Single Qubit Gates</h3>
@@ -142,6 +168,9 @@
                 </div>
             </aside>
 
+            <div class="panel-resize-handle" id="leftPanelResize" role="separator" aria-orientation="vertical"
+                aria-label="Resize gate palette width" title="Drag to resize; double-click to reset widths"></div>
+
             <!-- Center - Circuit Builder and NMR Simulator -->
             <main class="circuit-area">
                 <!-- Top Section: Tabs for Circuit Builder / NMR Simulator -->
@@ -166,6 +195,7 @@
                     </div>
                     <div class="editor-tabs">
                         <button class="tab-btn active" data-tab="circuit">Circuit Builder</button>
+                        <button class="tab-btn" data-tab="gateCreator">Gate Creator</button>
                         <button class="tab-btn" data-tab="nmr">NMR Simulator</button>
                         <button class="tab-btn" data-tab="resources">Other Resources</button>
                     </div>
@@ -174,6 +204,11 @@
                             <div id="circuitCanvas" class="circuit-canvas"></div>
                         </div>
                         <div id="stepTimeline" class="step-timeline"></div>
+                    </div>
+                    <div id="gateCreatorEditor" class="editor-panel">
+                        <div id="gateCreatorContainer" class="resources-wrapper">
+                            <!-- Gate Creator UI will be dynamically rendered here -->
+                        </div>
                     </div>
                     <div id="nmrEditor" class="editor-panel">
                         <div id="nmrSimulatorContainer" class="nmr-simulator-wrapper">
@@ -222,27 +257,79 @@
                 </button>
             </main>
 
+            <div class="panel-resize-handle" id="rightPanelResize" role="separator" aria-orientation="vertical"
+                aria-label="Resize code editor width" title="Drag to resize; double-click to reset widths"></div>
+
             <!-- Right Sidebar - Qubi Code Editor -->
             <aside class="code-sidebar">
                 <div class="sidebar-header">
                     <h3 class="sidebar-title">Qubi Code Editor</h3>
                 </div>
                 <div id="qubiEditor" class="editor-panel active">
-                    <div class="editor-toolbar">
-                        <button id="clearQubiBtn" class="btn btn-small">Clear</button>
+                    <div class="qubi-tabs" id="qubiTabs">
+                        <div class="qubi-tab-list" id="qubiTabList" role="tablist" aria-label="Qubi files"></div>
+                        <button id="addQubiTabBtn" class="btn btn-small" title="Add file tab">+</button>
+                    </div>
+                    <div class="editor-toolbar qubi-fix-hidden">
+                        <button id="clearQubiBtn" class="btn btn-small qubi-toolbar-btn">Clear</button>
                         <span class="toolbar-separator"></span>
-                        <button id="saveQubiFileBtn" class="btn btn-small" title="Save as .qubi file">Save File</button>
-                        <button id="loadQubiFileBtn" class="btn btn-small" title="Load from .qubi file">Load File</button>
+                        <span class="qubi-splitbtn" id="qubiSaveSplit">
+                            <button id="saveQubiFileBtn" class="btn btn-small qubi-toolbar-btn qubi-splitbtn-main" title="Save…">Save</button>
+                            <button id="qubiSaveMenuBtn" class="btn btn-small qubi-toolbar-btn qubi-splitbtn-caret" title="Save options" aria-haspopup="menu" aria-expanded="false">▾</button>
+                            <div class="qubi-splitbtn-menu" id="qubiSaveMenu" role="menu" aria-label="Save options" style="display:none">
+                                <button type="button" class="qubi-splitbtn-item" role="menuitem" id="saveQubiAsFileItem">As file (.qubi)</button>
+                                <button type="button" class="qubi-splitbtn-item" role="menuitem" id="saveQubiAsFolderItem">As folder</button>
+                                <button type="button" class="qubi-splitbtn-item" role="menuitem" id="saveQubiAsZipItem">As zip (.zip)</button>
+                            </div>
+                        </span>
+
+                        <span class="qubi-splitbtn" id="qubiLoadSplit">
+                            <button id="loadQubiFileBtn" class="btn btn-small qubi-toolbar-btn qubi-splitbtn-main" title="Load…">Load</button>
+                            <button id="qubiLoadMenuBtn" class="btn btn-small qubi-toolbar-btn qubi-splitbtn-caret" title="Load options" aria-haspopup="menu" aria-expanded="false">▾</button>
+                            <div class="qubi-splitbtn-menu" id="qubiLoadMenu" role="menu" aria-label="Load options" style="display:none">
+                                <button type="button" class="qubi-splitbtn-item" role="menuitem" id="loadQubiFromFileItem">From file (.qubi)</button>
+                                <button type="button" class="qubi-splitbtn-item" role="menuitem" id="loadQubiFromFolderItem">From folder</button>
+                                <button type="button" class="qubi-splitbtn-item" role="menuitem" id="loadQubiFromZipItem">From zip (.zip)</button>
+                            </div>
+                        </span>
                         <input type="file" id="qubiFileInput" accept=".qubi" style="display: none;">
+                        <input type="file" id="qubiFolderInput" accept=".qubi" webkitdirectory directory multiple style="display: none;">
+                        <input type="file" id="qubiZipInput" accept=".zip" style="display: none;">
+                        <span class="toolbar-separator"></span>
+                        <button id="fixWithQubiAiBtn" class="btn btn-small btn-success qubi-fix-btn" title="Prefill QubiAI to fix the current error" style="display:none" disabled>
+                            Fix with QubiAI
+                        </button>
                     </div>
                     <div class="code-editor-container">
                         <div class="line-numbers" id="lineNumbers"></div>
                         <div class="code-editor-wrapper">
                             <pre class="code-highlight" id="codeHighlight" aria-hidden="true"></pre>
-                            <textarea id="qubiCode" class="code-editor" spellcheck="false" placeholder="Enter Qubi code here..."></textarea>
+                            <textarea id="qubiCode" class="code-editor" spellcheck="false"
+                                placeholder="Enter Qubi code here..."></textarea>
                         </div>
                     </div>
                     <div id="qubiErrors" class="error-display"></div>
+                </div>
+                <!-- Qubi AI Panel -->
+                <div class="qubi-ai-panel" id="qubiAiPanel">
+                    <div class="qubi-ai-header">
+                        <span class="qubi-ai-label">QubiAI</span>
+                        <span class="qubi-ai-status" id="qubiAiStatus"></span>
+                    </div>
+                    <div class="qubi-ai-body">
+                        <div class="qubi-ai-input-row">
+                            <textarea id="qubiAiInput" class="qubi-ai-input" rows="2" maxlength="300"
+                                placeholder="Describe a quantum circuit..."></textarea>
+                            <button id="qubiAiBtn" class="qubi-ai-btn" title="Generate Qubi code">
+                                <span class="qubi-ai-btn-text">Generate</span>
+                                <span class="qubi-ai-btn-spinner" style="display:none"></span>
+                            </button>
+                        </div>
+                        <div class="qubi-ai-footer">
+                            <span class="qubi-ai-charcount" id="qubiAiCharcount">0 / 300</span>
+                            <span class="qubi-ai-cooldown" id="qubiAiCooldown"></span>
+                        </div>
+                    </div>
                 </div>
             </aside>
         </div>
@@ -285,15 +372,27 @@
 
     <!-- Examples Modal -->
     <div id="algorithmsModal" class="modal">
-        <div class="modal-content large-modal">
-            <h3>Quantum Examples</h3>
-            <div class="algorithm-options">
-                <label class="checkbox-label">
-                    <input type="checkbox" id="includeCommentsCheckbox">
-                    <span>Include explanatory comments in code</span>
-                </label>
+        <div class="modal-content algo-modal">
+            <div class="algo-modal-header">
+                <h3>Quantum Examples</h3>
+                <div class="algo-modal-controls">
+                    <div class="algo-search-wrapper">
+                        <span class="algo-search-icon">🔍</span>
+                        <input type="text" id="algoSearchInput" class="algo-search-input"
+                            placeholder="Search algorithms..." autocomplete="off">
+                    </div>
+                    <div class="algorithm-options">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="includeCommentsCheckbox">
+                            <span>Include explanatory comments in code</span>
+                        </label>
+                    </div>
+                </div>
             </div>
-            <div id="algorithmsList" class="algorithms-list"></div>
+            <div class="algo-modal-body">
+                <div id="algorithmsList" class="algorithms-list"></div>
+                <div id="algorithmDetail" class="algorithm-detail" style="display:none;"></div>
+            </div>
             <div id="algorithmParams" class="algorithm-params" style="display:none;">
                 <h4>Parameters</h4>
                 <div id="algorithmParamInputs"></div>
@@ -307,6 +406,7 @@
             </div>
         </div>
     </div>
+
 
     <!-- Settings Modal -->
     <div id="settingsModal" class="modal">
@@ -339,7 +439,7 @@
     <div id="exportModal" class="modal">
         <div class="modal-content large-modal">
             <h3>Export Circuit</h3>
-            
+
             <!-- Format Selection View -->
             <div id="exportFormatSelection">
                 <p class="export-description">Choose an export format to preview.</p>
@@ -364,7 +464,7 @@
                     <button id="closeExportBtn" class="btn btn-secondary">Close</button>
                 </div>
             </div>
-            
+
             <!-- Preview View -->
             <div id="exportPreviewView" class="export-preview-view" style="display: none;">
                 <div class="export-preview-header">
@@ -373,7 +473,8 @@
                 </div>
                 <div id="exportPreviewContainer" class="export-preview-container">
                     <div id="exportPreviewLoading" class="export-preview-loading">Generating preview...</div>
-                    <img id="exportPreviewImage" class="export-preview-image" style="display: none;" alt="Export preview">
+                    <img id="exportPreviewImage" class="export-preview-image" style="display: none;"
+                        alt="Export preview">
                 </div>
                 <div class="export-settings">
                     <label class="checkbox-label">
@@ -403,7 +504,9 @@
     <script src="js/syntaxHighlight.js"></script>
     <script src="js/nmr.js"></script>
     <script src="js/nmr-ui.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script src="js/ui.js"></script>
+    <script src="js/qubi-ai.js"></script>
 </body>
-</html>
 
+</html>

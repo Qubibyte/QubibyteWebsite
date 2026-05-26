@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="/js/theme-boot-inline.js"></script>
+    <script src="/js/software-mode-boot-inline.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qubi Language Reference Manual | Quantum Circuit Syntax &amp; Gates | Qubibyte</title>
+    <meta name="description"
+        content="Official Qubi quantum programming language reference from Qubibyte: line-oriented circuits, H/CX/CZ/SWAP/MEASURE syntax, REPEAT blocks, comments, editor validation, and examples. Matches the Quantum Circuit Simulator and QubiAI.">
+    <meta name="keywords"
+        content="Qubi language, Qubi programming language, quantum circuit syntax, quantum programming, Qubibyte, quantum simulator, quantum gates, CX, CZ, REPEAT END, QubiAI, quantum computing documentation, line-oriented quantum circuits">
+    <meta name="author" content="Qubibyte">
+    <meta name="publisher" content="Qubibyte">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <meta name="googlebot" content="index, follow">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="theme-color" content="#0a0a1a">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <link rel="canonical" href="https://qubibyte.org/qubi/">
+    <link rel="alternate" hreflang="en" href="https://qubibyte.org/qubi/">
+    <link rel="alternate" hreflang="x-default" href="https://qubibyte.org/qubi/">
+
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Qubibyte">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:title" content="Qubi Language Reference Manual | Qubibyte">
+    <meta property="og:description"
+        content="Complete Qubi quantum circuit language specification: gates, controlled operations, rotations, REPEAT/END, measurement, comments, and simulator-aligned validation, plus patterns from Bell states to Grover-style loops.">
+    <meta property="og:url" content="https://qubibyte.org/qubi/">
+    <meta property="og:image" content="https://qubibyte.org/images/logo.png">
+    <meta property="og:image:secure_url" content="https://qubibyte.org/images/logo.png">
+    <meta property="og:image:alt" content="Qubibyte: Qubi quantum programming language reference">
+    <meta property="article:author" content="Qubibyte">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://qubibyte.org/qubi/">
+    <meta name="twitter:title" content="Qubi Language Reference Manual | Qubibyte">
+    <meta name="twitter:description"
+        content="Official Qubi reference: quantum circuit syntax, gates, REPEAT/END, validation rules, and examples aligned with the Qubibyte Quantum Circuit Simulator.">
+    <meta name="twitter:image" content="https://qubibyte.org/images/logo.png">
+    <meta name="twitter:image:alt" content="Qubibyte logo, Qubi language documentation">
+
+    <link rel="icon" type="image/x-icon" href="/images/fav.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="../newindex.css" rel="stylesheet">
+    <link href="manual.css" rel="stylesheet">
+
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "TechArticle",
+                "@id": "https://qubibyte.org/qubi/#article",
+                "headline": "Qubi Language Reference Manual",
+                "alternativeHeadline": "Qubi quantum circuit programming language specification",
+                "description": "Official documentation for the Qubi line-oriented quantum circuit language used in the Qubibyte Quantum Circuit Simulator: syntax, gate set, controlled operations, REPEAT/END, measurement, comments, validation, and worked examples.",
+                "inLanguage": "en-US",
+                "isAccessibleForFree": true,
+                "url": "https://qubibyte.org/qubi/",
+                "mainEntityOfPage": { "@type": "WebPage", "@id": "https://qubibyte.org/qubi/" },
+                "isPartOf": {
+                    "@type": "WebSite",
+                    "name": "Qubibyte",
+                    "url": "https://qubibyte.org/"
+                },
+                "author": { "@type": "Organization", "name": "Qubibyte", "url": "https://qubibyte.org/" },
+                "publisher": {
+                    "@type": "Organization",
+                    "name": "Qubibyte",
+                    "url": "https://qubibyte.org/",
+                    "logo": {
+                        "@type": "ImageObject",
+                        "url": "https://qubibyte.org/images/logo.png"
+                    }
+                },
+                "about": [
+                    { "@type": "Thing", "name": "Quantum circuit programming" },
+                    { "@type": "ComputerLanguage", "name": "Qubi", "url": "https://qubibyte.org/qubi/" }
+                ],
+                "mentions": [
+                    {
+                        "@type": "SoftwareApplication",
+                        "name": "Qubibyte Quantum Circuit Simulator",
+                        "applicationCategory": "DeveloperApplication",
+                        "operatingSystem": "Web",
+                        "url": "https://qubibyte.org/simulator/"
+                    }
+                ]
+            },
+            {
+                "@type": "BreadcrumbList",
+                "@id": "https://qubibyte.org/qubi/#breadcrumb",
+                "itemListElement": [
+                    {
+                        "@type": "ListItem",
+                        "position": 1,
+                        "name": "Qubibyte",
+                        "item": "https://qubibyte.org/"
+                    },
+                    {
+                        "@type": "ListItem",
+                        "position": 2,
+                        "name": "Qubi Reference Manual",
+                        "item": "https://qubibyte.org/qubi/"
+                    }
+                ]
+            }
+        ]
+    }
+    </script>
+    <link rel="stylesheet" href="/css/themes.css">
+    <link rel="stylesheet" href="/css/theme-picker.css">
+    <script src="/js/theme.js"></script>
+    <script src="/js/theme-picker.js"></script>
+    <script src="/js/software-mode.js"></script>
+</head>
+
+<body class="manual-page">
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/index.html"><img src="/images/logo_white.png" alt="Qubibyte"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavQubi"
+                aria-controls="navbarNavQubi" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNavQubi">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/?section=Tech">Tech</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/simulator/">Simulator</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/tutorial/">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="manual-hero">
+        <div class="container">
+            <a href="/?section=Tech" class="manual-back">
+                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Technology
+            </a>
+            <p class="manual-kicker">Official language specification · Qubibyte</p>
+            <h1 class="manual-title">Qubi Reference Manual</h1>
+            <p class="manual-lead">
+                Official <strong>Qubi</strong> specification from Qubibyte: line-oriented quantum circuits with one
+                executable line per timestep and the same parser and validation as the <a class="manual-hero-link"
+                    href="/simulator/">Quantum Circuit Simulator</a>. The sections below define grammar and behavior;
+                editor highlighting is for readability only.
+            </p>
+            <div class="manual-actions">
+                <a class="btn-manual-primary" href="/simulator/">Open Simulator</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="manual-shell">
+        <div class="container manual-grid">
+            <nav class="manual-toc" aria-label="On this page">
+                <h2>Contents</h2>
+                <ul>
+                    <li><a href="#overview">Overview</a></li>
+                    <li><a href="#lexical">Lexical rules</a></li>
+                    <li><a href="#directives">Preprocessor</a></li>
+                    <li><a href="#grammar">Line grammar</a></li>
+                    <li><a href="#gates">Gate set</a></li>
+                    <li><a href="#multi">Controlled &amp; parallel</a></li>
+                    <li><a href="#rotations">RX, RY, RZ</a></li>
+                    <li><a href="#repeat">REPEAT / END</a></li>
+                    <li><a href="#measure">MEASURE</a></li>
+                    <li><a href="#validation">Editor validation</a></li>
+                    <li><a href="#patterns">Patterns</a></li>
+                    <li><a href="#examples">Examples</a></li>
+                    <li><a href="#tools">Tools</a></li>
+                </ul>
+            </nav>
+
+            <main class="manual-prose">
+                <section id="overview" class="manual-section">
+                    <h2>Overview</h2>
+                    <p>Programs are plain text, one instruction per line (after trimming leading and trailing
+                        whitespace). Execution builds the circuit left-to-right: each parsed line becomes one column in
+                        the grid. Qubit indices are integers <span class="manual-inline">0</span>, <span
+                            class="manual-inline">1</span>, …; in Qubibyte’s algorithm library, index <span
+                            class="manual-inline">0</span> is the least significant qubit in ket labels such as <span
+                            class="manual-inline">|q₁q₀⟩</span>.</p>
+                    <p>Recognized gate names in the simulator editor are <span class="manual-inline">H</span>, <span
+                            class="manual-inline">X</span>, <span class="manual-inline">Y</span>, <span
+                            class="manual-inline">Z</span>, <span class="manual-inline">S</span>, <span
+                            class="manual-inline">T</span>, <span class="manual-inline">RX</span>, <span
+                            class="manual-inline">RY</span>, <span class="manual-inline">RZ</span>, <span
+                            class="manual-inline">CX</span>, <span class="manual-inline">CY</span>, <span
+                            class="manual-inline">CZ</span>, <span class="manual-inline">SWAP</span>, and <span
+                            class="manual-inline">MEASURE</span>. Use those spellings so live validation and
+                        highlighting stay green.</p>
+                    <div class="manual-callout"><strong>Color legend: </strong>Code samples below use <span class="lg">gates</span>, <span class="lk">REPEAT/END</span>, <span
+                            class="ln">numeric literals</span>, <span class="lb">[ … ] lists</span>, <span class="lp">(
+                            … ) lists</span>, and <span class="lc">comments</span> (both <span class="manual-inline">//</span>
+                        line comments and <span class="manual-inline">/* … */</span> block comments).</div>
+                </section>
+
+                <section id="lexical" class="manual-section">
+                    <h2>Lexical rules</h2>
+                    <h3>Whitespace</h3>
+                    <p>Each line is <code class="manual-inline">trim()</code>’d before parsing. Indentation is allowed
+                        and ignored for matching; it is preserved only as part of the raw line for display.</p>
+                    <h3>Comments</h3>
+                    <p><strong>Line comments</strong> start with <span class="manual-inline">//</span> and run to the
+                        end of that physical line. A new comment starts only when both slash characters are at
+                        <strong>bracket depth zero</strong> (not nested inside unclosed <span class="manual-inline">( )</span>
+                        or <span class="manual-inline">[ ]</span> on that same line), so you can write <span class="manual-inline">H 0 // Bell prep</span>
+                        and <span class="manual-inline">CX [0,1] // entangle</span>. Text after that <span class="manual-inline">//</span>
+                        is ignored by the parser.</p>
+                    <p><strong>Block comments</strong> use <span class="manual-inline">/*</span> … <span class="manual-inline">*/</span>.
+                        They may appear anywhere a token can start (including between tokens on one line) and may span
+                        multiple lines. The first <span class="manual-inline">*/</span> closes the nearest open block.
+                        Unclosed blocks are reported as an error in the simulator gutter.</p>
+                    <p>After comments are removed, the remaining executable text on each line is trimmed and parsed. A
+                        line that contains only comments or whitespace is skipped.</p>
+                    <h3>Blank lines</h3>
+                    <p>Empty lines are skipped.</p>
+                    <h3>Numbers</h3>
+                    <p>Qubit indices are non-negative integers. For <span class="manual-inline">RX</span>/<span
+                            class="manual-inline">RY</span>/<span class="manual-inline">RZ</span>, omitting the angle uses
+                        the default <strong>π/2</strong>. When you supply a bare decimal (with optional scientific notation),
+                        it is interpreted as a <strong>multiple of π</strong>. You may instead
+                        give an explicit unit: append <span class="manual-inline">rad</span> or <span
+                            class="manual-inline">radians</span> for radians, or <span class="manual-inline">deg</span> /
+                        <span class="manual-inline">degrees</span> for degrees (e.g. <span class="manual-inline">RX 0
+                            1rad</span>, <span class="manual-inline">RY 1 90deg</span>).</p>
+                    <h3>Identifiers</h3>
+                    <p>Gate keywords are written in uppercase (<span class="manual-inline">MEASURE</span>, <span
+                            class="manual-inline">SWAP</span>, <span class="manual-inline">RX</span>, …). Stick to the
+                        supported names so the editor’s gate list, validation, and execution path all agree.</p>
+                </section>
+
+                <section id="directives" class="manual-section">
+                    <h2>Preprocessor: <span class="manual-inline">#import</span>, <span class="manual-inline">#include</span>, <span class="manual-inline">#define</span></h2>
+                    <p>Before the circuit is parsed, the simulator runs a small preprocessor (same behavior as <code class="manual-inline">qubi.js</code>). Directive lines are trimmed; block comments are respected the same way as elsewhere.</p>
+
+                    <h3><span class="manual-inline">#import</span> and <span class="manual-inline">#include</span></h3>
+                    <p>Both forms are equivalent. They splice another Qubi file into the compilation unit at this point:</p>
+                    <pre class="manual-code" aria-label="Import example"><span class="token-comment">// utils.qubi must exist as another tab in the simulator (same basename)</span>
+<span class="token-preprocessor">#import utils.qubi</span>
+<span class="token-preprocessor">#include helpers.qubi</span></pre>
+                    <p>Filename tokens allow letters, digits, dot, underscore, and hyphen; the name must end with <span class="manual-inline">.qubi</span>. Cycles or excessive nesting depth are rejected with an error. When no import resolver is configured, imports fail at execution time.</p>
+
+                    <h3><span class="manual-inline">#define</span> (named unitary)</h3>
+                    <p>Registers a custom gate backed by a literal complex matrix. The gate name (the token you use on circuit lines) must be <strong>1–4 uppercase letters A–Z only</strong> (normalized to uppercase). Invalid names are rejected in the preprocessor and in the live editor validator.</p>
+                    <p>Syntax:</p>
+                    <pre class="manual-code" aria-label="Define syntax"><span class="token-preprocessor">#define U [1 0; 0 i] "Phase gadget" "purple"</span></pre>
+                    <p>The matrix is written in square brackets. Rows are separated by semicolons (<span class="manual-inline">;</span>); entries in a row are separated by spaces or commas (comma is optional). The matrix must be square, size <span class="manual-inline">2<sup>k</sup></span>×<span class="manual-inline">2<sup>k</sup></span> with <span class="manual-inline">k ≥ 1</span>, and at most <span class="manual-inline">16×16</span>. It must be <strong>unitary</strong> (<span class="manual-inline">U†U = I</span>) within numerical tolerance.</p>
+
+                    <h3>Matrix entry expressions</h3>
+                    <p>Inside <span class="manual-inline">#define</span> each cell is parsed as a complex expression (whitespace ignored). Supported features match the simulator’s matrix helpers:</p>
+                    <ul>
+                        <li>Numbers (decimal and scientific notation), imaginary unit <span class="manual-inline">i</span>, constant <span class="manual-inline">pi</span>, constant <span class="manual-inline">e</span> when not followed by <span class="manual-inline">^</span>.</li>
+                        <li>Euler style: <span class="manual-inline">e^(i*pi/4)</span> (also works with complex exponents).</li>
+                        <li>Functions (real or complex argument where implemented): <span class="manual-inline">sqrt(…)</span>, <span class="manual-inline">sin(…)</span>, <span class="manual-inline">cos(…)</span>, <span class="manual-inline">tan(…)</span>, <span class="manual-inline">exp(…)</span>.</li>
+                        <li>Arithmetic <span class="manual-inline">+ − * /</span>, parentheses, unary <span class="manual-inline">+</span>/<span class="manual-inline">−</span>, and implicit multiplication (e.g. <span class="manual-inline">2pi</span>, <span class="manual-inline">3i</span>).</li>
+                    </ul>
+
+                    <h3>Using a <span class="manual-inline">#define</span>d gate on wires</h3>
+                    <p>A <span class="manual-inline">2×2</span> matrix is a one-qubit gate: use shorthand <span class="manual-inline">U 0</span> or parallel <span class="manual-inline">U (0,1)</span> for two independent one-qubit <span class="manual-inline">U</span>s in one column.</p>
+                    <p>For a <span class="manual-inline">2<sup>k</sup>×2<sup>k</sup></span> matrix with <span class="manual-inline">k &gt; 1</span>, list exactly <span class="manual-inline">k</span> qubit indices in <strong>square brackets</strong> — one <strong>joint</strong> gate on that register, e.g. a <span class="manual-inline">4×4</span> gate on qubits 0 and 1:</p>
+                    <pre class="manual-code" aria-label="Joint gate"><span class="token-preprocessor">#define P [0 1 0 0; 1 0 0 0; 0 0 1 0; 0 0 0 1]</span>
+<span class="token-gate">P</span> <span class="token-control-qubits">[0,1]</span></pre>
+                    <p><span class="manual-inline">CX</span>, <span class="manual-inline">CY</span>, <span class="manual-inline">CZ</span>, and <span class="manual-inline">SWAP</span> also use <span class="manual-inline">[…]</span> only (never bare <span class="manual-inline">(0,1)</span>, which is reserved for <em>parallel single-qubit</em> gates). You may wrap one or more bracket registers in parentheses: <span class="manual-inline">CX ([0,1])</span> or <span class="manual-inline">CX ([0,1], [2,3])</span> for two CNOTs in the same timestep.</p>
+                    <p class="manual-callout"><strong>Dragging from the palette:</strong> for multi-qubit custom gates, dropping the tile on wire <span class="manual-inline">q</span> places the gate on the consecutive wires <span class="manual-inline">q, q+1, …</span> if there is room and the column is free on all of them.</p>
+                </section>
+
+                <section id="grammar" class="manual-section">
+                    <h2>Line grammar</h2>
+                    <p>Lines are classified in this order (same order as <code class="manual-inline">qubi.js</code>):
+                        rotation lines (angle optional; default π/2), <span class="manual-inline">REPEAT</span>, <span
+                            class="manual-inline">END</span>, single-qubit shorthand, then bracket registers or parenthesized
+                        parallel lists. Anything that does not match is silently omitted from the instruction list, so a typo can
+                        silently drop operations. Rely on the simulator’s red underline and gutter tooltips.</p>
+                    <dl class="manual-dl">
+                        <dt>Rotation</dt>
+                        <dd><span class="manual-inline">RX|RY|RZ</span> + qubit list + optional angle: either
+                            <span class="manual-inline">GATE q [θ]</span>, <span class="manual-inline">GATE (q0,q1,…) [θ]</span>, or
+                            <span class="manual-inline">GATE [q0,q1,…] [θ]</span>
+                            for the same rotation on every listed wire. If <span class="manual-inline">θ</span> is omitted, the
+                            rotation is π/2. When present, <span class="manual-inline">θ</span> may be a
+                            <em>multiple of π</em>, or an explicit <span class="manual-inline">…rad</span> /
+                            <span class="manual-inline">…deg</span> literal (see Rotations).</dd>
+                        <dt>REPEAT</dt>
+                        <dd>Exact form <span class="manual-inline">REPEAT</span> + one or more spaces + a positive
+                            integer count. Lines like <span class="manual-inline">REPEAT</span> alone do not match and
+                            are skipped.</dd>
+                        <dt>END</dt>
+                        <dd>Executable text is exactly <span class="manual-inline">END</span> (after comment removal
+                            and trim). Optional trailing line comments are allowed, e.g. <span class="manual-inline">END // loop</span>.</dd>
+                        <dt>Shorthand</dt>
+                        <dd><span class="manual-inline">GATE q</span>: one gate token, whitespace, a single integer
+                            qubit. No commas. Example: <span class="manual-inline">H 0</span>.</dd>
+                        <dt>Parallel</dt>
+                        <dd><span class="manual-inline">GATE (q1,q2,…)</span>: ASCII parentheses; comma-separated
+                            non-negative integers; optional spaces after commas. Applies the same single-qubit gate to
+                            each listed wire in one time step. For <span class="manual-inline">RX</span>/<span
+                                class="manual-inline">RY</span>/<span class="manual-inline">RZ</span>, put an optional angle
+                            <em>after</em> the closing parenthesis: <span class="manual-inline">RX (0,1) 0.5</span> or
+                            <span class="manual-inline">RX (0,1)</span> for the default π/2.</dd>
+                        <dt>Brackets</dt>
+                        <dd><span class="manual-inline">GATE [q0,q1,…]</span>: square brackets; comma-separated
+                            integers. Used for <span class="manual-inline">CX</span>/<span class="manual-inline">CY</span>/<span class="manual-inline">CZ</span>, <span class="manual-inline">SWAP</span>, joint <span class="manual-inline">#define</span>d unitaries, and broadcasting any single-qubit gate to several wires (see next section). One timestep may list several registers as <span class="manual-inline">GATE ([q…],[q…])</span>.</dd>
+                    </dl>
+                    <pre class="manual-code" aria-label="Grammar examples"><span class="token-comment">// Comment-only line</span>
+<span class="token-gate">H</span> <span class="token-number">0</span> <span class="token-comment">// same-line</span>
+<span class="token-comment">/* multi-
+line block */</span>
+<span class="token-gate">H</span> <span class="token-target-qubits">(0,1,2)</span>
+<span class="token-gate">CX</span> <span class="token-control-qubits">[0,1]</span>
+<span class="token-gate">CX</span> <span class="token-target-qubits">([0,1], [2,3])</span>
+<span class="token-keyword">REPEAT</span> <span class="token-number">4</span>
+  <span class="token-gate">RZ</span> <span class="token-number">0</span> <span class="token-number">0.25</span>
+  <span class="token-gate">RX</span> <span class="token-control-qubits">[0,1]</span> <span class="token-number">0.25</span>
+  <span class="token-gate">RY</span> <span class="token-number">2</span> <span class="token-number">45deg</span>
+<span class="token-keyword">END</span></pre>
+                </section>
+
+                <section id="gates" class="manual-section">
+                    <h2>Gate set</h2>
+                    <p>Single-qubit unitaries include the Clifford set and <span class="manual-inline">T</span> for
+                        π/8 phase. Multi-qubit primitives are Pauli-controlled rotations and swap. <span
+                            class="manual-inline">MEASURE</span> collapses a wire in simulation.</p>
+                    <div class="manual-table-wrap">
+                        <table class="manual-table">
+                            <thead>
+                                <tr>
+                                    <th>Gate</th>
+                                    <th>Syntax notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><code>H</code></td>
+                                    <td>Hadamard; shorthand <code>H q</code> or parallel <code>H (…)</code>.</td>
+                                </tr>
+                                <tr>
+                                    <td><code>X</code> · <code>Y</code> · <code>Z</code></td>
+                                    <td>Pauli; same shorthand / parallel forms.</td>
+                                </tr>
+                                <tr>
+                                    <td><code>S</code> · <code>T</code></td>
+                                    <td>Phase π/2 and π/8 about Z.</td>
+                                </tr>
+                                <tr>
+                                    <td><code>CX</code> · <code>CY</code> · <code>CZ</code></td>
+                                    <td>Bracket form only, e.g. <code>CX [c,t]</code> or multi-control <code>CZ [c0,c1,t]</code>.</td>
+                                </tr>
+                                <tr>
+                                    <td><code>SWAP</code></td>
+                                    <td>Exactly two indices: <code>SWAP [a,b]</code>.</td>
+                                </tr>
+                                <tr>
+                                    <td><code>RX</code> · <code>RY</code> · <code>RZ</code></td>
+                                    <td><code>GATE q θ</code> or parallel <code>GATE (q,…) θ</code> or <code>GATE [q,…] θ</code>. Angle θ is a π-multiple, or use <code>…rad</code> / <code>…deg</code>.</td>
+                                </tr>
+                                <tr>
+                                    <td><code>MEASURE</code></td>
+                                    <td>Shorthand only: <code>MEASURE q</code>.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="multi" class="manual-section">
+                    <h2>Controlled and parallel operations</h2>
+                    <h3>Square brackets (controlled)</h3>
+                    <p>For <span class="manual-inline">CX</span>, <span class="manual-inline">CY</span>, and <span
+                            class="manual-inline">CZ</span>, the parser marks the line as controlled. The <strong>last</strong>
+                        index in the bracket list is the <strong>target</strong>; every earlier index is a control. So
+                        <span class="manual-inline">CX [0,1]</span> is control 0, target 1; <span class="manual-inline">CX [0,1,2]</span> is controls 0 and 1, target 2 (Toffoli-style multi-controlled X).</p>
+                    <h3>Parentheses (parallel)</h3>
+                    <p>Parentheses apply one single-qubit gate to several wires at the same time step, e.g. uniform
+                        superposition on a register:</p>
+                    <pre class="manual-code" aria-label="Parallel H"><span class="token-gate">H</span> <span class="token-target-qubits">(0,1,2,3)</span></pre>
+                    <h3>SWAP</h3>
+                    <p>Use bracket notation with the two wires to exchange:</p>
+                    <pre class="manual-code" aria-label="SWAP"><span class="token-gate">SWAP</span> <span class="token-control-qubits">[1,3]</span></pre>
+                </section>
+
+                <section id="rotations" class="manual-section">
+                    <h2>Parameterized rotations</h2>
+                    <p><span class="manual-inline">RX</span>, <span class="manual-inline">RY</span>, and <span
+                            class="manual-inline">RZ</span> take a qubit (or parenthesized or bracket list for the same gate on
+                        multiple wires in one step), then an optional angle. If you omit the angle, the rotation is
+                        <strong>π/2</strong> (same default as parallel <span class="manual-inline">RX (0)</span> on one wire).
+                        A <strong>plain number</strong> (when you supply an angle) is always a multiple
+                        of π: <span class="manual-inline">RY 1 0.5</span> is π/2 about Y on qubit 1.</p>
+                    <p>Optionally use units: <span class="manual-inline">rad</span> / <span
+                            class="manual-inline">radians</span> for radians, or <span class="manual-inline">deg</span> /
+                        <span class="manual-inline">degrees</span> for degrees — e.g. <span class="manual-inline">RX 0
+                            1rad</span> is a 1-radian rotation about X, and <span class="manual-inline">RZ 2 90deg</span> is
+                        π/2 about Z. Optional spaces before the suffix are allowed (<span class="manual-inline">35
+                            deg</span>).</p>
+                    <p><strong>Parallel rotations:</strong> <span class="manual-inline">RX (0,1) 0.5</span> applies the
+                        same RX (here 0.5·π on each) to qubits 0 and 1 in one timestep, analogous to <span
+                            class="manual-inline">H (0,1)</span>.</p>
+                    <p>The editor accepts the same default: <span class="manual-inline">RX 0</span>, <span class="manual-inline">RY [0,1]</span>, or
+                        <span class="manual-inline">RZ (0,1)</span> with no trailing token means π/2 on each listed wire. If you
+                        do write an angle, it must parse as a π-multiple, <span class="manual-inline">…rad</span>, or
+                        <span class="manual-inline">…deg</span>.</p>
+                    <pre class="manual-code" aria-label="Rotation examples"><span class="token-gate">RX</span> <span class="token-number">0</span>
+<span class="token-comment">// default π/2 about X on qubit 0</span>
+<span class="token-gate">RX</span> <span class="token-number">0</span> <span class="token-number">1</span>
+<span class="token-comment">// π rotation about X (1·π); same as 1π shorthand</span>
+<span class="token-gate">RY</span> <span class="token-number">1</span> <span class="token-number">0.5</span>
+<span class="token-gate">RX</span> <span class="token-number">0</span> <span class="token-number">1rad</span>
+<span class="token-gate">RZ</span> <span class="token-number">2</span> <span class="token-number">90deg</span>
+<span class="token-gate">RX</span> <span class="token-target-qubits">(0,1)</span> <span class="token-number">0.25</span>
+<span class="token-comment">// π/4 RX on both qubits 0 and 1</span>
+<span class="token-gate">RZ</span> <span class="token-number">2</span> <span class="token-number">0.125</span></pre>
+                </section>
+
+                <section id="repeat" class="manual-section">
+                    <h2>REPEAT and END</h2>
+                    <p><span class="manual-inline">REPEAT n</span> opens a block; every following line until the
+                        matching <span class="manual-inline">END</span> belongs to that block. Blocks may nest: inner
+                        <span class="manual-inline">REPEAT</span> pairs with the nearest following <span
+                            class="manual-inline">END</span> at the correct depth. The visual editor renders these as
+                        control-flow regions around the enclosed columns.</p>
+                    <p>Each gate line inside a block still consumes one column; <span class="manual-inline">REPEAT</span>
+                        and <span class="manual-inline">END</span> themselves occupy control-flow columns in the
+                        layout.</p>
+                    <pre class="manual-code" aria-label="Nested REPEAT"><span class="token-keyword">REPEAT</span> <span class="token-number">2</span>
+  <span class="token-gate">H</span> <span class="token-number">0</span>
+  <span class="token-keyword">REPEAT</span> <span class="token-number">3</span>
+    <span class="token-gate">T</span> <span class="token-number">1</span>
+  <span class="token-keyword">END</span>
+  <span class="token-gate">CX</span> <span class="token-control-qubits">[0,1]</span>
+<span class="token-keyword">END</span></pre>
+                </section>
+
+                <section id="measure" class="manual-section">
+                    <h2>Measurement</h2>
+                    <p><span class="manual-inline">MEASURE q</span> inserts a measurement on that wire. Use the same
+                        shorthand pattern as other unary operations. Semantics follow the simulator backend (collapse
+                        and sampled outcomes for shots).</p>
+                    <pre class="manual-code" aria-label="Measure"><span class="token-gate">H</span> <span class="token-number">0</span>
+<span class="token-gate">MEASURE</span> <span class="token-number">0</span></pre>
+                </section>
+
+                <section id="validation" class="manual-section">
+                    <h2>Editor validation (what turns red)</h2>
+                    <p>The live highlighter shares rules with the error tooltips on the line gutter. Highlights use the
+                        same token colors as above; invalid tokens use the simulator’s error style (red with wavy
+                        underline).</p>
+                    <ul>
+                        <li>Unclosed <span class="manual-inline">/*</span> block comment (missing <span class="manual-inline">*/</span>).</li>
+                        <li>Unknown gate name at the start of a gate line.</li>
+                        <li><span class="manual-inline">REPEAT</span> without a positive integer, or non-numeric count.
+                        </li>
+                        <li><span class="manual-inline">END</span> with no matching <span class="manual-inline">REPEAT</span> (unbalanced block).</li>
+                        <li>Unclosed <span class="manual-inline">REPEAT</span> at end of file (missing <span
+                                class="manual-inline">END</span>).</li>
+                        <li><span class="manual-inline">RX</span>/<span class="manual-inline">RY</span>/<span
+                                class="manual-inline">RZ</span> with a supplied angle that is unparseable (including
+                            <span class="manual-inline">…deg</span> / <span class="manual-inline">…rad</span>), or bad
+                            qubit list in <span class="manual-inline">(q,…)</span> / <span class="manual-inline">[q,…]</span> for rotations.</li>
+                        <li>Malformed parenthesis or bracket lists (non-integers, bad commas, missing closing delimiter).
+                        </li>
+                        <li>Preprocessor: invalid <span class="manual-inline">#import</span> / <span class="manual-inline">#include</span> filename; invalid <span class="manual-inline">#define</span> gate name (must be 1–4 uppercase letters), non-unitary matrix, non–power-of-two size, or size over <span class="manual-inline">16×16</span>.</li>
+                    </ul>
+                    <p>Balanced <span class="manual-inline">END</span> without <span class="manual-inline">REPEAT</span>
+                        is flagged; fix structure before exporting or sharing snippets.</p>
+                </section>
+
+                <section id="patterns" class="manual-section">
+                    <h2>Patterns and recipes</h2>
+                    <h3>Bell |Φ+⟩</h3>
+                    <pre class="manual-code" aria-label="Bell state"><span class="token-comment">// |Φ+⟩ = (|00⟩+|11⟩)/√2</span>
+<span class="token-gate">H</span> <span class="token-number">0</span>
+<span class="token-gate">CX</span> <span class="token-control-qubits">[0,1]</span></pre>
+                    <h3>Phase kickback with CZ</h3>
+                    <pre class="manual-code" aria-label="Phase kickback"><span class="token-gate">H</span> <span class="token-number">0</span>
+<span class="token-gate">X</span> <span class="token-number">1</span>
+<span class="token-gate">CZ</span> <span class="token-control-qubits">[0,1]</span></pre>
+                    <h3>Grover outer loop (placeholder body)</h3>
+                    <p>Fill oracle and diffusion from the simulator’s <strong>Algorithms</strong> menu for tuned
+                        counts; the skeleton below shows only control flow:</p>
+                    <pre class="manual-code" aria-label="Grover skeleton"><span class="token-gate">H</span> <span class="token-target-qubits">(0,1,2)</span>
+<span class="token-keyword">REPEAT</span> <span class="token-number">5</span>
+  <span class="token-comment">// oracle</span>
+  <span class="token-comment">// diffusion</span>
+<span class="token-keyword">END</span></pre>
+                </section>
+
+                <section id="examples" class="manual-section">
+                    <h2>Algorithm examples</h2>
+                    <p>Same parameterized Qubi generators as the simulator’s <strong>Quantum Examples</strong> library.
+                        Use the buttons to switch algorithms; change qubits and other options to refresh the preview.
+                        <strong>Open in Simulator</strong> sends the current preview into the simulator editor; you can
+                        also copy the snippet. In the simulator, the examples modal can
+                        <strong>show Qubi preview before loading</strong> into the editor.</p>
+                    <div id="manualAlgoExamplesRoot" class="manual-algo-root" hidden></div>
+                    <noscript>
+                        <p class="manual-callout">Enable JavaScript to browse live algorithm previews.</p>
+                    </noscript>
+                </section>
+
+                <section id="tools" class="manual-section">
+                    <h2>Tools and workflow</h2>
+                    <p>The <a href="/simulator/">Quantum Circuit Simulator</a> keeps Qubi, the drag-and-drop canvas, and
+                        exports in sync. <strong>QubiAI</strong> generates Qubi that follows these same patterns. Review
+                        bracket ordering (target last) after any AI edit. The <a href="/tutorial/">interactive
+                            tutorial</a> explains the linear algebra and algorithms behind the snippets here.</p>
+                    <div class="manual-callout"><strong>Practical workflow.</strong> Draft in the manual or in Git,
+                        paste into the simulator, fix any red lines using gutter tooltips, then snapshot the circuit or
+                        export images (PNG / SVG / PDF) for reviews.</div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <footer class="manual-footer">
+        <div class="container">
+            <p>© 2026 Qubibyte. Qubi and the Qubibyte wordmark are trademarks of Qubibyte.</p>
+        </div>
+    </footer>
+    <script src="/simulator/js/algorithms.js"></script>
+    <script src="/simulator/js/syntaxHighlight.js"></script>
+    <script src="js/manual-algorithms.js"></script>
+</body>
+
+</html>

@@ -292,7 +292,9 @@ class QubitVisualizer {
         
         // Scene
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0f172a);
+        scene.background = window.QubibyteTheme
+            ? window.QubibyteTheme.createThreeBackground()
+            : new THREE.Color(0x0f172a);
         
         // Camera
         const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
@@ -402,7 +404,9 @@ class QubitVisualizer {
         
         // Scene
         this.blochScene = new THREE.Scene();
-        this.blochScene.background = new THREE.Color(0x0f172a);
+        this.blochScene.background = window.QubibyteTheme
+            ? window.QubibyteTheme.createThreeBackground()
+            : new THREE.Color(0x0f172a);
         
         // Camera - positioned to look into the |+⟩ and |i⟩ corner
         // With |+⟩ on the left and |i⟩ on the right when |0⟩ is at top
@@ -935,8 +939,6 @@ class QubitVisualizer {
         
         const scrollContainer = document.createElement('div');
         scrollContainer.className = 'results-scroll-container';
-        scrollContainer.style.maxHeight = '320px';
-        scrollContainer.style.overflowY = 'auto';
         
         sortedProbs.forEach(([binary, prob]) => {
             const resultItem = document.createElement('div');
@@ -950,21 +952,16 @@ class QubitVisualizer {
             probEl.className = 'result-probability';
             probEl.textContent = `${(prob * 100).toFixed(precision)}%`;
             
-            resultItem.appendChild(binaryEl);
-            resultItem.appendChild(probEl);
-            
-            const barContainer = document.createElement('div');
-            barContainer.style.cssText = 'display: flex; justify-content: flex-end; width: 100%; margin-top: 0.5rem;';
-            
             const bar = document.createElement('div');
             bar.className = 'result-bar';
             const barFill = document.createElement('div');
             barFill.className = 'result-bar-fill';
             barFill.style.width = `${prob * 100}%`;
             bar.appendChild(barFill);
-            barContainer.appendChild(bar);
-            
-            resultItem.appendChild(barContainer);
+
+            resultItem.appendChild(binaryEl);
+            resultItem.appendChild(bar);
+            resultItem.appendChild(probEl);
             scrollContainer.appendChild(resultItem);
         });
         

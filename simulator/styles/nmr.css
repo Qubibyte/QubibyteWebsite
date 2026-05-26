@@ -7,7 +7,7 @@
     display: flex;
     flex-direction: column;
     height: 100%;
-    background: #0f172a;
+    background: var(--background);
     color: #e2e8f0;
 }
 
@@ -164,6 +164,16 @@
     align-items: center;
     position: relative;
     z-index: 1;
+}
+
+.nmr-pulse-clickable {
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.nmr-pulse-clickable:hover {
+    transform: scale(1.1);
+    opacity: 0.9;
 }
 
 .nmr-pulse-bar {
@@ -470,7 +480,7 @@
     width: calc(100% - 16px);
     padding: 6px 8px;
     font-size: 12px;
-    background: #0f172a;
+    background: var(--background);
     color: #e2e8f0;
     border: 1px solid #475569;
     border-radius: 4px;
@@ -596,7 +606,7 @@
 .nmr-jc-item {
     font-size: 9px;
     color: #94a3b8;
-    background: #0f172a;
+    background: var(--background);
     padding: 2px 5px;
     border-radius: 3px;
     font-family: monospace;
@@ -646,7 +656,7 @@
     width: 50px;
     padding: 3px 4px;
     font-size: 11px;
-    background: #0f172a;
+    background: var(--background);
     color: #e2e8f0;
     border: 1px solid #475569;
     border-radius: 3px;
@@ -663,7 +673,7 @@
     flex: 1;
     padding: 3px 6px;
     font-size: 10px;
-    background: #0f172a;
+    background: var(--background);
     color: #e2e8f0;
     border: 1px solid #475569;
     border-radius: 3px;
@@ -814,7 +824,7 @@
 }
 
 .nmr-sample-card {
-    background: #0f172a;
+    background: var(--background);
     border: 1px solid #334155;
     border-radius: 4px;
     padding: 8px;
@@ -947,31 +957,79 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+    .nmr-container {
+        height: auto !important;
+        min-height: 400px;
+    }
+
     .nmr-layout {
         flex-direction: column;
+        height: auto !important;
+        overflow: visible !important;
+        padding: 8px;
+        gap: 8px;
     }
-    
+
     .nmr-sidebar {
-        width: 100%;
-        flex-direction: row;
-        flex-wrap: wrap;
+        width: 100% !important;
+        min-width: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        flex-direction: column;
+        gap: 6px;
     }
-    
-    .nmr-sidebar .nmr-panel {
-        flex: 1 1 200px;
+
+    .nmr-main {
+        overflow: visible !important;
+        min-height: 300px;
     }
-    
+
     .nmr-viz-row {
         flex-direction: column;
     }
-    
-    .nmr-molecule-panel,
-    .nmr-pulse-panel {
-        flex: 1 1 auto;
+
+    .nmr-molecule-panel {
+        flex: none;
+        min-height: 200px;
     }
-    
+
+    .nmr-molecule-panel canvas {
+        min-height: 160px;
+        height: 200px;
+    }
+
+    .nmr-pulse-panel {
+        flex: none;
+    }
+
+    .nmr-spectrum-panel {
+        min-height: 250px;
+    }
+
+    .nmr-spectrum-panel canvas {
+        min-height: 200px;
+    }
+
+    #nmr-sample-panel {
+        max-height: none;
+    }
+
+    .nmr-resources {
+        grid-template-columns: 1fr;
+        height: auto !important;
+    }
+
     .nmr-fullscreen {
         width: 95vw !important;
         height: 90vh !important;
+    }
+
+    .resources-wrapper {
+        height: auto !important;
+        min-height: 300px;
+    }
+
+    .resources-wrapper .nmr-resources {
+        height: auto !important;
     }
 }

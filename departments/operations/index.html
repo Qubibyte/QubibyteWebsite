@@ -1,9 +1,33 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+    <script src="/js/theme-boot-inline.js"></script>
+    <script src="/js/software-mode-boot-inline.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <title>Operations Department - Qubibyte</title>
+    <meta name="description"
+        content="Qubibyte's Operations Department ensures efficient workflow, supply chain management, and operational excellence in quantum computing.">
+    <meta name="keywords" content="Qubibyte operations, quantum computing operations, supply chain, project management">
+    <meta name="author" content="Qubibyte">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Operations Department - Qubibyte">
+    <meta property="og:description"
+        content="Qubibyte's Operations Department ensures efficient workflow, supply chain management, and operational excellence in quantum computing.">
+    <meta property="og:image" content="/images/logo.png">
+    <meta property="og:url" content="https://qubibyte.org/departments/operations/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Operations Department - Qubibyte">
+    <meta name="twitter:description"
+        content="Qubibyte's Operations Department ensures efficient workflow, supply chain management, and operational excellence in quantum computing.">
+    <meta name="twitter:image" content="/images/logo.png">
+    <link rel="canonical" href="https://qubibyte.org/departments/operations/">
     <link rel="icon" type="image/x-icon" href="/images/fav.png">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -15,29 +39,35 @@
             padding: 120px 0 80px;
             text-align: center;
         }
+
         .department-content {
             padding: 60px 0;
         }
+
         .department-info-card {
-            background: #2a2a3e;
+            background: #141428;
             border-radius: 20px;
             padding: 40px;
             margin-bottom: 30px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
             transition: transform 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #e0e0e0;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: #f1f5f9;
         }
+
         .department-info-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
         }
+
         .department-content {
-            background: #1a1a2e;
+            background: #0a0a1a;
         }
+
         body {
-            background: #1a1a2e;
+            background: #0a0a1a;
         }
+
         .back-link {
             color: white;
             text-decoration: none;
@@ -47,34 +77,45 @@
             margin-bottom: 30px;
             transition: opacity 0.3s ease;
         }
+
         .back-link:hover {
             opacity: 0.8;
             color: white;
         }
+
         .department-card-description {
             color: #ffffff !important;
         }
+
         .department-card-description li {
             color: #ffffff !important;
         }
+
         .section-header::after {
             display: none;
         }
     </style>
+    <link rel="stylesheet" href="/css/themes.css">
+    <link rel="stylesheet" href="/css/theme-picker.css">
+    <script src="/js/theme.js"></script>
+    <script src="/js/theme-picker.js"></script>
+    <script src="/js/software-mode.js"></script>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-md navbar-dark fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="../../index.html"><img src="../../images/logo_white.png" alt="Qubibyte" style="width:100px;"></img></a>
+            <a class="navbar-brand" href="../../index.html"><img src="../../images/logo_white.png" alt="Qubibyte"
+                    style="width:100px;"></img></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item"><a class="nav-link" href="../../index.html#Products">Products</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../../index.html#Blog">Blog</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../../index.html#Company">Company</a></li>
-                    <li class="nav-item"><a class="nav-link" href="../../index.html#Career">Career</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/?section=Tech">Tech</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/?section=Media">Media</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/?section=Company">Company</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/?section=Career">Career</a></li>
                 </ul>
             </div>
         </div>
@@ -82,14 +123,16 @@
 
     <div class="department-hero">
         <div class="container">
-            <a href="../../index.html#Company" class="back-link">
+            <a href="/?section=Company" class="back-link">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
                 </svg>
                 Back to Company
             </a>
-            <h1 class="department-card-title" style="font-size: 3.5em; margin-bottom: 20px; color: white;">Operations Department</h1>
-            <p class="lead" style="font-size: 1.5em; max-width: 800px; margin: 0 auto; font-family: 'Khand', Arial, sans-serif;">
+            <h1 class="department-card-title" style="font-size: 3.5em; margin-bottom: 20px; color: white;">Operations
+                Department</h1>
+            <p class="lead"
+                style="font-size: 1.5em; max-width: 800px; margin: 0 auto; font-family: 'Khand', Arial, sans-serif;">
                 Ensuring seamless execution and operational excellence across all aspects of Qubibyte's business.
             </p>
         </div>
@@ -100,17 +143,21 @@
             <div class="row">
                 <div class="col-lg-8 offset-lg-2">
                     <div class="department-info-card">
-                        <h2 class="section-header" style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Overview</h2>
+                        <h2 class="section-header"
+                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Overview
+                        </h2>
                         <p class="department-card-description" style="font-size: 1.1em; line-height: 1.8;">
-                            The Operations Department is the engine that keeps Qubibyte running smoothly. We manage 
-                            day-to-day business activities, optimize processes, and ensure that our quantum computing 
-                            solutions are delivered efficiently and effectively. From supply chain management to 
+                            The Operations Department is the engine that keeps Qubibyte running smoothly. We manage
+                            day-to-day business activities, optimize processes, and ensure that our quantum computing
+                            solutions are delivered efficiently and effectively. From supply chain management to
                             quality assurance, our team ensures operational excellence at every level.
                         </p>
                     </div>
 
                     <div class="department-info-card">
-                        <h2 class="section-header" style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Responsibilities</h2>
+                        <h2 class="section-header"
+                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">
+                            Responsibilities</h2>
                         <ul class="department-card-description" style="font-size: 1.1em; line-height: 2;">
                             <li>Production planning and manufacturing coordination</li>
                             <li>Supply chain management and vendor relationships</li>
@@ -123,35 +170,47 @@
                     </div>
 
                     <div class="department-info-card">
-                        <h2 class="section-header" style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Key Focus Areas</h2>
+                        <h2 class="section-header"
+                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Key Focus
+                            Areas</h2>
                         <p class="department-card-description" style="font-size: 1.1em; line-height: 1.8;">
-                            Our operations team is particularly focused on scaling production of our quantum computing 
-                            hardware, including the upcoming Qubibyte Quadra. We work closely with the Technology 
-                            Department to translate R&D into manufacturable products, and with the Financial Department 
+                            Our operations team is particularly focused on scaling production of our quantum computing
+                            hardware, including the upcoming Qubibyte Quadra. We work closely with the Technology
+                            Department to translate R&D into manufacturable products, and with the Financial Department
                             to ensure cost-effective operations that support sustainable growth.
                         </p>
                     </div>
 
                     <div class="department-info-card">
-                        <h2 class="section-header" style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Excellence in Action</h2>
+                        <h2 class="section-header"
+                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Excellence
+                            in Action</h2>
                         <p class="department-card-description" style="font-size: 1.1em; line-height: 1.8;">
-                            The Operations Department prides itself on maintaining the highest standards of efficiency 
-                            and quality. We leverage lean methodologies and data-driven decision-making to continuously 
-                            improve our processes. Our goal is to ensure that Qubibyte can deliver innovative quantum 
-                            computing solutions at scale while maintaining the precision and quality our customers expect.
+                            The Operations Department prides itself on maintaining the highest standards of efficiency
+                            and quality. We leverage lean methodologies and data-driven decision-making to continuously
+                            improve our processes. Our goal is to ensure that Qubibyte can deliver innovative quantum
+                            computing solutions at scale while maintaining the precision and quality our customers
+                            expect.
                         </p>
                     </div>
 
                     <div class="department-info-card">
-                        <h2 class="section-header" style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Leadership</h2>
+                        <h2 class="section-header"
+                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Leadership
+                        </h2>
                         <p class="department-card-description" style="font-size: 1.1em; line-height: 1.8;">
-                            The Operations Department is led by <strong style="color: #ffffff;">Trent Rosenthal</strong>, Chief Operating Officer (Acting), 
-                            who has been serving in this acting capacity since <strong style="color: #0687C9;">November 23rd, 2025</strong>. 
-                            The operations team works closely with all departments to ensure seamless execution of business strategies 
+                            The Operations Department is led by <strong style="color: #ffffff;">Trent
+                                Rosenthal</strong>, Chief Operating Officer (Acting),
+                            who has been serving in this acting capacity since <strong style="color: #0687C9;">November
+                                23rd, 2025</strong>.
+                            The operations team works closely with all departments to ensure seamless execution of
+                            business strategies
                             and efficient delivery of Qubibyte's quantum computing solutions.
                         </p>
-                        <p class="department-card-description" style="font-size: 1.1em; line-height: 1.8; margin-top: 15px; color: #b0b0b0;">
-                            <strong style="color: #ffffff;">Trent Rosenthal</strong> - Chief Operating Officer (Acting)<br>
+                        <p class="department-card-description"
+                            style="font-size: 1.1em; line-height: 1.8; margin-top: 15px; color: #b0b0b0;">
+                            <strong style="color: #ffffff;">Trent Rosenthal</strong> - Chief Operating Officer
+                            (Acting)<br>
                             <strong style="color: #ffffff;">Tenure:</strong> November 23rd, 2025 - Present (Acting)
                         </p>
                     </div>
@@ -160,13 +219,14 @@
         </div>
     </div>
 
-    <footer style="background: #1a1a2e; padding: 40px 0; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+    <footer
+        style="background: #060614; padding: 40px 0; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.06);">
         <div class="container">
-            <p style="font-family: 'Khand', Arial, sans-serif; color: #b0b0b0; margin: 0;">
-                &copy; 2025 Qubibyte. All rights reserved.
+            <p style="font-family: 'Inter', 'Khand', sans-serif; color: #64748b; margin: 0; font-size: 0.85em;">
+                &copy; 2026 Qubibyte. All rights reserved.
             </p>
         </div>
     </footer>
 </body>
-</html>
 
+</html>

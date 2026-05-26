@@ -1,0 +1,265 @@
+/**
+ * Blog article pages — theme-aware, proportional 1920×1080 reference.
+ * Requires /css/themes.css, /newindex.css (--layout-ref-w/h), html[data-theme].
+ */
+
+body.blog-page {
+    background: var(--blog-page-bg) !important;
+    color: var(--blog-body-text) !important;
+}
+
+body.blog-page #Home {
+    background: var(--blog-page-bg) !important;
+    min-height: auto !important;
+    padding-top: calc(88 * 100vw / var(--layout-ref-w, 1920));
+    padding-bottom: calc(64 * 100vw / var(--layout-ref-w, 1920));
+}
+
+body.blog-page .blog-article-shell {
+    margin-top: calc(24 * 100vw / var(--layout-ref-w, 1920));
+}
+
+body.blog-page #articlediv {
+    font-size: calc(16 * 100vw / var(--layout-ref-w, 1920));
+    max-width: calc(1200 * 100vw / var(--layout-ref-w, 1920));
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+}
+
+#articlediv h2 {
+    color: var(--blog-heading) !important;
+    font-family: 'Khand', 'Inter', sans-serif;
+    font-size: 2.2em;
+    margin-bottom: calc(16 * 100vw / var(--layout-ref-w, 1920));
+}
+
+#articlediv p {
+    color: var(--blog-body-text) !important;
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    font-size: 1.15em;
+    line-height: 1.85;
+    margin-bottom: 1.2em;
+    text-align: left;
+}
+
+#articlediv strong {
+    color: var(--blog-strong) !important;
+    font-weight: 600;
+}
+
+nav.navbar.fixed-top {
+    background: var(--blog-navbar-bg) !important;
+}
+
+/* Images — proportional to 1080p (not 85vw, which overshoots on 720p) */
+#articlediv .blogimage {
+    display: block;
+    margin: calc(24 * 100vw / var(--layout-ref-w, 1920)) auto;
+    width: auto;
+    height: auto;
+    /* Fill article column width; height scales with 1080p reference */
+    max-width: 100% !important;
+    max-height: calc(810 * 100vh / var(--layout-ref-h, 1080)) !important;
+    object-fit: contain;
+    border-radius: calc(8 * 100vw / var(--layout-ref-w, 1920));
+    border: calc(1 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-image-border);
+    background-color: var(--blog-image-bg);
+}
+
+/* UI photos, diagrams — smaller than full-width charts */
+#articlediv .blogimage.blogimage--small {
+    max-width: min(100%, calc(480 * 100vw / var(--layout-ref-w, 1920))) !important;
+    max-height: calc(320 * 100vh / var(--layout-ref-h, 1080)) !important;
+}
+
+.blog-video-wrap {
+    display: flex;
+    justify-content: center;
+    margin: calc(24 * 100vw / var(--layout-ref-w, 1920)) 0;
+}
+
+#youtubevideo {
+    width: calc(648 * 100vw / var(--layout-ref-w, 1920)) !important;
+    height: calc(432 * 100vh / var(--layout-ref-h, 1080)) !important;
+    max-width: 100% !important;
+    border: 0 !important;
+    border-radius: calc(12 * 100vw / var(--layout-ref-w, 1920)) !important;
+}
+
+.blog-section-heading {
+    color: var(--blog-heading) !important;
+    font-family: 'Khand', 'Inter', sans-serif;
+    font-size: 1.7em;
+    font-weight: 600;
+    margin: 2em 0 0.8em;
+    padding-bottom: 0.3em;
+    border-bottom: calc(1 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-section-border);
+}
+
+#articlediv code {
+    background: var(--blog-code-inline-bg);
+    padding: calc(2 * 100vw / var(--layout-ref-w, 1920)) calc(6 * 100vw / var(--layout-ref-w, 1920));
+    border-radius: calc(4 * 100vw / var(--layout-ref-w, 1920));
+    font-family: 'Courier New', monospace;
+    font-size: 0.88em;
+    color: var(--blog-code-inline-fg);
+}
+
+#articlediv a {
+    color: var(--blog-link);
+    text-decoration: none;
+}
+
+#articlediv a:hover {
+    text-decoration: underline;
+}
+
+.blog-component-table-wrapper {
+    overflow-x: auto;
+    margin: 1.6em 0 2em;
+    border-radius: calc(10 * 100vw / var(--layout-ref-w, 1920));
+    border: calc(1 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-table-wrap-border);
+}
+
+.blog-component-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'Khand', 'Inter', sans-serif;
+    font-size: 0.98em;
+}
+
+.blog-component-table thead {
+    background: var(--blog-table-head-bg);
+}
+
+.blog-component-table th {
+    padding: calc(12 * 100vw / var(--layout-ref-w, 1920)) calc(16 * 100vw / var(--layout-ref-w, 1920));
+    text-align: left;
+    color: var(--blog-table-head-fg);
+    font-weight: 600;
+    font-size: 1.02em;
+    border-bottom: calc(2 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-table-head-border);
+    white-space: nowrap;
+}
+
+.blog-component-table td {
+    padding: calc(10 * 100vw / var(--layout-ref-w, 1920)) calc(16 * 100vw / var(--layout-ref-w, 1920));
+    color: var(--blog-table-cell-fg);
+    border-bottom: calc(1 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-table-row-border);
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 0.95em;
+}
+
+.blog-component-table tbody tr:hover {
+    background: var(--blog-table-row-hover);
+}
+
+.blog-component-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.blog-component-table .part-num {
+    font-family: 'Courier New', monospace;
+    font-size: 0.88em;
+    color: var(--blog-table-part-fg);
+    background: var(--blog-table-part-bg);
+    padding: calc(1 * 100vw / var(--layout-ref-w, 1920)) calc(5 * 100vw / var(--layout-ref-w, 1920));
+    border-radius: calc(3 * 100vw / var(--layout-ref-w, 1920));
+}
+
+.blog-component-table .tbd {
+    color: var(--blog-table-tbd-fg);
+    font-style: italic;
+}
+
+.qubi-code-block {
+    background: var(--blog-code-block-bg);
+    border: calc(1 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-code-block-border);
+    border-radius: calc(10 * 100vw / var(--layout-ref-w, 1920));
+    margin: 1.4em auto 1.6em;
+    max-width: min(100%, calc(560 * 100vw / var(--layout-ref-w, 1920)));
+    overflow: hidden;
+    text-align: left;
+}
+
+.qubi-code-header {
+    background: var(--blog-code-header-bg);
+    padding: calc(9 * 100vw / var(--layout-ref-w, 1920)) calc(16 * 100vw / var(--layout-ref-w, 1920));
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    font-size: 0.78em;
+    font-weight: 500;
+    color: var(--blog-code-header-fg);
+    border-bottom: calc(1 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-code-block-border);
+    display: flex;
+    align-items: center;
+    gap: calc(8 * 100vw / var(--layout-ref-w, 1920));
+}
+
+.qubi-code-lang {
+    background: var(--blog-code-lang-bg);
+    color: var(--blog-code-lang-fg);
+    font-size: 0.85em;
+    font-weight: 600;
+    padding: calc(2 * 100vw / var(--layout-ref-w, 1920)) calc(7 * 100vw / var(--layout-ref-w, 1920));
+    border-radius: calc(4 * 100vw / var(--layout-ref-w, 1920));
+    letter-spacing: calc(0.4 * 100vw / var(--layout-ref-w, 1920));
+}
+
+.qubi-code-body {
+    padding: calc(16 * 100vw / var(--layout-ref-w, 1920)) calc(20 * 100vw / var(--layout-ref-w, 1920));
+    font-family: 'Courier New', 'Fira Code', monospace;
+    font-size: 0.92em;
+    line-height: 1.65;
+    color: var(--blog-code-body-fg);
+    overflow-x: auto;
+    white-space: pre;
+    margin: 0;
+}
+
+.hl-gate { color: #c084fc; font-weight: 600; }
+.hl-keyword { color: #9295ff; font-weight: 600; }
+.hl-bracket { color: #63d4b6; }
+.hl-paren { color: #60a5fa; }
+.hl-number { color: #fbbf24; }
+.hl-comment { color: #96addb; font-style: italic; }
+.hl-py-kw { color: #ff7b72; }
+.hl-py-fn { color: #d2a8ff; }
+.hl-py-str { color: #a5d6ff; }
+.hl-py-comment { color: #8b949e; font-style: italic; }
+
+html[data-theme="light"] .hl-gate { color: #7c3aed; }
+html[data-theme="light"] .hl-keyword { color: #4f46e5; }
+html[data-theme="light"] .hl-comment,
+html[data-theme="light"] .hl-py-comment { color: #64748b; }
+
+@media (max-width: 767.98px) {
+    body.blog-page #Home {
+        padding-top: calc(72 * 100vw / var(--layout-ref-w, 1920));
+    }
+
+    body.blog-page #articlediv {
+        max-width: 100%;
+    }
+
+    #articlediv h2 {
+        font-size: 1.6em;
+    }
+
+    #articlediv p {
+        font-size: 1.05em;
+        line-height: 1.75;
+    }
+
+    .blog-section-heading {
+        font-size: 1.35em;
+    }
+
+    .qubi-code-block {
+        max-width: 100%;
+    }
+
+    .qubi-code-body {
+        font-size: 0.82em;
+    }
+}

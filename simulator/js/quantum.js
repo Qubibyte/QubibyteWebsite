@@ -353,12 +353,11 @@ class QuantumState {
             throw new Error(`Invalid qubit index: ${qubitIndex}`);
         }
 
-        if (this.useOptimizedGates) {
-            // Use O(2^n) optimized implementation
+        const gateMatrix = this.getGateMatrix(gate);
+        // Optimized 2×2 path only when the matrix is actually 2×2 (custom gates may register larger matrices).
+        if (this.useOptimizedGates && gateMatrix.length === 4) {
             this.applyGateOptimized(gate, qubitIndex);
         } else {
-            // Use generalized matrix multiplication
-            const gateMatrix = GateMatrices[gate] || this.getGateMatrix(gate);
             this.applyGateGeneral(gateMatrix, [qubitIndex]);
         }
     }
@@ -664,7 +663,7 @@ class QuantumState {
             'T': [Complex.create(1), Complex.create(0), Complex.create(0), Complex.fromPolar(1, Math.PI/4)], // T gate: |1⟩ -> e^(iπ/4)|1⟩
         };
 
-        return gates[gate] || [Complex.create(1), Complex.create(0), Complex.create(0), Complex.create(1)];
+        return gates[gate] || GateMatrices[gate] || [Complex.create(1), Complex.create(0), Complex.create(0), Complex.create(1)];
     }
 
     getRotationMatrix(axis, angle) {

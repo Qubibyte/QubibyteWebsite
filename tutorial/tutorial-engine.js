@@ -61,7 +61,7 @@ function renderSidebar() {
         <div class="sidebar-header">
             <div class="sidebar-controls">
                 <a href="/" class="sidebar-logo-link">
-                    <img src="/images/logo_cropped.png" alt="Qubibyte Logo" class="sidebar-logo">
+                    <img src="/images/logo_white.png" alt="Qubibyte Logo" class="sidebar-logo">
                 </a>
                 <button class="mobile-menu-toggle" onclick="toggleSidebar()">
                     <span>☰</span>
@@ -467,7 +467,7 @@ function showExamResultsWithFeedback(percentage, passed, feedbackData) {
                 <div style="margin-top: 30px; background: rgba(5, 75, 110, 0.3); padding: 20px; border-radius: 10px;">
                     <h3>Claim Your Certificate</h3>
                     <p>Enter your name as it should appear on the certificate:</p>
-                    <input type="text" id="cert-name-input" placeholder="Your Name" style="padding: 10px; font-size: 1.2rem; width: 300px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 15px; color: black;">
+                    <input type="text" id="cert-name-input" placeholder="Your Name" style="padding: 10px; font-size: 1.2rem; width: 100%; max-width: 300px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 15px; color: black; box-sizing: border-box;">
                     <br>
                     <button class="btn-nav" onclick="generateCertificate()">Generate Certificate</button>
                     <br><br>
@@ -498,7 +498,7 @@ function renderSuccessDashboard(state) {
             <div style="margin-top: 30px; background: rgba(5, 75, 110, 0.3); padding: 20px; border-radius: 10px;">
                 <h3>Certificate</h3>
                 <p>Enter your name to regenerate your certificate:</p>
-                <input type="text" id="cert-name-input" placeholder="Your Name" style="padding: 10px; font-size: 1.2rem; width: 300px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 15px; color: black;">
+                <input type="text" id="cert-name-input" placeholder="Your Name" style="padding: 10px; font-size: 1.2rem; width: 100%; max-width: 300px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 15px; color: black; box-sizing: border-box;">
                 <br>
                 <button class="btn-nav" onclick="generateCertificate()">View Certificate</button>
                 <br><br>
@@ -561,7 +561,7 @@ function generateCertificate() {
 
                 <div class="cert-footer">
                     <div class="cert-col">
-                        <img src="/images/logo_cropped.png" alt="Qubibyte" class="cert-logo-img">
+                        <img src="/images/logo_white.png" alt="Qubibyte" class="cert-logo-img">
                     </div>
                     
                     <div class="cert-col">

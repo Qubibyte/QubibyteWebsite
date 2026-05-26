@@ -288,6 +288,10 @@ class NMRSimulatorUI {
         document.getElementById('nmr-spectrum-mode')?.addEventListener('change', () => {
             this.spectrumZoom = 1.0;
             this.spectrumPanX = 0;
+            // Clear any empty data points that might cause issues
+            if (this.spectrumData) {
+                this.spectrumData.dataPoints = [];
+            }
             this.updateSpectrum();
         });
         
@@ -601,7 +605,9 @@ class NMRSimulatorUI {
         let html = `<div class="nmr-nuclei-header">B₀ = ${b0.toFixed(2)} T</div>`;
         html += '<table class="nmr-nuclei-table"><thead><tr><th>Q</th><th>Nucleus</th><th>δ ppm</th><th>ω MHz</th></tr></thead><tbody>';
         
-        nuclei.forEach((n, i) => {
+        // Iterate over nuclei using the actual sample nuclei array to ensure correct indexing
+        for (let i = 0; i < this.nmrEngine.sample.nuclei.length; i++) {
+            const n = nuclei[i]; // Get the mapped info from getNucleiInfo()
             // Make qubit number clickable to focus on that peak
             html += `<tr class="nmr-nuclei-row" data-qubit="${i}" title="Click to focus on Q${i} peak">
                 <td class="nmr-qubit-focus">${i}</td>
@@ -609,7 +615,7 @@ class NMRSimulatorUI {
                 <td>${(n.chemicalShift || 0).toFixed(1)}</td>
                 <td>${(n.larmorFreq / 1e6).toFixed(2)}</td>
             </tr>`;
-        });
+        }
         
         html += '</tbody></table>';
         
@@ -672,7 +678,8 @@ class NMRSimulatorUI {
             const maxFreq = Math.max(...freqs);
             const center = (minFreq + maxFreq) / 2;
             
-            this.spectrumPanX = (freq - center) / 1e6 * 20;
+            // Pan in Hz units (same as data values) with appropriate scale
+            this.spectrumPanX = (freq - center) * 0.0001;
         }
         
         this.updateSpectrum();
@@ -912,6 +919,109 @@ class NMRSimulatorUI {
         ctx.font = `${isFullscreen ? 14 : 10}px sans-serif`;
         ctx.textAlign = 'left';
         ctx.fillText(this.nmrEngine.sample.formula || '', isFullscreen ? 15 : 8, canvas.height - (isFullscreen ? 15 : 8));
+        
+        // Legend in fullscreen mode
+        if (isFullscreen) {
+            this.drawMoleculeLegend(ctx, canvas.width, canvas.height);
+        }
+    }
+    
+    drawMoleculeLegend(ctx, width, height) {
+        const legendX = width - 200;
+        const legendY = 50;
+        const legendWidth = 180;
+        const legendHeight = 220;
+        
+        // Background
+        ctx.fillStyle = 'rgba(30, 41, 59, 0.95)';
+        ctx.fillRect(legendX, legendY, legendWidth, legendHeight);
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(legendX, legendY, legendWidth, legendHeight);
+        
+        // Title
+        ctx.fillStyle = '#f1f5f9';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('Legend', legendX + 10, legendY + 25);
+        
+        let y = legendY + 50;
+        const lineHeight = 28;
+        const iconSize = 16;
+        const textStart = legendX + 35;
+        
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'left';
+        
+        // Qubit atoms
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(legendX + 20, y, iconSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(legendX + 20, y, iconSize / 2 + 2, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('Qubit atoms (Q0, Q1, ...)', textStart, y + 5);
+        y += lineHeight;
+        
+        // Regular atoms
+        ctx.fillStyle = '#64748b';
+        ctx.beginPath();
+        ctx.arc(legendX + 20, y, iconSize / 2 * 0.9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('Non-qubit atoms', textStart, y + 5);
+        y += lineHeight;
+        
+        // Bonds
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(legendX + 12, y);
+        ctx.lineTo(legendX + 28, y);
+        ctx.stroke();
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('Covalent bonds', textStart, y + 5);
+        y += lineHeight;
+        
+        // Double bonds
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(legendX + 12, y - 3);
+        ctx.lineTo(legendX + 28, y - 3);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(legendX + 12, y + 3);
+        ctx.lineTo(legendX + 28, y + 3);
+        ctx.stroke();
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('Double bonds', textStart, y + 5);
+        y += lineHeight;
+        
+        // J-coupling
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = 'rgba(129, 140, 248, 0.8)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(legendX + 12, y);
+        ctx.lineTo(legendX + 28, y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('J-coupling (dashed)', textStart, y + 5);
+        y += lineHeight;
+        
+        // Qubit labels
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText('Q0', legendX + 20, y + 5);
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText('Qubit labels', textStart, y + 5);
     }
     
     // Helper color functions
@@ -994,13 +1104,15 @@ class NMRSimulatorUI {
         
         const vals = dataPoints.map(d => d.val);
         const minVal = vals.length ? Math.min(...vals) : 0;
-        const maxVal = vals.length ? Math.max(...vals) : 10;
-        const spread = (maxVal - minVal) || 10;
-        const padding = Math.max(spread * 0.15, mode === 'ppm' ? 0.5 : 50);
+        const maxVal = vals.length ? Math.max(...vals) : (mode === 'ppm' ? 10 : 50e6);
+        const spread = (maxVal - minVal) || (mode === 'ppm' ? 10 : 50e6);
+        const padding = Math.max(spread * 0.15, mode === 'ppm' ? 0.5 : spread * 0.05);
         
         // Apply zoom and pan
         const range = (spread + 2 * padding) / this.spectrumZoom;
-        const center = (minVal + maxVal) / 2 + this.spectrumPanX * (mode === 'ppm' ? 0.05 : 5);
+        // Pan scale: ppm mode uses small values, Hz mode uses Hz values (already scaled)
+        const panScale = mode === 'ppm' ? 0.05 : 1.0;
+        const center = (minVal + maxVal) / 2 + this.spectrumPanX * panScale;
         const viewMin = center - range / 2;
         const viewMax = center + range / 2;
         
@@ -1442,7 +1554,7 @@ class NMRSimulatorUI {
                 const pulsesAtCol = pulsesByColumnAndQubit[key] || [];
                 
                 if (pulsesAtCol.length > 0) {
-                    pulsesAtCol.forEach(p => {
+                    pulsesAtCol.forEach((p, pIdx) => {
                         // Color based on rotation angle
                         let cls = 'nmr-pulse-90';
                         if (p.flipAngle && Math.abs(p.flipAngle - Math.PI) < 0.1) cls = 'nmr-pulse-180';
@@ -1454,7 +1566,19 @@ class NMRSimulatorUI {
                         const angleDeg = p.flipAngle ? (p.flipAngle * 180 / Math.PI).toFixed(0) : '90';
                         const tooltip = `${p.gate || p.description} (${angleDeg}°${phaseLabel})`;
                         
-                        html += `<div class="nmr-pulse-block ${cls}" title="${tooltip}">
+                        // Store pulse data as JSON for click handler
+                        const pulseData = JSON.stringify({
+                            gate: p.gate || '',
+                            description: p.description || '',
+                            frequency: p.frequency,
+                            duration: p.duration,
+                            flipAngle: p.flipAngle,
+                            phase: p.phase,
+                            qubit: p.qubit,
+                            type: p.type
+                        });
+                        
+                        html += `<div class="nmr-pulse-block ${cls} nmr-pulse-clickable" title="${tooltip}" data-pulse='${pulseData.replace(/'/g, '&apos;')}'>
                             <div class="nmr-pulse-bar"></div>
                             <span class="nmr-pulse-name">${p.gate || ''}</span>
                         </div>`;
@@ -1483,6 +1607,101 @@ class NMRSimulatorUI {
         }
         
         container.innerHTML = html;
+        
+        // Add click handlers to pulse blocks
+        container.querySelectorAll('.nmr-pulse-clickable').forEach(block => {
+            block.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const pulseData = JSON.parse(block.dataset.pulse);
+                this.showPulsePopup(pulseData, e.clientX, e.clientY);
+            });
+        });
+    }
+    
+    showPulsePopup(pulse, x, y) {
+        // Remove existing popup
+        this.hidePulsePopup();
+        
+        const popup = document.createElement('div');
+        popup.id = 'nmr-pulse-popup';
+        popup.className = 'nmr-peak-popup';
+        
+        const freqMHz = pulse.frequency ? (pulse.frequency / 1e6).toFixed(4) : 'N/A';
+        const durationMs = pulse.duration ? (pulse.duration * 1000).toFixed(2) : 'N/A';
+        const angleDeg = pulse.flipAngle ? (pulse.flipAngle * 180 / Math.PI).toFixed(1) : 'N/A';
+        const phaseDeg = pulse.phase !== undefined ? ((pulse.phase * 180 / Math.PI) % 360).toFixed(0) : 'N/A';
+        const phaseLabel = phaseDeg === '0' ? 'x' : phaseDeg === '90' ? 'y' : phaseDeg === '180' ? '-x' : phaseDeg === '270' ? '-y' : `${phaseDeg}°`;
+        
+        popup.innerHTML = `
+            <div class="nmr-popup-header">
+                <span class="nmr-popup-nucleus">${pulse.gate || 'Pulse'}</span>
+                <span class="nmr-popup-element">${pulse.type || 'rf'}</span>
+                <button class="nmr-popup-close" onclick="document.getElementById('nmr-pulse-popup')?.remove()">✕</button>
+            </div>
+            <div class="nmr-popup-body">
+                ${pulse.frequency ? `
+                <div class="nmr-popup-row">
+                    <span class="nmr-popup-label">Frequency:</span>
+                    <span class="nmr-popup-value">${freqMHz} MHz</span>
+                </div>` : ''}
+                <div class="nmr-popup-row">
+                    <span class="nmr-popup-label">Duration:</span>
+                    <span class="nmr-popup-value">${durationMs} ms</span>
+                </div>
+                ${pulse.flipAngle ? `
+                <div class="nmr-popup-row">
+                    <span class="nmr-popup-label">Flip Angle:</span>
+                    <span class="nmr-popup-value">${angleDeg}°</span>
+                </div>` : ''}
+                ${pulse.phase !== undefined ? `
+                <div class="nmr-popup-row">
+                    <span class="nmr-popup-label">Phase:</span>
+                    <span class="nmr-popup-value">${phaseLabel}</span>
+                </div>` : ''}
+                ${pulse.qubit !== undefined ? `
+                <div class="nmr-popup-row">
+                    <span class="nmr-popup-label">Qubit:</span>
+                    <span class="nmr-popup-value">Q${pulse.qubit}</span>
+                </div>` : ''}
+                ${pulse.description ? `
+                <div class="nmr-popup-env">
+                    <span class="nmr-popup-label">Description:</span>
+                    <span class="nmr-popup-desc">${pulse.description}</span>
+                </div>` : ''}
+            </div>
+        `;
+        
+        // Position popup
+        popup.style.left = `${x + 10}px`;
+        popup.style.top = `${y - 10}px`;
+        
+        document.body.appendChild(popup);
+        
+        // Adjust if off screen
+        const popupRect = popup.getBoundingClientRect();
+        if (popupRect.right > window.innerWidth) {
+            popup.style.left = `${x - popupRect.width - 10}px`;
+        }
+        if (popupRect.bottom > window.innerHeight) {
+            popup.style.top = `${y - popupRect.height - 10}px`;
+        }
+        
+        // Close on click outside
+        setTimeout(() => {
+            document.addEventListener('click', this.hidePulsePopupOnClickOutside, { once: true });
+        }, 100);
+    }
+    
+    hidePulsePopupOnClickOutside = (e) => {
+        const popup = document.getElementById('nmr-pulse-popup');
+        if (popup && !popup.contains(e.target)) {
+            popup.remove();
+        }
+    }
+    
+    hidePulsePopup() {
+        const popup = document.getElementById('nmr-pulse-popup');
+        if (popup) popup.remove();
     }
     
     setCircuit(circuit) {

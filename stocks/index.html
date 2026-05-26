@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="https://schema.org/WebApplication">
+
+<head>
+    <script src="/js/theme-boot-inline.js"></script>
+    <script src="/js/software-mode-boot-inline.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Primary SEO -->
+    <title>Quantum Stock Tracker — Live Quantum Computing Stock Charts | Qubibyte</title>
+    <meta name="description"
+        content="Track quantum computing stocks live with Qubibyte's Quantum Stock Tracker. Real-time Yahoo Finance data for IONQ, RGTI, QUBT, QBTS, ARQQ, QTUM, INFQ and QUBI with interactive charts and annotated historical events.">
+    <meta name="keywords"
+        content="quantum computing stocks, quantum stock tracker, IONQ stock, RGTI stock, QUBT stock, QBTS stock, D-Wave stock, IonQ stock, Rigetti stock, Arqit stock, Infleqtion stock, Qubibyte, quantum ETF, QTUM ETF, quantum investing, quantum computing market">
+    <meta name="author" content="Qubibyte">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+    <link rel="canonical" href="https://qubibyte.org/stocks/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://qubibyte.org/stocks/">
+    <meta property="og:title" content="Quantum Stock Tracker — Live Quantum Computing Stock Charts">
+    <meta property="og:description"
+        content="Interactive live charts for quantum computing stocks. Track IONQ, RGTI, QUBT, QBTS, ARQQ, QTUM, INFQ and QUBI with historical event annotations.">
+    <meta property="og:image" content="https://qubibyte.org/images/logo.png">
+    <meta property="og:image:alt" content="Qubibyte Quantum Stock Tracker">
+    <meta property="og:site_name" content="Qubibyte">
+    <meta property="og:locale" content="en_US">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Quantum Stock Tracker — Live Charts | Qubibyte">
+    <meta name="twitter:description"
+        content="Track quantum computing stocks live with interactive charts and historical event annotations. Powered by Qubibyte.">
+    <meta name="twitter:image" content="https://qubibyte.org/images/logo.png">
+
+    <!-- Structured Data — WebApplication -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Quantum Stock Tracker",
+        "url": "https://qubibyte.org/stocks/",
+        "description": "Track quantum computing stocks live with interactive charts and annotated historical events. Covers IONQ, RGTI, QUBT, QBTS, ARQQ, QTUM, INFQ, and QUBI.",
+        "applicationCategory": "FinanceApplication",
+        "operatingSystem": "Web",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "Qubibyte",
+            "url": "https://qubibyte.org"
+        },
+        "browserRequirements": "Requires JavaScript"
+    }
+    </script>
+
+    <!-- Structured Data — BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Qubibyte", "item": "https://qubibyte.org" },
+            { "@type": "ListItem", "position": 2, "name": "Tech", "item": "https://qubibyte.org/?section=Tech" },
+            { "@type": "ListItem", "position": 3, "name": "Quantum Stock Tracker", "item": "https://qubibyte.org/stocks/" }
+        ]
+    }
+    </script>
+
+    <!-- Structured Data — FAQPage (quantum stock FAQs) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {
+                "@type": "Question",
+                "name": "What quantum computing stocks can I track?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "The Quantum Stock Tracker covers IONQ (IonQ), RGTI (Rigetti Computing), QUBT (Quantum Computing Inc.), QBTS (D-Wave Quantum), ARQQ (Arqit Quantum), QTUM (Defiance Quantum ETF), INFQ (Infleqtion), and QUBI (Qubibyte - private)."
+                }
+            },
+            {
+                "@type": "Question",
+                "name": "Is the stock data real-time?",
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": "Price data is sourced from Yahoo Finance and cached for up to 4 hours. The data is near-real-time for publicly traded stocks. Private stocks like QUBI show curated company data."
+                }
+            }
+        ]
+    }
+    </script>
+
+    <link rel="icon" type="image/x-icon" href="/images/fav.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link href="styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/themes.css">
+    <script src="/js/theme.js"></script>
+    <script src="/js/software-mode.js"></script>
+</head>
+
+<body>
+    <!-- Compact Top Bar -->
+    <header class="top-bar" id="topBar">
+        <a class="top-logo" href="/"><img src="/images/logo_white.png" alt="Qubibyte"></a>
+        <div class="top-title">
+            <h1 class="top-title-text">Quantum Stock Tracker</h1>
+            <span class="top-live-dot" aria-label="Live data indicator"></span>
+        </div>
+    </header>
+
+    <!-- Main App Container — fills viewport -->
+    <main class="app" id="app">
+
+        <!-- Left: Stock Selector Strip -->
+        <aside class="stock-strip" id="stockStrip" aria-label="Stock selector">
+            <!-- Stock buttons injected by JS -->
+        </aside>
+
+        <!-- Center: Chart + Events -->
+        <section class="center-panel" aria-label="Stock chart and events">
+
+            <!-- Chart Header (tiny) -->
+            <div class="chart-bar" id="chartBar">
+                <div class="chart-bar-left">
+                    <span class="chart-bar-icon" id="chartBarIcon">⚛️</span>
+                    <span class="chart-bar-name" id="chartBarName">IonQ, Inc.</span>
+                    <span class="chart-bar-ticker" id="chartBarTicker">IONQ</span>
+                    <span class="chart-bar-price" id="chartBarPrice">$38.72</span>
+                    <span class="chart-bar-change up" id="chartBarChange">+5.14%</span>
+                    <span class="chart-bar-src" id="chartBarSrc"></span>
+                </div>
+                <div class="chart-bar-right">
+                    <div class="tf-group" id="tfGroup" role="group" aria-label="Chart timeframe">
+                        <button class="tf-btn" data-tf="1D">1D</button>
+                        <button class="tf-btn" data-tf="5D">5D</button>
+                        <button class="tf-btn active" data-tf="1M">1M</button>
+                        <button class="tf-btn" data-tf="6M">6M</button>
+                        <button class="tf-btn" data-tf="YTD">YTD</button>
+                        <button class="tf-btn" data-tf="1Y">1Y</button>
+                        <button class="tf-btn" data-tf="5Y">5Y</button>
+                        <button class="tf-btn" data-tf="All">All</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- The Chart — this is the STAR -->
+            <div class="chart-wrap" id="chartWrap">
+                <canvas id="mainChart" aria-label="Stock price chart"></canvas>
+                <div class="chart-tooltip" id="tooltip"></div>
+                <div class="crosshair-v" id="crossV"></div>
+                <div class="crosshair-h" id="crossH"></div>
+                <!-- event markers injected by JS -->
+            </div>
+
+            <!-- Axes -->
+            <div class="chart-x-axis" id="xAxis" aria-hidden="true"></div>
+
+            <!-- Events strip (compact, horizontal scroll) -->
+            <div class="events-strip" id="eventsStrip">
+                <div class="events-strip-label">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+                    Events
+                </div>
+                <div class="events-scroll" id="eventsScroll" role="list" aria-label="Historical events">
+                    <!-- event pills injected by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Right: Y-axis -->
+        <div class="y-axis" id="yAxis" aria-hidden="true"></div>
+
+    </main>
+
+    <!-- Bottom Ticker -->
+    <footer class="bottom-ticker" id="bottomTicker" aria-label="Stock ticker">
+        <div class="ticker-track" id="tickerTrack">
+            <!-- ticker items injected by JS -->
+        </div>
+    </footer>
+
+    <!-- Event Detail Modal -->
+    <div class="modal-overlay" id="modal" role="dialog" aria-modal="true" aria-label="Event details">
+        <div class="modal-card">
+            <button class="modal-x" id="modalX" aria-label="Close modal">&times;</button>
+            <div class="modal-bar" id="modalBar"></div>
+            <div class="modal-body">
+                <div class="modal-date" id="mDate"></div>
+                <h3 class="modal-title" id="mTitle"></h3>
+                <div class="modal-impact" id="mImpact"></div>
+                <p class="modal-desc" id="mDesc"></p>
+                <div class="modal-details" id="mDetails"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Disclaimer tooltip -->
+    <div class="disclaimer-badge" id="disclaimerBadge" title="Price data sourced from Yahoo Finance. Historical events are curated annotations. Not financial advice.">ⓘ</div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

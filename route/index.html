@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="/js/theme-boot-inline.js"></script>
+    <script src="/js/software-mode-boot-inline.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qubibyte Route Simulator | Quantum-Optimized Logistics</title>
+    <meta name="description"
+        content="Interactive route optimization simulator comparing classical and quantum-inspired algorithms. Explore Dijkstra, A*, Genetic Algorithm, QAOA, and more with real-time benchmarking.">
+    <meta name="keywords"
+        content="Qubibyte, route optimization, quantum computing, QAOA, Dijkstra, traveling salesman, logistics, quantum annealing">
+    <meta name="author" content="Qubibyte">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Qubibyte Route Simulator | Quantum-Optimized Logistics">
+    <meta property="og:description"
+        content="Compare classical vs quantum routing algorithms in real-time with animated visualizations and benchmarking.">
+    <meta property="og:image" content="/images/logo.png">
+    <meta property="og:url" content="https://qubibyte.org/route/">
+    <link rel="icon" type="image/x-icon" href="/images/fav.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/css/themes.css">
+    <link rel="stylesheet" href="/css/theme-picker.css">
+    <script src="/js/theme.js"></script>
+    <script src="/js/theme-picker.js"></script>
+    <script src="/js/software-mode.js"></script>
+</head>
+
+<body>
+    <!-- Top Navigation Bar -->
+    <nav class="topbar" id="topbar">
+        <div class="topbar-left">
+            <a href="/" class="topbar-brand">
+                <img src="/images/logo_white.png" alt="Qubibyte" class="topbar-logo">
+            </a>
+            <div class="topbar-divider"></div>
+            <span class="topbar-title">Route Simulator</span>
+            <span class="topbar-badge">BETA</span>
+        </div>
+        <div class="topbar-center">
+            <div class="topbar-status" id="topbarStatus">
+                <span class="status-dot"></span>
+                <span class="status-text">Ready</span>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <button class="topbar-btn" id="btnLearn" title="Learn How It Works">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                </svg>
+                <span>Learn</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Main Application Layout -->
+    <div class="app-layout" id="appLayout">
+        <!-- Left Sidebar — Control Panel -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-scroll">
+                <!-- Simulation Config -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-section-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M12 20V10M6 20V4M18 20v-6" />
+                        </svg>
+                        Simulation Config
+                    </h3>
+                    <div class="control-group">
+                        <label class="control-label" for="numStops">Delivery Stops</label>
+                        <div class="control-row">
+                            <input type="range" id="numStops" class="control-range" min="4" max="200" value="15">
+                            <span class="control-value" id="numStopsVal">15</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="numVehicles">Vehicles</label>
+                        <div class="control-row">
+                            <input type="range" id="numVehicles" class="control-range" min="1" max="10" value="1">
+                            <span class="control-value" id="numVehiclesVal">1</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="simSpeed">Animation Speed</label>
+                        <div class="control-row">
+                            <input type="range" id="simSpeed" class="control-range" min="1" max="10" value="5">
+                            <span class="control-value" id="simSpeedVal">5x</span>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="routeMode">Route Mode</label>
+                        <select id="routeMode" class="control-select">
+                            <option value="direct">Direct (Diagonal)</option>
+                            <option value="roads">Road Network</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="distMetric">Distance Metric</label>
+                        <select id="distMetric" class="control-select">
+                            <option value="euclidean">Euclidean</option>
+                            <option value="manhattan">Manhattan</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="randomSeed">Seed</label>
+                        <div class="seed-row">
+                            <input type="number" id="randomSeed" class="control-input seed-input" value="42" min="0"
+                                max="99999">
+                            <label class="seed-random-toggle" title="Auto-generate random seed on each Generate click">
+                                <input type="checkbox" id="chkRandomSeed" class="control-checkbox" checked>
+                                <span class="seed-random-label">Random</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Traffic & Constraints -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-section-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M12 6v6l4 2" />
+                        </svg>
+                        Traffic & Constraints
+                    </h3>
+                    <div class="control-group">
+                        <label class="control-label" for="trafficVar">Traffic Variability</label>
+                        <div class="control-row">
+                            <input type="range" id="trafficVar" class="control-range" min="0" max="100" value="0">
+                            <span class="control-value" id="trafficVarVal">0%</span>
+                        </div>
+                        <span class="control-hint">Adds asymmetric noise to distances simulating congestion</span>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <input type="checkbox" id="chkTimeConstraints" class="control-checkbox"> Time Constraints
+                        </label>
+                        <span class="control-hint">Constrains max route length per vehicle</span>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">
+                            <input type="checkbox" id="chkRealtime" class="control-checkbox"> Real-time Recalc
+                        </label>
+                        <span class="control-hint">Re-run on setting changes</span>
+                    </div>
+                </div>
+
+                <!-- Algorithm Selection -->
+                <div class="sidebar-section">
+                    <h3 class="sidebar-section-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                        </svg>
+                        Algorithms
+                    </h3>
+                    <div class="algo-list" id="algoList">
+                        <div class="algo-category">
+                            <h4 class="algo-category-title">Pathfinding</h4>
+                            <label class="algo-item"><input type="checkbox" data-algo="dijkstra" checked><span
+                                    class="algo-color" style="--algo-clr:#38bdf8"></span>Dijkstra + NN</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="astar"><span class="algo-color"
+                                    style="--algo-clr:#34d399"></span>A* + NN</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="bellmanford"><span
+                                    class="algo-color" style="--algo-clr:#fbbf24"></span>Bellman-Ford + NN</label>
+                        </div>
+                        <div class="algo-category">
+                            <h4 class="algo-category-title">Heuristic</h4>
+                            <label class="algo-item"><input type="checkbox" data-algo="greedy" checked><span
+                                    class="algo-color" style="--algo-clr:#f97316"></span>Greedy NN</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="twoopt"><span class="algo-color"
+                                    style="--algo-clr:#a78bfa"></span>2-Opt</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="oropt"><span class="algo-color"
+                                    style="--algo-clr:#22d3ee"></span>Or-Opt</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="savings"><span class="algo-color"
+                                    style="--algo-clr:#f59e0b"></span>Clarke-Wright</label>
+                        </div>
+                        <div class="algo-category">
+                            <h4 class="algo-category-title">Metaheuristic</h4>
+                            <label class="algo-item"><input type="checkbox" data-algo="genetic"><span class="algo-color"
+                                    style="--algo-clr:#fb7185"></span>Genetic (TSP)</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="annealing"><span
+                                    class="algo-color" style="--algo-clr:#2dd4bf"></span>Simulated Annealing</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="antcolony"><span
+                                    class="algo-color" style="--algo-clr:#84cc16"></span>Ant Colony</label>
+                        </div>
+                        <div class="algo-category">
+                            <h4 class="algo-category-title">Exact <span class="algo-note">(≤20 nodes)</span></h4>
+                            <label class="algo-item"><input type="checkbox" data-algo="branchbound"><span
+                                    class="algo-color" style="--algo-clr:#e879f9"></span>Branch & Bound</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="heldkarp"><span
+                                    class="algo-color" style="--algo-clr:#67e8f9"></span>Held-Karp (DP)</label>
+                        </div>
+                        <div class="algo-category" id="quantumAlgoCategory">
+                            <h4 class="algo-category-title quantum-title">Quantum-Inspired</h4>
+                            <label class="algo-item"><input type="checkbox" data-algo="qaoa"><span class="algo-color"
+                                    style="--algo-clr:#c084fc"></span>QAOA</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="grover"><span class="algo-color"
+                                    style="--algo-clr:#818cf8"></span>Grover Search</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="qannealing"><span
+                                    class="algo-color" style="--algo-clr:#f0abfc"></span>Quantum Annealing</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="vqe"><span class="algo-color"
+                                    style="--algo-clr:#06b6d4"></span>VQE Router</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="qwalk"><span class="algo-color"
+                                    style="--algo-clr:#8b5cf6"></span>Quantum Walk</label>
+                            <label class="algo-item"><input type="checkbox" data-algo="qgenetic"><span
+                                    class="algo-color" style="--algo-clr:#ec4899"></span>Quantum Genetic</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sticky Actions -->
+            <div class="sidebar-actions" id="sidebarActions">
+                <button class="btn-primary" id="btnGenerate">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4" />
+                    </svg>
+                    Generate City
+                </button>
+                <button class="btn-accent" id="btnRun">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                    </svg>
+                    Run Simulation
+                </button>
+                <button class="btn-secondary" id="btnClear">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                    Clear
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-area" id="mainArea">
+            <!-- Map Canvas Area -->
+            <div class="map-container" id="mapContainer">
+                <canvas id="mapCanvas"></canvas>
+                <!-- Map overlay controls -->
+                <div class="map-overlay-top">
+                    <div class="map-info-badge" id="mapInfoBadge">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        <span id="mapNodeCount">0 nodes</span>
+                        <span class="map-info-sep">•</span>
+                        <span id="mapEdgeCount">0 edges</span>
+                    </div>
+                </div>
+                <div class="map-overlay-bottom">
+                    <div class="map-legend" id="mapLegend"></div>
+                </div>
+                <!-- Depot indicator -->
+                <div class="depot-label" id="depotLabel" style="display:none">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                        <path d="M16 7V5a4 4 0 0 0-8 0v2" />
+                    </svg>
+                    DEPOT
+                </div>
+            </div>
+
+            <!-- Floating Metrics Cards -->
+            <div class="metrics-bar" id="metricsBar">
+                <div class="metric-card metric-best" id="metricBest">
+                    <div class="metric-icon">🏆</div>
+                    <div class="metric-content">
+                        <span class="metric-label">Best Route</span>
+                        <span class="metric-value" id="metricBestVal">—</span>
+                    </div>
+                </div>
+                <div class="metric-card metric-time" id="metricTime">
+                    <div class="metric-icon">⚡</div>
+                    <div class="metric-content">
+                        <span class="metric-label">Fastest Compute</span>
+                        <span class="metric-value" id="metricTimeVal">—</span>
+                    </div>
+                </div>
+                <div class="metric-card metric-nodes" id="metricNodes">
+                    <div class="metric-icon">📍</div>
+                    <div class="metric-content">
+                        <span class="metric-label">Active Nodes</span>
+                        <span class="metric-value" id="metricNodesVal">0</span>
+                    </div>
+                </div>
+                <div class="metric-card metric-algos" id="metricAlgos">
+                    <div class="metric-icon">🧬</div>
+                    <div class="metric-content">
+                        <span class="metric-label">Algorithms</span>
+                        <span class="metric-value" id="metricAlgosVal">0</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Right Panel — Results & Details -->
+        <aside class="results-panel" id="resultsPanel">
+            <div class="panel-tabs">
+                <button class="panel-tab active" data-tab="results">Results</button>
+                <button class="panel-tab" data-tab="chart">Charts</button>
+                <button class="panel-tab" data-tab="quantum" id="tabQuantum">Quantum</button>
+            </div>
+            <div class="panel-scroll">
+                <!-- Results Tab -->
+                <div class="panel-content active" data-panel="results">
+                    <div class="results-empty" id="resultsEmpty">
+                        <div class="empty-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5" opacity="0.4">
+                                <polygon points="5 3 19 12 5 21 5 3" />
+                            </svg>
+                        </div>
+                        <p class="empty-title">No Results Yet</p>
+                        <p class="empty-sub">Generate a city and run the simulation to see algorithm comparisons.</p>
+                    </div>
+                    <div class="results-actions" id="resultsActions" style="display:none">
+                        <button class="btn-xs" id="btnShowAll" title="Show all routes">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            Show All
+                        </button>
+                        <button class="btn-xs" id="btnHideAll" title="Hide all routes">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path
+                                    d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" />
+                                <line x1="1" y1="1" x2="23" y2="23" />
+                            </svg>
+                            Hide All
+                        </button>
+                        <button class="btn-xs" id="btnSelectAll" title="Select all algorithms">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="9 11 12 14 22 4" />
+                                <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+                            </svg>
+                            All Algos
+                        </button>
+                    </div>
+                    <div class="results-list" id="resultsList" style="display:none"></div>
+                </div>
+
+                <!-- Charts Tab -->
+                <div class="panel-content" data-panel="chart">
+                    <div class="chart-section">
+                        <h4 class="chart-title">Route Length Comparison</h4>
+                        <canvas id="chartRouteLength" height="200"></canvas>
+                    </div>
+                    <div class="chart-section">
+                        <h4 class="chart-title">Compute Time (ms)</h4>
+                        <canvas id="chartComputeTime" height="200"></canvas>
+                    </div>
+                    <div class="chart-section">
+                        <h4 class="chart-title">Convergence</h4>
+                        <canvas id="chartConvergence" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Quantum Tab -->
+                <div class="panel-content" data-panel="quantum">
+                    <div class="quantum-panel" id="quantumPanel">
+                        <div class="quantum-header">
+                            <h4 class="quantum-title">Quantum Analysis</h4>
+                            <span class="quantum-badge">SIMULATED</span>
+                        </div>
+                        <div class="quantum-stats">
+                            <div class="qstat">
+                                <span class="qstat-label">Qubit Count</span>
+                                <span class="qstat-value" id="qstatQubits">—</span>
+                            </div>
+                            <div class="qstat">
+                                <span class="qstat-label">Circuit Depth</span>
+                                <span class="qstat-value" id="qstatDepth">—</span>
+                            </div>
+                            <div class="qstat">
+                                <span class="qstat-label">Coherence Cost</span>
+                                <span class="qstat-value" id="qstatCoherence">—</span>
+                            </div>
+                        </div>
+                        <div class="bloch-sphere-container">
+                            <h4 class="chart-title">Bloch Sphere</h4>
+                            <canvas id="blochCanvas" width="180" height="180"></canvas>
+                        </div>
+                        <div class="chart-section">
+                            <h4 class="chart-title">Probability Distribution</h4>
+                            <canvas id="chartProbDist" height="180"></canvas>
+                        </div>
+                        <div class="quantum-explainer">
+                            <h4 class="chart-title">How Quantum Routing Differs</h4>
+                            <p>Classical routing algorithms explore solution spaces <strong>sequentially</strong>.
+                                Quantum approaches like QAOA leverage <strong>superposition</strong> to evaluate
+                                multiple routes simultaneously, and <strong>interference</strong> to amplify optimal
+                                solutions.</p>
+                            <p>Grover's search provides a <strong>quadratic speedup</strong> (√N vs N) for unstructured
+                                search, while quantum annealing exploits <strong>quantum tunneling</strong> to escape
+                                local minima that trap classical methods.</p>
+                            <p>The VQE Router uses a <strong>variational ansatz</strong> to encode tour permutations,
+                                optimized via SPSA gradient estimation. Quantum Walk exploits
+                                <strong>wave-like interference</strong> across multiple walkers to explore the solution
+                                landscape in parallel.
+                            </p>
+                            <p>For N cities, the TSP search space is N!/2N. Even with N=20, this is ~6×10¹⁶ routes.
+                                Quantum parallelism can explore this exponential space in polynomial depth circuits — a
+                                fundamental advantage for logistics at scale.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Learn Modal -->
+    <div class="modal-overlay" id="learnModal">
+        <div class="modal-container">
+            <button class="modal-close" id="modalClose">&times;</button>
+            <div class="modal-header">
+                <h2>Learn How It Works</h2>
+                <p class="modal-subtitle">Understanding route optimization algorithms</p>
+            </div>
+            <div class="modal-body">
+                <div class="learn-section">
+                    <h3>🗺️ The Problem</h3>
+                    <p>Route optimization (a variant of the Traveling Salesman Problem) asks: <em>"Given a set of
+                            delivery stops, what is the shortest route that visits each stop exactly once and returns to
+                            the depot?"</em> This is NP-hard — the number of possible routes grows factorially with
+                        stops.</p>
+                </div>
+
+                <div class="learn-section">
+                    <h3>📊 Algorithm Explorer</h3>
+                    <p style="margin-bottom:16px;font-size:0.85rem;color:var(--text-muted);">Click an algorithm to see
+                        how it works with a live animated example.</p>
+                    <div class="algo-explorer">
+                        <div class="algo-explorer-list" id="algoExplorerList">
+                            <button class="algo-explore-btn active" data-explore="dijkstra"><span
+                                    class="algo-explore-dot" style="background:#38bdf8"></span>Dijkstra + NN</button>
+                            <button class="algo-explore-btn" data-explore="astar"><span class="algo-explore-dot"
+                                    style="background:#34d399"></span>A* + NN</button>
+                            <button class="algo-explore-btn" data-explore="greedy"><span class="algo-explore-dot"
+                                    style="background:#f97316"></span>Greedy NN</button>
+                            <button class="algo-explore-btn" data-explore="twoopt"><span class="algo-explore-dot"
+                                    style="background:#a78bfa"></span>2-Opt</button>
+                            <button class="algo-explore-btn" data-explore="oropt"><span class="algo-explore-dot"
+                                    style="background:#22d3ee"></span>Or-Opt</button>
+                            <button class="algo-explore-btn" data-explore="savings"><span class="algo-explore-dot"
+                                    style="background:#f59e0b"></span>Clarke-Wright</button>
+                            <button class="algo-explore-btn" data-explore="genetic"><span class="algo-explore-dot"
+                                    style="background:#fb7185"></span>Genetic (TSP)</button>
+                            <button class="algo-explore-btn" data-explore="annealing"><span class="algo-explore-dot"
+                                    style="background:#2dd4bf"></span>Simulated Annealing</button>
+                            <button class="algo-explore-btn" data-explore="antcolony"><span class="algo-explore-dot"
+                                    style="background:#84cc16"></span>Ant Colony</button>
+                            <button class="algo-explore-btn" data-explore="branchbound"><span class="algo-explore-dot"
+                                    style="background:#e879f9"></span>Branch & Bound</button>
+                            <button class="algo-explore-btn" data-explore="heldkarp"><span class="algo-explore-dot"
+                                    style="background:#67e8f9"></span>Held-Karp</button>
+                            <button class="algo-explore-btn" data-explore="qaoa"><span class="algo-explore-dot"
+                                    style="background:#c084fc"></span>QAOA</button>
+                            <button class="algo-explore-btn" data-explore="grover"><span class="algo-explore-dot"
+                                    style="background:#818cf8"></span>Grover Search</button>
+                            <button class="algo-explore-btn" data-explore="qannealing"><span class="algo-explore-dot"
+                                    style="background:#f0abfc"></span>Quantum Annealing</button>
+                            <button class="algo-explore-btn" data-explore="vqe"><span class="algo-explore-dot"
+                                    style="background:#06b6d4"></span>VQE Router</button>
+                            <button class="algo-explore-btn" data-explore="qwalk"><span class="algo-explore-dot"
+                                    style="background:#8b5cf6"></span>Quantum Walk</button>
+                            <button class="algo-explore-btn" data-explore="qgenetic"><span class="algo-explore-dot"
+                                    style="background:#ec4899"></span>Quantum Genetic</button>
+                        </div>
+                        <div class="algo-explore-detail">
+                            <div class="algo-explore-canvas-wrap">
+                                <canvas id="algoExploreCanvas" width="340" height="220"></canvas>
+                            </div>
+                            <div class="algo-explore-info" id="algoExploreInfo">
+                                <h4 id="algoExploreName">Dijkstra + NN</h4>
+                                <div class="algo-explore-meta">
+                                    <span class="algo-explore-tag" id="algoExploreTime">O(V² log V)</span>
+                                    <span class="algo-explore-tag" id="algoExploreSpace">O(V)</span>
+                                    <span class="algo-explore-tag" id="algoExploreOptimal">Not Optimal</span>
+                                </div>
+                                <p id="algoExploreDesc">Computes the shortest-path tree from the depot using Dijkstra's
+                                    algorithm, then constructs a tour by always visiting the nearest unvisited node. The
+                                    single-source shortest paths ensure accurate distance computation even through road
+                                    networks.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="learn-section">
+                    <h3>🔬 Classical vs Quantum</h3>
+                    <div class="learn-comparison">
+                        <div class="comparison-col">
+                            <h4>Classical Approach</h4>
+                            <ul>
+                                <li>Explores solutions one-at-a-time</li>
+                                <li>Heuristics trade accuracy for speed</li>
+                                <li>Exact solvers limited to ~20 nodes</li>
+                                <li>Gets trapped in local optima</li>
+                                <li>Well-understood, mature tooling</li>
+                            </ul>
+                        </div>
+                        <div class="comparison-col comparison-quantum">
+                            <h4>Quantum Approach</h4>
+                            <ul>
+                                <li>Superposition evaluates many routes simultaneously</li>
+                                <li>Interference amplifies better solutions</li>
+                                <li>Quantum tunneling escapes local minima</li>
+                                <li>Grover provides quadratic speedup</li>
+                                <li>Hardware-limited today, massive future potential</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="learn-section">
+                    <h3>🏭 Real-World Applications</h3>
+                    <p>Route optimization impacts every logistics company on earth. Amazon, FedEx, and UPS collectively
+                        solve millions of vehicle routing problems daily. A 1% improvement in route efficiency for a
+                        major carrier can save <strong>$50M+ annually</strong>. As quantum hardware matures,
+                        quantum-optimized routing will become a critical competitive advantage in supply chain
+                        management.</p>
+                </div>
+
+                <div class="learn-section">
+                    <h3>🧠 When To Use Each Algorithm</h3>
+                    <div class="when-to-use">
+                        <div class="use-case">
+                            <strong>&lt; 15 stops:</strong> Use Held-Karp or Branch & Bound for exact optimal solutions.
+                        </div>
+                        <div class="use-case">
+                            <strong>15–50 stops:</strong> Use 2-Opt or Simulated Annealing for near-optimal results in
+                            practical time.
+                        </div>
+                        <div class="use-case">
+                            <strong>50–200 stops:</strong> Use Genetic Algorithm with large population sizes. Consider
+                            QAOA or VQE for potential speedup.
+                        </div>
+                        <div class="use-case">
+                            <strong>200+ stops:</strong> Use Greedy NN + 2-Opt as baseline. Quantum Annealing and
+                            Quantum Walk show the most promise at this scale.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quantum Mode Overlay Effect -->
+    <div class="quantum-overlay" id="quantumOverlay"></div>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/algorithms.js"></script>
+    <script src="js/quantum.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/algo-explorer.js"></script>
+</body>
+
+</html>
