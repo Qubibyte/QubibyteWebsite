@@ -15,18 +15,21 @@
         {
             "type": "image",
             "src": "pi.jpg",
-            "alt": "Raspberry Pi and 7 in. Display."
+            "alt": "Raspberry Pi and 7 in. Display.",
+            "size": "small"
         },
         "For prototyping, I'll be using an Analog Discovery 2 by Digilent as a waveform generator, which ranges from 1 µHz to 25 MHz. Depending on the external magnetic field, this would more than likely be sufficient to write to each of the qubits, however, this device cannot be used in a final design due to certain licensing restrictions. It would've been very convenient to incorporate this device into the final design, but by switching to a simpler board we can also at least shave a few hundred dollars off the production cost of each unit. The software will initially be written in Python with the Tkinter package, but if Python is not sufficient to provide frequent enough commands to the waveform generator, other options will be explored.",
         {
             "type": "image",
             "src": "hmi.png",
-            "alt": "Qubibyte HMI startup."
+            "alt": "Qubibyte HMI startup.",
+            "size": "small"
         },
         {
             "type": "image",
             "src": "hmi2.png",
-            "alt": "Qubibyte HMI user interface."
+            "alt": "Qubibyte HMI user interface.",
+            "size": "small"
         },
         "As for the physical design, the Qubibyte Quadra will contain a sample that will be placed between two magnets, which will be at least a few hundred milliteslas of magnetic flux density. The sample itself is planned to be mutable; so that anyone can choose between tens of different samples to purchase and insert into their device. Depending on the sample, a user would expect to have between 1 and 4 usable qubits. Water will be the first tested sample due to its abundance; it has hydrogen so it's able to be used as a single qubit.",
         {
@@ -43,7 +46,7 @@
         "These qubits are just atoms in a molecule that have intrinsic angular momentum, referred to as spin. In spin-½ nuclides, these have two measurable states, spin-up and spin-down, which are viewed as a binary 0 and 1. Until a measurement is performed through free induction decay into the transceiver coil, a qubit can be in a superposition of spin-up and spin-down, which can have different quantum gates applied to it to affect these probabilities. In NMR quantum computing, this is done by applying a pulse that matches the Larmor frequency of that qubit: that is the frequency that the nuclide is precessing at in its given external magnetic field. You can then modulate certain properties like the pulse's duration, amplitude, and phase, to apply different gates to that qubit, as well as quantumly entangling multiple qubits.",
         {
             "type": "image",
-            "src": "https://www.researchgate.net/profile/Renju-Rajan/publication/378169484/figure/fig3/AS:11431281223652449@1707830205101/NMR-based-quantum-computing.png",
+            "src": "/images/blog2_nmrqc.png",
             "alt": "NMR quantum computing."
         },
         "There's a few Python libraries, like Qiskit, that offer what can be considered a quantum programming language, but none of them really meet the needs for this system. So, I'll be creating a programming language specific to quantum that can be written in and executed as a program on this quantum computer, and hopefully some by other companies as well. I'll also be working on a simulator for NMR quantum computing so that you can adjust certain properties like magnetic field strength and the distance between magnets, which sample molecule is being used and of what quantity, the pulses you send to the qubits, and a few other things. This will allow you to see the output graphically as an NMR spectrum, which can reveal the measured state of the system.",

@@ -1,0 +1,136 @@
+{
+    "ytvid": {
+        "text": "Qubibyte Blog #3: Quantum Circuit Simulator, Qubi Programming Language, and QubiAI",
+        "link": "https://www.youtube.com/embed/QAKJeNtcYmM",
+        "author": "Qubibyte",
+        "date": "April 20th, 2026"
+    },
+    "title": "Qubibyte Blog #3: Quantum Circuit Simulator, Qubi Programming Language, and QubiAI",
+    "author": "Trent Rosenthal",
+    "date": "April 20th, 2026",
+    "content": [
+        "Hello, I'm Trent Rosenthal, the Founder & CEO of Qubibyte.",
+        "Today I'd like to make an official statement on three pieces of technology that we've been building: our <strong>Quantum Circuit Simulator</strong>, the <strong>Qubi</strong> programming language, and <strong>QubiAI</strong>, an AI-powered code generator for quantum circuits. These are all live and free to use on our website right now, and they represent a significant part of what we're doing at Qubibyte on the software side.",
+        {
+            "type": "heading",
+            "text": "The Quantum Circuit Simulator"
+        },
+        "When I started working on Qubibyte Quadra, I realized fairly quickly that we needed a proper simulation environment. There are existing tools like Qiskit, Cirq, and various browser-based simulators, but none of them were quite right for what we needed. We needed something scalable for our NMR hardware and for future quantum hardware, and something intuitive for developers, because quantum computers should not be programmed through a Python library.",
+        "The <a href='/simulator/' style='color:#AB6FAF;'>Qubibyte Quantum Circuit Simulator</a> is a fully browser-based tool that lets you design, simulate, and visualize quantum circuits in real time. It supports drag-and-drop gate placement, Bloch sphere visualization, state vector inspection, measurement probability distributions, and a quantum gate creator. You can export your circuits as images or code, and then import them back at a later time. It's entirely free, no account required, and no installations.",
+        "The backbone of this simulator is our <strong>Qubi</strong> programming language, which empowers users to quickly build and simulate quantum circuits.",
+        {
+            "type": "heading",
+            "text": "The Qubi Programming Language"
+        },
+        "Qubi is a purpose-built quantum programming language designed to be as minimal and readable as possible while still being powerful enough to express any quantum circuit. I wanted something that a student could learn in five minutes, not something that requires importing a dozen libraries and writing lines of clutter before you can even place a single gate.",
+        "Here's a Bell state in Qubi:",
+        {
+            "type": "code",
+            "lang": "qubi",
+            "caption": "Bell State, Two-Qubit Entanglement",
+            "code": "H 0\nCX [0,1]"
+        },
+        "That's two lines. Apply a Hadamard gate to qubit 0, then a controlled-X (CNOT) with qubit 0 as control and qubit 1 as target. Run it, and you get a maximally entangled pair, which is the foundation of quantum teleportation, superdense coding, and dozens of other protocols.",
+        "For comparison, here's the same thing in Qiskit:",
+        {
+            "type": "code",
+            "lang": "python",
+            "caption": "Bell State in Qiskit (Python)",
+            "code": "from qiskit import QuantumCircuit\n\nqc = QuantumCircuit(2, 2)\nqc.h(0)\nqc.cx(0, 1)\nqc.measure([0, 1], [0, 1])"
+        },
+        "And here's the same circuit expressed in OpenQASM, the open standard for describing quantum circuits:",
+        {
+            "type": "code",
+            "lang": "qasm",
+            "caption": "Bell State in OpenQASM 3.0",
+            "code": "OPENQASM 3.0;\ninclude \"stdgates.inc\";\n\nqubit[2] q;\nbit[2] c;\n\nh q[0];\ncx q[0], q[1];\n\nc = measure q;"
+        },
+        "All three get the job done. But Qubi is designed to stay out of your way so you can focus on the physics instead of fighting the syntax.",
+        {
+            "type": "heading",
+            "text": "Syntax at a Glance"
+        },
+        "Qubi supports the full standard gate set you'd expect from any serious quantum framework. Here's the rundown.",
+        "Single-qubit gates take a qubit index. Simple as it gets:",
+        {
+            "type": "code",
+            "lang": "qubi",
+            "caption": "Single-Qubit Gates",
+            "code": "H 0     // Hadamard on qubit 0\nX 1     // Pauli-X (NOT) on qubit 1\nY 2     // Pauli-Y on qubit 2\nZ 0     // Pauli-Z (phase flip) on qubit 0\nS 1     // S gate (π/2 phase) on qubit 1\nT 2     // T gate (π/4 phase) on qubit 2"
+        },
+        "Rotation gates take a qubit and an angle as a multiple of π. So <code>RX 0 0.5</code> rotates qubit 0 around the X-axis by π/2 radians:",
+        {
+            "type": "code",
+            "lang": "qubi",
+            "caption": "Rotation Gates",
+            "code": "RX 0 0.5   // Rotate around X by π/2 (0.5 * π)\nRY 1 0.25  // Rotate around Y by π/4\nRZ 2 1.0   // Rotate around Z by π"
+        },
+        "Multi-qubit controlled gates use bracket notation, where every index except the last is a control qubit and the last is the target:",
+        {
+            "type": "code",
+            "lang": "qubi",
+            "caption": "Controlled Gates",
+            "code": "CX [0,1]   // CNOT: Qubit 0 controls, Target 1\nCY [0,1]   // CY: Qubit 0 controls, Target 1\nCZ [0,1,2] // CCZ: Qubits 0 & 1 control, Target 2"
+        },
+        "You can apply the same gate to multiple qubits in parallel using parentheses. This is one of my favorite features because it keeps common patterns really compact:",
+        {
+            "type": "code",
+            "lang": "qubi",
+            "caption": "Parallel Application",
+            "code": "H (0,1,2)       // Apply Hadamard to qubits 0, 1, and 2\nMEASURE (0,1,2) // Measure qubits 0, 1, and 2"
+        },
+        "And for iterative algorithms like Grover's, repeat blocks let you express iteration without duplicating code:",
+        {
+            "type": "code",
+            "lang": "qubi",
+            "caption": "Repeat Blocks",
+            "code": "REPEAT 3   // Start outer loop: run 3 times\nH 0        //   Apply Hadamard to qubit 0\nCX [0,1]   //   Apply CNOT (qubit 0 controls target 1)\nEND        // Close loop"
+        },
+        {
+            "type": "heading",
+            "text": "A Real Example: Grover's Search"
+        },
+        "Let me walk through something more substantial. Grover's algorithm is one of the most important quantum algorithms ever devised. It provides a quadratic speedup for unstructured search problems, and it's a great benchmark for any quantum language. Here's a complete implementation in Qubi, searching for the state |101⟩ across three qubits:",
+        {
+            "type": "code",
+            "lang": "qubi",
+            "caption": "Grover's Search for |101⟩ on 3 Qubits",
+            "code": "// Uniform superposition\nH (0,1,2)\n\nREPEAT 2\n\n// Oracle: mark |101⟩\nX 1\nCZ [0,1,2]\nX 1\n\n// Diffusion operator\nH (0,1,2)\nX (0,1,2)\nCZ [0,1,2]\nX (0,1,2)\nH (0,1,2)\n\nEND"
+        },
+        "Twelve lines for a complete quantum search algorithm. Let me break down what's going on.",
+        "The first line, <code>H (0,1,2)</code>, puts all three qubits into a uniform superposition so each of the eight possible states (|000⟩ through |111⟩) has equal amplitude. This is the starting point for Grover's algorithm: every state is equally likely.",
+        "Inside the <code>REPEAT 2</code> block, two operations happen each iteration. First, the <strong>oracle</strong> marks the target state. In Qubi, qubits are indexed from right to left: |101⟩ means qubit 2 is 1, qubit 1 is 0, and qubit 0 is 1. The oracle needs to flip the phase of exactly this state. The CZ gate flips the phase when <em>all</em> inputs are |1⟩, so we temporarily flip the qubit that should be 0 (qubit 1) with an X gate, apply CZ across all three qubits, then undo the X. The target state's amplitude becomes negative while everything else remains untouched.",
+        "Then the <strong>diffusion operator</strong> amplifies the marked state. It reflects all amplitudes about their mean, which boosts the negative (marked) amplitude and suppresses the rest. After two iterations (the optimal count for three qubits, derived from ⌊π/4 × √2³⌋), measuring the system will collapse to |101⟩ with high probability.",
+        "This kind of circuit requires considerably more code and cognitive overhead in frameworks like Qiskit or Cirq. Qubi was specifically designed for this sort of thing.",
+        {
+            "type": "heading",
+            "text": "QubiAI: Natural Language to Quantum Circuits"
+        },
+        "What if you don't want to write the code yourself?",
+        "QubiAI is an AI assistant built directly into the Qubi code editor. You describe a circuit in plain English, something like \"create a bell state\" or \"Grover search for 101 on 3 qubits,\" and it generates valid Qubi code, loads it into the editor, and renders the circuit automatically.",
+        "Under the hood, QubiAI currently runs on Cloudflare Workers AI with a system prompt that encodes the full Qubi specification, gate semantics, and a library of worked algorithm examples. The model knows that preparing the state |101⟩ requires X gates on qubits 0 and 2. For Grover's algorithm, it knows that the oracle for a given target state requires X gates on each qubit whose target bit is 0. It understands the optimal iteration count. And it can generate Bell states, GHZ states, quantum Fourier transforms, Bernstein-Vazirani circuits, teleportation protocols, and more.",
+        "Every response is validated against Qubi syntax rules before it ever reaches the editor. If the output is syntactically invalid, it's rejected and retried with a more capable fallback model. There's a 10-second rate limit per user to keep the system responsive for everyone.",
+        {
+            "type": "heading",
+            "text": "Where QubiAI Is Headed"
+        },
+        "The current implementation works, but it's not where we plan to stay. Right now, QubiAI relies on a general-purpose language model interpreting Qubi through a carefully tuned system prompt. That's a reasonable starting point, but it has clear limitations. A general model doesn't inherently understand quantum gate semantics or circuit topology. It's pattern-matching from examples, not reasoning from first principles.",
+        "The next step is to fine-tune a model specifically on Qubi syntax and quantum circuit patterns, trained on a curated corpus of validated circuits and algorithm implementations. A purpose-built model would be significantly more accurate and consistent than a general LLM trying to parse quantum instructions from a prompt alone. It would also be smaller and faster, since it wouldn't need the broad knowledge base that a general model carries.",
+        "There's also an autonomy consideration that matters a lot to us. Relying on a third-party cloud provider for a core AI capability introduces latency, usage constraints, and a dependency we can't fully control. If Cloudflare changes their pricing, deprecates a model, or experiences downtime, QubiAI goes with it. The longer-term goal is to bring inference in-house, either through self-hosted infrastructure or through on-device execution, so that QubiAI runs independently of any external service. That makes the system faster, more reliable, and fully under our control end to end.",
+        "Beyond just code generation, a fine-tuned model that deeply understands gate behavior and circuit structure opens up a lot of possibilities. It could suggest circuit optimizations, identify redundant gate sequences, estimate resource requirements for different hardware backends, and help debug circuits that aren't behaving as expected. That's the trajectory we're on, and fine-tuning is the critical first step towards getting there.",
+        {
+            "type": "heading",
+            "text": "Why This Matters"
+        },
+        "When I started Qubibyte, I said that one of our goals, beyond the hardware, would be to develop quantum programming languages and software. Qubi and the simulator are that promise being delivered, and they're core infrastructure that will be developed and useful for years to come.",
+        "The Qubi language is going to serve as the native programming interface for Qubibyte Quadra. The workflow will be to write and test your circuits in the simulator, which is both on our website and also built in to Qubibyte Quadra, and then you can execute that same Qubi code on real qubits. No translation layer, no rewriting, the same language everywhere.",
+        "QubiAI takes it further by lowering the barrier to entry. A student who has never written a quantum circuit can describe what they want in English and immediately see it rendered and simulated. That's powerful for education and it's only going to keep improving.",
+        {
+            "type": "heading",
+            "text": "Try It Yourself"
+        },
+        "The simulator, Qubi, and QubiAI are all free to use right now at <a href='/simulator/' style='color:#AB6FAF;'>qubibyte.org/simulator</a>. Build a Bell state. Run Grover's algorithm. Ask QubiAI to generate something you haven't tried before. Load one of the built-in examples and study how it works. Export a circuit diagram for a presentation or a paper.",
+        "If you're a student, a researcher, or just someone who's curious about quantum computing, this was built for you. And if something breaks or you have ideas for how to make it better, I want to hear about it.",
+        "I'll be releasing a more in-depth video on how to use Qubi within the simulator, so stay tuned."
+    ]
+}

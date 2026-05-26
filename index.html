@@ -2,67 +2,101 @@
 <html lang="en">
 
 <head>
+    <script src="/js/theme-boot-inline.js"></script>
+    <script src="/js/software-mode-boot-inline.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Qubibyte</title>
+    <title>Qubibyte | Quantum Computing</title>
+    <meta name="description"
+        content="Qubibyte designs quantum computing architecture, programming languages, and software for nuclear fusion, materials science, pharmaceuticals, and beyond. Explore the Qubibyte Quadra, our portable quantum computer.">
+    <meta name="keywords"
+        content="Qubibyte, quantum computing, NMR quantum computer, Qubibyte Quadra, quantum simulator, quantum circuit, quantum programming">
+    <meta name="author" content="Qubibyte">
+    <meta name="robots" content="index, follow">
+
+    <!-- Open Graph / Social -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Qubibyte | Quantum Computing">
+    <meta property="og:description"
+        content="Pioneering accessible quantum computing. Explore the Qubibyte Quadra portable quantum computer, interactive simulators, and educational resources.">
+    <meta property="og:image" content="/images/logo.png">
+    <meta property="og:url" content="https://qubibyte.org">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Qubibyte | Quantum Computing">
+    <meta name="twitter:description"
+        content="Pioneering accessible quantum computing. Explore the Qubibyte Quadra portable quantum computer, interactive simulators, and educational resources.">
+    <meta name="twitter:image" content="/images/logo.png">
+    <link rel="canonical" href="https://qubibyte.org/">
+
     <link rel="icon" type="image/x-icon" href="/images/fav.png">
+
+    <!-- Preload critical fonts to prevent layout shift -->
+    <link rel="preload" as="font" href="/fonts/Khand-Medium.ttf" type="font/ttf" crossorigin>
+    <link rel="preload" as="font" href="/fonts/JockeyOne-Regular.ttf" type="font/ttf" crossorigin>
+    <link rel="preload" as="font" href="/fonts/Khand-Regular.ttf" type="font/ttf" crossorigin>
+
+    <!-- Preload critical carousel images -->
+    <link rel="preload" as="image" href="/images/blog1thumb.png">
+    <link rel="preload" as="image" href="/images/blog2thumb.png">
+    <link rel="preload" as="image" href="/images/blog3thumb.png">
+    <link rel="preload" as="image" href="/images/misc1thumb.png">
+    <link rel="preload" as="image" href="/images/oct25_headshot.webp">
+    <link rel="preload" as="image" href="/images/unknown_user.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <link href="newindex.css" rel="stylesheet">
+    <link href="css/home-desktop-scale.css" rel="stylesheet">
+    <script src="js/home-scale.js" defer></script>
+    <link rel="stylesheet" href="/css/themes.css">
+    <link rel="stylesheet" href="/css/theme-picker.css">
+    <script src="/js/theme.js"></script>
+    <script src="/js/theme-picker.js"></script>
+    <script src="/js/software-mode.js"></script>
 </head>
 
-<body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-md navbar-dark fixed-top"">
-        <div class=" container">
-        <a class="navbar-brand" href="javascript:void(0);" onclick="scrollToSection('#Home')"><img
-                src="images/logo_white.png" alt="Qubibyte" style="width:100px;"></img></a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="javascript:void(0);"
-                        onclick="scrollToSection('#Products')">Products</a></li>
-                <li class="nav-item"><a class="nav-link" href="javascript:void(0);"
-                        onclick="scrollToSection('#Blog')">Blog</a></li>
-                <li class="nav-item"><a class="nav-link" href="javascript:void(0);"
-                        onclick="scrollToSection('#Company')">Company</a></li>
-                <li class="nav-item"><a class="nav-link" href="javascript:void(0);"
-                        onclick="scrollToSection('#Career')">Career</a></li>
-            </ul>
-        </div>
+<body class="qubibyte-home">
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="javascript:void(0);" data-section="Home"><img src="images/logo_white.png"
+                    alt="Qubibyte"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="javascript:void(0);" data-section="Tech">Tech</a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="javascript:void(0);" data-section="Media">Media</a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="javascript:void(0);"
+                            data-section="Company">Company</a></li>
+                    <li class="nav-item"><a class="nav-link" href="javascript:void(0);" data-section="Career">Career</a>
+                    </li>
+                </ul>
+            </div>
         </div>
     </nav>
 
-    <script>
-        function scrollToSection(sectionId) {
-            const section = document.querySelector(sectionId);
-            if (section) {
-                const offsetTop = section.offsetTop - 80; // Account for fixed navbar
-                window.scrollTo({
-                    top: offsetTop,
-                    behavior: 'smooth'
-                });
-            }
-        }
-
-        // Add scroll effect to navbar
-        window.addEventListener('scroll', function () {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
-        });
-    </script>
+    <div id="home-scale-root">
 
     <!-- Home Section -->
     <section id="Home">
+        <!-- Quantum particle network background -->
+        <canvas id="quantumCanvas"></canvas>
+
+        <!-- Decorative orbs -->
+        <div class="hero-orb hero-orb--1"></div>
+        <div class="hero-orb hero-orb--2"></div>
+        <div class="hero-orb hero-orb--3"></div>
+
         <div class="home-content">
             <div class="container-fluid">
-                <div class="row align-items-start" style="min-height: 100vh; padding-top: 0;">
+                <div class="row align-items-start hero-home-row">
                     <div class="col-lg-6 col-12 order-lg-1 order-1">
                         <div class="hero-text-container">
                             <div class="hero-badge">Welcome to Qubibyte</div>
@@ -89,8 +123,8 @@
                                     </audio>
                                     <div class="custom-audio-player">
                                         <button class="audio-play-btn" id="audioPlayBtn" aria-label="Play audio">
-                                            <span class="play-icon">▶︎</span>
-                                            <span class="pause-icon" style="display: none;">❚❚</span>
+                                            <span class="play-icon">&#9654;&#xFE0E;</span>
+                                            <span class="pause-icon" style="display: none;">&#10074;&#10074;</span>
                                         </button>
                                         <div class="audio-progress-container">
                                             <div class="audio-progress-bar" id="audioProgressBar">
@@ -124,511 +158,1810 @@
     </section>
 
     <!-- Products Section -->
-    <section id="Products" class="text-center py-5">
+    <section id="Tech" class="text-center py-5">
         <div class="container">
-            <h2 class="section-header">Products</h2>
-            <div class="row g-4 mt-4 justify-content-center">
-                <!-- Qubibyte Quadra Product -->
-                <div class="col-lg-4 col-md-6 col-12">
-                    <div class="product-card card fade-in-up">
-                        <div class="product-image-container">
-                            <img src="images/QuadraAssemblyImage.png" class="product-image" alt="Quadra Assembly Image">
-                        </div>
-                        <div class="card-body">
-                            <h3 class="product-title">Qubibyte Quadra</h3>
-                            <p class="product-subtitle">Expected Release: Q3 2026</p>
-                            <div class="product-details">
-                                <div class="product-detail-item">
-                                    <span class="detail-label">Description:</span>
-                                    <span class="detail-value">4-Qubit Portable Liquid-State NMR Quantum Computer @
-                                        &lt;$5,000</span>
-                                </div>
-                                <div class="product-detail-item">
-                                    <span class="detail-label">Physical Dimensions:</span>
-                                    <span class="detail-value">8 in. x 8 in. x 6 in.</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <h2 class="section-header reveal">Technology</h2>
+
+            <!-- ===== TECH EXPLORER (3-stage drill-down) ===== -->
+            <div class="tech-explorer reveal" id="techExplorer" data-stage="1" data-cat="" data-item="">
+
+                <!-- Breadcrumb island (hidden at stage 1) -->
+                <div class="tech-breadcrumb" aria-live="polite">
+                    <button type="button" class="tech-crumb tech-crumb-cat" data-crumb="cat"></button>
+                    <span class="tech-crumb-sep" data-crumb-sep="item">&rsaquo;</span>
+                    <button type="button" class="tech-crumb tech-crumb-item" data-crumb="item"></button>
                 </div>
-                <!-- Quantum Circuit Simulator Product -->
-                <div class="col-lg-4 col-md-6 col-12">
-                    <div class="product-card card fade-in-up" style="animation-delay: 0.2s;">
-                        <div class="product-image-container simulator-container">
-                            <div class="simulator-preview">
-                                <div class="simulator-icon">⚛️</div>
-                                <h4 class="simulator-title">Quantum Circuit Simulator</h4>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <h3 class="product-title">Quantum Circuit Simulator</h3>
-                            <p class="product-subtitle">Interactive Tool</p>
-                            <div class="product-details">
-                                <div class="product-detail-item">
-                                    <span class="detail-label">Features:</span>
-                                    <span class="detail-value">Visualize quantum circuits, probability distributions,
-                                        and
-                                        Bloch spheres</span>
-                                </div>
-                                <div class="product-detail-item">
-                                    <span class="detail-label">Capabilities:</span>
-                                    <span class="detail-value">8-qubit quantum circuits, Qubi programming environment,
-                                        real-time simulation</span>
-                                </div>
-                            </div>
-                            <a href="/simulator" target="_blank" class="product-link-btn">Launch Simulator
-                                →</a>
-                        </div>
-                    </div>
+
+                <div class="tech-explorer-cols">
+
+                <!-- Categories column -->
+                <div class="tech-col tech-col-cat">
+                    <button type="button" class="tech-row tech-row-cat reveal" data-cat="products">
+                        <span class="tech-row-icon" aria-hidden="true">&#9883;&#65039;</span>
+                        <span class="tech-row-content">
+                            <span class="tech-row-label">Products</span>
+                            <span class="tech-row-sub">Our quantum hardware</span>
+                        </span>
+                        <span class="tech-row-arrow" aria-hidden="true">&rarr;</span>
+                    </button>
+                    <button type="button" class="tech-row tech-row-cat reveal reveal-delay-1" data-cat="tools">
+                        <span class="tech-row-icon" aria-hidden="true">&#128736;&#65039;</span>
+                        <span class="tech-row-content">
+                            <span class="tech-row-label">Tools</span>
+                            <span class="tech-row-sub">Interactive simulators &amp; trackers</span>
+                        </span>
+                        <span class="tech-row-arrow" aria-hidden="true">&rarr;</span>
+                    </button>
+                    <button type="button" class="tech-row tech-row-cat reveal reveal-delay-2" data-cat="tutorials">
+                        <span class="tech-row-icon" aria-hidden="true">&#127891;</span>
+                        <span class="tech-row-content">
+                            <span class="tech-row-label">Tutorials</span>
+                            <span class="tech-row-sub">Docs &amp; learning resources</span>
+                        </span>
+                        <span class="tech-row-arrow" aria-hidden="true">&rarr;</span>
+                    </button>
+                    <button type="button" class="tech-back-row" data-back-to="1" aria-label="Back to categories">
+                        <span class="tech-row-icon" aria-hidden="true">&larr;</span>
+                    </button>
                 </div>
-                <!-- Quantum Computing Tutorial Product (hide for now)
-                <div class="col-lg-4 col-md-6 col-12">
-                    <div class="product-card card fade-in-up" style="animation-delay: 0.4s;">
-                        <div class="product-image-container tutorial-container">
-                            <div class="simulator-preview"
-                                style="background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);">
-                                <div class="simulator-icon">📚</div>
-                                <h4 class="simulator-title">Quantum Computing Tutorial</h4>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <h3 class="product-title">Quantum Computing Tutorial</h3>
-                            <p class="product-subtitle">Educational Resource</p>
-                            <div class="product-details">
-                                <div class="product-detail-item">
-                                    <span class="detail-label">Features:</span>
-                                    <span class="detail-value">Comprehensive guide to quantum concepts, gates, and
-                                        algorithms</span>
-                                </div>
-                                <div class="product-detail-item">
-                                    <span class="detail-label">Level:</span>
-                                    <span class="detail-value">Beginner to Intermediate, Interactive examples</span>
-                                </div>
-                            </div>
-                            <a href="/tutorial" class="product-link-btn">Start Learning →</a>
-                        </div>
-                    </div>
+
+                <!-- Items column -->
+                <div class="tech-col tech-col-items">
+                    <!-- PRODUCTS -->
+                    <button type="button" class="tech-row tech-row-item" data-cat="products" data-item="quadra" data-href="/products/quadra">
+                        <span class="tech-row-icon tech-row-icon-img" aria-hidden="true">
+                            <img src="images/QuadraAssemblyImage.png" alt="" class="tech-row-img">
+                        </span>
+                        <span class="tech-row-content">
+                            <span class="tech-row-label">Qubibyte Quadra</span>
+                            <span class="tech-row-sub">4-Qubit Portable NMR Quantum Computer</span>
+                            <span class="tech-row-pills">
+                                <span class="tech-pill">4 Qubits</span>
+                                <span class="tech-pill">Portable</span>
+                                <span class="tech-pill">NMR</span>
+                            </span>
+                        </span>
+                        <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                    </button>
+
+                    <!-- TOOLS -->
+                    <button type="button" class="tech-row tech-row-item" data-cat="tools" data-item="circuit" data-href="/simulator" data-target="_blank">
+                        <span class="tech-row-icon" aria-hidden="true">&#9883;&#65039;</span>
+                        <span class="tech-row-content">
+                            <span class="tech-row-label">Quantum Circuit Simulator</span>
+                            <span class="tech-row-sub">Qubi language, QubiAI, &amp; real-time visualization</span>
+                            <span class="tech-row-pills">
+                                <span class="tech-pill">12 Qubits</span>
+                                <span class="tech-pill">QubiAI</span>
+                                <span class="tech-pill">Qubi Language</span>
+                            </span>
+                        </span>
+                        <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                    </button>
+                    <button type="button" class="tech-row tech-row-item" data-cat="tools" data-item="nmr" data-href="/nmr" data-target="_blank">
+                        <span class="tech-row-icon" aria-hidden="true">&#129522;</span>
+                        <span class="tech-row-content">
+                            <span class="tech-row-label">NMR Simulator</span>
+                            <span class="tech-row-sub">Spectrometer simulation &amp; spectrum analysis</span>
+                            <span class="tech-row-pills">
+                                <span class="tech-pill">Spectrometer</span>
+                                <span class="tech-pill">Real-time</span>
+                                <span class="tech-pill">8+ Samples</span>
+                            </span>
+                        </span>
+                        <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                    </button>
+                    <button type="button" class="tech-row tech-row-item" data-cat="tools" data-item="route" data-href="/route" data-target="_blank">
+                        <span class="tech-row-icon" aria-hidden="true">&#128739;&#65039;</span>
+                        <span class="tech-row-content">
+                            <span class="tech-row-label">Route Simulator</span>
+                            <span class="tech-row-sub">14+ classical &amp; quantum routing algorithms</span>
+                            <span class="tech-row-pills">
+                                <span class="tech-pill">14 Algorithms</span>
+                                <span class="tech-pill">Traffic Sim</span>
+                                <span class="tech-pill">VRP</span>
+                            </span>
+                        </span>
+                        <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                    </button>
+                    <button type="button" class="tech-row tech-row-item" data-cat="tools" data-item="stocks" data-href="/stocks" data-target="_blank">
+                        <span class="tech-row-icon" aria-hidden="true">&#128200;</span>
+                        <span class="tech-row-content">
+                            <span class="tech-row-label">Stock Tracker</span>
+                            <span class="tech-row-sub">Quantum stock charts &amp; event analysis</span>
+                            <span class="tech-row-pills">
+                                <span class="tech-pill">8 Stocks</span>
+                                <span class="tech-pill">Interactive Charts</span>
+                                <span class="tech-pill">65+ Events</span>
+                            </span>
+                        </span>
+                        <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                    </button>
+
+                    <!-- TUTORIALS -->
+                    <button type="button" class="tech-row tech-row-item" data-cat="tutorials" data-item="qubi" data-href="/qubi/">
+                        <span class="tech-row-icon" aria-hidden="true">&#128214;</span>
+                        <span class="tech-row-content">
+                            <span class="tech-row-label">Qubi Reference Manual</span>
+                            <span class="tech-row-sub">Official language docs, examples &amp; tutorials</span>
+                            <span class="tech-row-pills">
+                                <span class="tech-pill">Syntax</span>
+                                <span class="tech-pill">Gates</span>
+                                <span class="tech-pill">Simulator-ready</span>
+                            </span>
+                        </span>
+                        <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                    </button>
+                    <button type="button" class="tech-row tech-row-item" data-cat="tutorials" data-item="tutorial" data-href="/tutorial">
+                        <span class="tech-row-icon" aria-hidden="true">&#128218;</span>
+                        <span class="tech-row-content">
+                            <span class="tech-row-label">Quantum Computing Tutorial</span>
+                            <span class="tech-row-sub">Learn quantum computing from beginner to advanced</span>
+                            <span class="tech-row-pills">
+                                <span class="tech-pill">Certification</span>
+                                <span class="tech-pill">Interactive</span>
+                                <span class="tech-pill">Free</span>
+                            </span>
+                        </span>
+                        <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                    </button>
+                    <button type="button" class="tech-back-row" data-back-to="2" aria-label="Back to items list">
+                        <span class="tech-row-icon" aria-hidden="true">&larr;</span>
+                    </button>
                 </div>
-                --> 
+
+                <!-- Detail column -->
+                <div class="tech-col tech-col-detail">
+
+                    <div class="tech-detail-panel" data-item="quadra">
+                        <div class="tech-detail-header">
+                            <div class="tech-detail-icon tech-detail-icon-img">
+                                <img src="images/QuadraAssemblyImage.png" alt="Qubibyte Quadra">
+                            </div>
+                            <div class="tech-detail-titles">
+                                <h3 class="tech-detail-title"><a href="/products/quadra">Qubibyte Quadra</a></h3>
+                                <p class="tech-detail-subtitle">4-Qubit Portable NMR Quantum Computer</p>
+                            </div>
+                            <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                        </div>
+                        <div class="tech-detail-pills">
+                            <span class="tech-pill">4 Qubits</span>
+                            <span class="tech-pill">Portable</span>
+                            <span class="tech-pill">NMR</span>
+                        </div>
+                        <div class="tech-detail-rows">
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Release</span><span class="tech-detail-val">Q1 2027</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Price</span><span class="tech-detail-val">$800</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Size</span><span class="tech-detail-val">8 &times; 8 &times; 6 in.</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Type</span><span class="tech-detail-val">Liquid-state NMR</span></div>
+                        </div>
+                        <a href="/products/quadra" class="tech-tile-launch">View Product &rarr;</a>
+                    </div>
+
+                    <div class="tech-detail-panel" data-item="circuit">
+                        <div class="tech-detail-header">
+                            <div class="tech-detail-icon"><span class="tech-detail-emoji">&#9883;&#65039;</span></div>
+                            <div class="tech-detail-titles">
+                                <h3 class="tech-detail-title"><a href="/simulator" target="_blank" rel="noopener">Quantum Circuit Simulator</a></h3>
+                                <p class="tech-detail-subtitle">Qubi language, QubiAI, &amp; real-time visualization</p>
+                            </div>
+                            <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                        </div>
+                        <div class="tech-detail-pills">
+                            <span class="tech-pill">12 Qubits</span>
+                            <span class="tech-pill">QubiAI</span>
+                            <span class="tech-pill">Qubi Language</span>
+                        </div>
+                        <div class="tech-detail-rows">
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Qubits</span><span class="tech-detail-val">Up to 12</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Language</span><span class="tech-detail-val">Qubi with QubiAI code generation</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Features</span><span class="tech-detail-val">Bloch spheres, probability distributions</span></div>
+                        </div>
+                        <a href="/simulator" target="_blank" class="tech-tile-launch">Launch Simulator &rarr;</a>
+                    </div>
+
+                    <div class="tech-detail-panel" data-item="nmr">
+                        <div class="tech-detail-header">
+                            <div class="tech-detail-icon"><span class="tech-detail-emoji">&#129522;</span></div>
+                            <div class="tech-detail-titles">
+                                <h3 class="tech-detail-title"><a href="/nmr" target="_blank" rel="noopener">NMR Simulator</a></h3>
+                                <p class="tech-detail-subtitle">Spectrometer simulation &amp; spectrum analysis</p>
+                            </div>
+                            <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                        </div>
+                        <div class="tech-detail-pills">
+                            <span class="tech-pill">Spectrometer</span>
+                            <span class="tech-pill">Real-time</span>
+                            <span class="tech-pill">8+ Samples</span>
+                        </div>
+                        <div class="tech-detail-rows">
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Samples</span><span class="tech-detail-val">Ethanol, Fluorine, etc.</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Control</span><span class="tech-detail-val">Adjustable B&#8320; field, FID</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Visuals</span><span class="tech-detail-val">FID &amp; Bloch sphere</span></div>
+                        </div>
+                        <a href="/nmr" target="_blank" class="tech-tile-launch">Launch Simulator &rarr;</a>
+                    </div>
+
+                    <div class="tech-detail-panel" data-item="route">
+                        <div class="tech-detail-header">
+                            <div class="tech-detail-icon"><span class="tech-detail-emoji">&#128739;&#65039;</span></div>
+                            <div class="tech-detail-titles">
+                                <h3 class="tech-detail-title"><a href="/route" target="_blank" rel="noopener">Route Simulator</a></h3>
+                                <p class="tech-detail-subtitle">14+ classical &amp; quantum routing algorithms</p>
+                            </div>
+                            <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                        </div>
+                        <div class="tech-detail-pills">
+                            <span class="tech-pill">14 Algorithms</span>
+                            <span class="tech-pill">Traffic Sim</span>
+                            <span class="tech-pill">VRP</span>
+                        </div>
+                        <div class="tech-detail-rows">
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Algorithms</span><span class="tech-detail-val">Dijkstra, Genetic, QAOA, Grover&hellip;</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Features</span><span class="tech-detail-val">Convergence charts, Heatmaps</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Modes</span><span class="tech-detail-val">Classical &amp; quantum benchmarking</span></div>
+                        </div>
+                        <a href="/route" target="_blank" class="tech-tile-launch">Launch Simulator &rarr;</a>
+                    </div>
+
+                    <div class="tech-detail-panel" data-item="stocks">
+                        <div class="tech-detail-header">
+                            <div class="tech-detail-icon"><span class="tech-detail-emoji">&#128200;</span></div>
+                            <div class="tech-detail-titles">
+                                <h3 class="tech-detail-title"><a href="/stocks" target="_blank" rel="noopener">Stock Tracker</a></h3>
+                                <p class="tech-detail-subtitle">Quantum stock charts &amp; event analysis</p>
+                            </div>
+                            <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                        </div>
+                        <div class="tech-detail-pills">
+                            <span class="tech-pill">8 Stocks</span>
+                            <span class="tech-pill">Interactive Charts</span>
+                            <span class="tech-pill">65+ Events</span>
+                        </div>
+                        <div class="tech-detail-rows">
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Stocks</span><span class="tech-detail-val">IONQ, RGTI, QUBT, QBTS, ARQQ&hellip;</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Features</span><span class="tech-detail-val">Interactive charts, event annotations</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Views</span><span class="tech-detail-val">Sparklines, multiple timeframes</span></div>
+                        </div>
+                        <a href="/stocks" target="_blank" class="tech-tile-launch">Launch Tracker &rarr;</a>
+                    </div>
+
+                    <div class="tech-detail-panel" data-item="qubi">
+                        <div class="tech-detail-header">
+                            <div class="tech-detail-icon"><span class="tech-detail-emoji">&#128214;</span></div>
+                            <div class="tech-detail-titles">
+                                <h3 class="tech-detail-title"><a href="/qubi/">Qubi Reference Manual</a></h3>
+                                <p class="tech-detail-subtitle">Official language docs, examples &amp; tutorials</p>
+                            </div>
+                            <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                        </div>
+                        <div class="tech-detail-pills">
+                            <span class="tech-pill">Syntax</span>
+                            <span class="tech-pill">Gates</span>
+                            <span class="tech-pill">Simulator-ready</span>
+                        </div>
+                        <div class="tech-detail-rows">
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Coverage</span><span class="tech-detail-val">Line syntax, controlled gates, REPEAT/END, RX&ndash;RZ, worked patterns</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Workflow</span><span class="tech-detail-val">Copy examples into the Circuit Simulator &amp; QubiAI</span></div>
+                        </div>
+                        <a href="/qubi/" class="tech-tile-launch">Open manual &rarr;</a>
+                    </div>
+
+                    <div class="tech-detail-panel" data-item="tutorial">
+                        <div class="tech-detail-header">
+                            <div class="tech-detail-icon"><span class="tech-detail-emoji">&#128218;</span></div>
+                            <div class="tech-detail-titles">
+                                <h3 class="tech-detail-title"><a href="/tutorial">Quantum Computing Tutorial</a></h3>
+                                <p class="tech-detail-subtitle">Learn quantum computing from beginner to advanced</p>
+                            </div>
+                            <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                        </div>
+                        <div class="tech-detail-pills">
+                            <span class="tech-pill">Certification</span>
+                            <span class="tech-pill">Interactive</span>
+                            <span class="tech-pill">Free</span>
+                        </div>
+                        <div class="tech-detail-rows">
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Level</span><span class="tech-detail-val">Beginner &rarr; Advanced</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Units</span><span class="tech-detail-val">Bloch Sphere, Gates, Algorithms</span></div>
+                            <div class="tech-tile-detail-row"><span class="tech-detail-label">Bonus</span><span class="tech-detail-val">Interactive Bloch visualizations &amp; certification exam</span></div>
+                        </div>
+                        <a href="/tutorial" class="tech-tile-launch">Start Learning &rarr;</a>
+                    </div>
+
+                </div>
+
+                </div><!-- /.tech-explorer-cols -->
             </div>
+
+
         </div>
     </section>
 
     <!-- Blog Section -->
-    <section id="Blog" class="text-center py-5">
-        <br>
+    <section id="Media" class="text-center py-5">
         <div class="container">
-            <h2 class="section-header">Blog</h2>
-            <div class="card mx-auto fade-in-up" style="max-width: 800px; min-height:500px; border-radius: 1rem;">
-                <div id="blogsCarousel" class="carousel slide" data-bs-ride="carousel">
-                    <div class="carousel-inner" id="carouselContentBlogs"></div>
-                    <button class="carousel-control-prev" type="button" data-bs-target="#blogsCarousel"
-                        style="filter: invert(1);" data-bs-slide="prev">
-                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    </button>
-                    <button class="carousel-control-next" type="button" data-bs-target="#blogsCarousel"
-                        style="filter: invert(1);" data-bs-slide="next">
-                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    </button>
+            <h2 class="section-header reveal">Media</h2>
+
+            <div class="media-section-wrapper" data-mode="carousel" id="mediaSection">
+
+                <!-- ===== CAROUSEL MODE ===== -->
+                <div class="media-mode-pane" data-mode-content="carousel">
+
+                    <!-- Custom Blog Carousel -->
+                    <div class="blog-carousel-wrapper reveal">
+                        <button class="blog-carousel-btn blog-carousel-prev" aria-label="Previous">&#10094;</button>
+
+                        <div class="blog-carousel">
+                            <div class="blog-cards-row" id="blogCarouselRow">
+                                <!-- Blog cards will be injected by blogs.js -->
+                            </div>
+                        </div>
+
+                        <button class="blog-carousel-btn blog-carousel-next" aria-label="Next">&#10095;</button>
+                    </div>
+
+                    <!-- Blog dots -->
+                    <div class="blog-carousel-dots" id="blogCarouselDots">
+                        <!-- Dots will be injected by blogs.js -->
+                    </div>
+
+                    <!-- Blog info -->
+                    <div class="blog-info-card reveal reveal-delay-1">
+                        <h5 id="blogCaption" class="blog-caption"></h5>
+                        <p id="blogAuthor" class="blog-meta"></p>
+                        <p id="blogDate" class="blog-meta"></p>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <h5 id="blogCaption" class="card-title"></h5>
-                    <p id="blogAuthor" class="card-text3 text-muted"></p>
-                    <p id="blogDate" class="card-text3 text-muted"></p>
+
+                <!-- ===== EXPLORER MODE ===== -->
+                <div class="media-mode-pane" data-mode-content="explorer">
+                    <div class="tech-explorer reveal" id="mediaExplorer" data-stage="1" data-cat="" data-item="">
+
+                        <div class="tech-breadcrumb" aria-live="polite">
+                            <button type="button" class="tech-crumb tech-crumb-cat" data-crumb="cat"></button>
+                            <span class="tech-crumb-sep" data-crumb-sep="item">&rsaquo;</span>
+                            <button type="button" class="tech-crumb tech-crumb-item" data-crumb="item"></button>
+                        </div>
+
+                        <div class="tech-explorer-cols">
+
+                            <!-- Categories column -->
+                            <div class="tech-col tech-col-cat">
+                                <button type="button" class="tech-row tech-row-cat reveal" data-cat="blogs">
+                                    <span class="tech-row-icon" aria-hidden="true">&#128221;</span>
+                                    <span class="tech-row-content">
+                                        <span class="tech-row-label">Blogs</span>
+                                        <span class="tech-row-sub">Written articles &amp; announcements</span>
+                                    </span>
+                                    <span class="tech-row-arrow" aria-hidden="true">&rarr;</span>
+                                </button>
+                                <button type="button" class="tech-row tech-row-cat reveal reveal-delay-1" data-cat="tutorials">
+                                    <span class="tech-row-icon" aria-hidden="true">&#127891;</span>
+                                    <span class="tech-row-content">
+                                        <span class="tech-row-label">Tutorials</span>
+                                        <span class="tech-row-sub">Videos, demos &amp; walkthroughs</span>
+                                    </span>
+                                    <span class="tech-row-arrow" aria-hidden="true">&rarr;</span>
+                                </button>
+                                <button type="button" class="tech-back-row" data-back-to="1" aria-label="Back to categories">
+                                    <span class="tech-row-icon" aria-hidden="true">&larr;</span>
+                                </button>
+                            </div>
+
+                            <!-- Items column -->
+                            <div class="tech-col tech-col-items">
+
+                                <!-- BLOGS (sequential, oldest -> newest) -->
+                                <button type="button" class="tech-row tech-row-item" data-cat="blogs" data-item="blog-1" data-href="/blog/1/">
+                                    <span class="tech-row-icon tech-row-icon-img" aria-hidden="true">
+                                        <img src="images/blog1thumb.png" alt="" class="tech-row-img">
+                                    </span>
+                                    <span class="tech-row-content">
+                                        <span class="tech-row-label">Qubibyte Blog #1: The Declaration of Qubibyte &amp; Announcement of Qubibyte Quadra</span>
+                                        <span class="tech-row-sub">By Trent Rosenthal &middot; March 7th, 2025</span>
+                                        <span class="tech-row-pills">
+                                            <span class="tech-pill">Article</span>
+                                            <span class="tech-pill">Announcement</span>
+                                            <span class="tech-pill">Founding</span>
+                                        </span>
+                                    </span>
+                                    <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                                </button>
+                                <button type="button" class="tech-row tech-row-item" data-cat="blogs" data-item="blog-2" data-href="/blog/2/">
+                                    <span class="tech-row-icon tech-row-icon-img" aria-hidden="true">
+                                        <img src="images/blog2thumb.png" alt="" class="tech-row-img">
+                                    </span>
+                                    <span class="tech-row-content">
+                                        <span class="tech-row-label">Qubibyte Blog #2: Qubibyte Quadra Design Choices</span>
+                                        <span class="tech-row-sub">By Trent Rosenthal &middot; July 20th, 2025</span>
+                                        <span class="tech-row-pills">
+                                            <span class="tech-pill">Article</span>
+                                            <span class="tech-pill">Hardware</span>
+                                            <span class="tech-pill">Design</span>
+                                        </span>
+                                    </span>
+                                    <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                                </button>
+                                <button type="button" class="tech-row tech-row-item" data-cat="blogs" data-item="blog-3" data-href="/blog/3/">
+                                    <span class="tech-row-icon tech-row-icon-img" aria-hidden="true">
+                                        <img src="images/blog3thumb.png" alt="" class="tech-row-img">
+                                    </span>
+                                    <span class="tech-row-content">
+                                        <span class="tech-row-label">Qubibyte Blog #3: Quantum Circuit Simulator, Qubi Programming Language, and QubiAI</span>
+                                        <span class="tech-row-sub">By Trent Rosenthal &middot; April 20th, 2026</span>
+                                        <span class="tech-row-pills">
+                                            <span class="tech-pill">Article</span>
+                                            <span class="tech-pill">Simulator</span>
+                                            <span class="tech-pill">Qubi</span>
+                                        </span>
+                                    </span>
+                                    <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                                </button>
+                                <button type="button" class="tech-row tech-row-item" data-cat="blogs" data-item="blog-4" data-href="/blog/4/">
+                                    <span class="tech-row-icon tech-row-icon-img" aria-hidden="true">
+                                        <img src="images/blog3thumb.png" alt="" class="tech-row-img">
+                                    </span>
+                                    <span class="tech-row-content">
+                                        <span class="tech-row-label">Qubibyte Blog #4: How to Design an NMR Quantum Computer</span>
+                                        <span class="tech-row-sub">By Trent Rosenthal &middot; May 21st, 2026</span>
+                                        <span class="tech-row-pills">
+                                            <span class="tech-pill">Article</span>
+                                            <span class="tech-pill">NMR</span>
+                                            <span class="tech-pill">Hardware</span>
+                                        </span>
+                                    </span>
+                                    <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                                </button>
+
+                                <!-- TUTORIALS — Qubi Programming Language series (sequential) -->
+                                <div class="tech-row-group" data-cat="tutorials">
+                                    <h4 class="tech-row-group-header">Qubi Programming Language</h4>
+                                </div>
+                                <button type="button" class="tech-row tech-row-item" data-cat="tutorials" data-item="qubi-1" data-href="https://www.youtube.com/watch?v=lUor5_tTGYE" data-target="_blank">
+                                    <span class="tech-row-icon tech-row-icon-img" aria-hidden="true">
+                                        <img src="images/qubi1thumb.png" alt="" class="tech-row-img">
+                                    </span>
+                                    <span class="tech-row-content">
+                                        <span class="tech-row-label">Qubi Tutorial #1: Classical &amp; Quantum Computing</span>
+                                        <span class="tech-row-sub">By Trent Rosenthal &middot; May 15th, 2026</span>
+                                        <span class="tech-row-pills">
+                                            <span class="tech-pill">Video</span>
+                                            <span class="tech-pill">Foundations</span>
+                                            <span class="tech-pill">Beginner</span>
+                                        </span>
+                                    </span>
+                                    <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                                </button>
+                                <button type="button" class="tech-row tech-row-item" data-cat="tutorials" data-item="qubi-2" data-href="https://www.youtube.com/watch?v=MmtWitxGbe0" data-target="_blank">
+                                    <span class="tech-row-icon tech-row-icon-img" aria-hidden="true">
+                                        <img src="images/qubi2thumb.png" alt="" class="tech-row-img">
+                                    </span>
+                                    <span class="tech-row-content">
+                                        <span class="tech-row-label">Qubi Tutorial #2: Introduction to Qubi</span>
+                                        <span class="tech-row-sub">By Trent Rosenthal &middot; May 15th, 2026</span>
+                                        <span class="tech-row-pills">
+                                            <span class="tech-pill">Video</span>
+                                            <span class="tech-pill">Qubi</span>
+                                            <span class="tech-pill">Beginner</span>
+                                        </span>
+                                    </span>
+                                    <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                                </button>
+
+                                <div class="tech-row-group" data-cat="tutorials">
+                                    <h4 class="tech-row-group-header">Miscellaneous</h4>
+                                </div>
+                                <button type="button" class="tech-row tech-row-item" data-cat="tutorials" data-item="misc-1" data-href="https://www.youtube.com/watch?v=TBKbAuFZHYU" data-target="_blank">
+                                    <span class="tech-row-icon tech-row-icon-img" aria-hidden="true">
+                                        <img src="images/misc1thumb.png" alt="" class="tech-row-img">
+                                    </span>
+                                    <span class="tech-row-content">
+                                        <span class="tech-row-label">Qubibyte Quadra Simulators, Quick Demo</span>
+                                        <span class="tech-row-sub">By Trent Rosenthal &middot; February 9th, 2026</span>
+                                        <span class="tech-row-pills">
+                                            <span class="tech-pill">Video</span>
+                                            <span class="tech-pill">Demo</span>
+                                            <span class="tech-pill">Quadra</span>
+                                        </span>
+                                    </span>
+                                    <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
+                                </button>
+
+                                <button type="button" class="tech-back-row" data-back-to="2" aria-label="Back to items list">
+                                    <span class="tech-row-icon" aria-hidden="true">&larr;</span>
+                                </button>
+                            </div>
+
+                            <!-- Detail column -->
+                            <div class="tech-col tech-col-detail">
+
+                                <div class="tech-detail-panel" data-item="blog-1">
+                                    <div class="tech-detail-header">
+                                        <div class="tech-detail-icon tech-detail-icon-img">
+                                            <img src="images/blog1thumb.png" alt="Qubibyte Blog #1">
+                                        </div>
+                                        <div class="tech-detail-titles">
+                                            <h3 class="tech-detail-title"><a href="/blog/1/">Qubibyte Blog #1: The Declaration of Qubibyte &amp; Announcement of Qubibyte Quadra</a></h3>
+                                            <p class="tech-detail-subtitle">By Trent Rosenthal &middot; March 7th, 2025</p>
+                                        </div>
+                                        <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                                    </div>
+                                    <div class="tech-detail-pills">
+                                        <span class="tech-pill">Article</span>
+                                        <span class="tech-pill">Announcement</span>
+                                        <span class="tech-pill">Founding</span>
+                                    </div>
+                                    <p class="tech-detail-desc">The founding article: Qubibyte's mission, our approach to portable liquid-state NMR quantum computing, and the first public reveal of the Qubibyte Quadra.</p>
+                                    <div class="tech-detail-rows">
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Type</span><span class="tech-detail-val">Blog article</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Topics</span><span class="tech-detail-val">Founding, Mission, Quadra reveal</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Published</span><span class="tech-detail-val">March 7th, 2025</span></div>
+                                    </div>
+                                    <a href="/blog/1/" class="tech-tile-launch">Read article &rarr;</a>
+                                </div>
+
+                                <div class="tech-detail-panel" data-item="blog-2">
+                                    <div class="tech-detail-header">
+                                        <div class="tech-detail-icon tech-detail-icon-img">
+                                            <img src="images/blog2thumb.png" alt="Qubibyte Blog #2">
+                                        </div>
+                                        <div class="tech-detail-titles">
+                                            <h3 class="tech-detail-title"><a href="/blog/2/">Qubibyte Blog #2: Qubibyte Quadra Design Choices</a></h3>
+                                            <p class="tech-detail-subtitle">By Trent Rosenthal &middot; July 20th, 2025</p>
+                                        </div>
+                                        <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                                    </div>
+                                    <div class="tech-detail-pills">
+                                        <span class="tech-pill">Article</span>
+                                        <span class="tech-pill">Hardware</span>
+                                        <span class="tech-pill">Design</span>
+                                    </div>
+                                    <p class="tech-detail-desc">A deep dive into the engineering choices behind the Qubibyte Quadra: from the permanent magnets and transceiver coil to the form factor and target price.</p>
+                                    <div class="tech-detail-rows">
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Type</span><span class="tech-detail-val">Blog article</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Topics</span><span class="tech-detail-val">Hardware, NMR, Engineering</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Published</span><span class="tech-detail-val">July 20th, 2025</span></div>
+                                    </div>
+                                    <a href="/blog/2/" class="tech-tile-launch">Read article &rarr;</a>
+                                </div>
+
+                                <div class="tech-detail-panel" data-item="blog-3">
+                                    <div class="tech-detail-header">
+                                        <div class="tech-detail-icon tech-detail-icon-img">
+                                            <img src="images/blog3thumb.png" alt="Qubibyte Blog #3">
+                                        </div>
+                                        <div class="tech-detail-titles">
+                                            <h3 class="tech-detail-title"><a href="/blog/3/">Qubibyte Blog #3: Quantum Circuit Simulator, Qubi Programming Language, and QubiAI</a></h3>
+                                            <p class="tech-detail-subtitle">By Trent Rosenthal &middot; April 20th, 2026</p>
+                                        </div>
+                                        <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                                    </div>
+                                    <div class="tech-detail-pills">
+                                        <span class="tech-pill">Article</span>
+                                        <span class="tech-pill">Simulator</span>
+                                        <span class="tech-pill">Qubi</span>
+                                    </div>
+                                    <p class="tech-detail-desc">Announcing the launch of the Quantum Circuit Simulator, the Qubi programming language, and QubiAI: the toolkit that makes building &amp; running quantum circuits accessible to everyone.</p>
+                                    <div class="tech-detail-rows">
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Type</span><span class="tech-detail-val">Blog article</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Topics</span><span class="tech-detail-val">Circuit Simulator, Qubi language, QubiAI</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Published</span><span class="tech-detail-val">April 20th, 2026</span></div>
+                                    </div>
+                                    <a href="/blog/3/" class="tech-tile-launch">Read article &rarr;</a>
+                                </div>
+
+                                <div class="tech-detail-panel" data-item="blog-4">
+                                    <div class="tech-detail-header">
+                                        <div class="tech-detail-icon tech-detail-icon-img">
+                                            <img src="images/blog3thumb.png" alt="Qubibyte Blog #4">
+                                        </div>
+                                        <div class="tech-detail-titles">
+                                            <h3 class="tech-detail-title"><a href="/blog/4/">Qubibyte Blog #4: How to Design an NMR Quantum Computer</a></h3>
+                                            <p class="tech-detail-subtitle">By Trent Rosenthal &middot; May 21st, 2026</p>
+                                        </div>
+                                        <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                                    </div>
+                                    <div class="tech-detail-pills">
+                                        <span class="tech-pill">Article</span>
+                                        <span class="tech-pill">NMR</span>
+                                        <span class="tech-pill">Hardware</span>
+                                    </div>
+                                    <p class="tech-detail-desc">An engineering walkthrough of the Qubibyte Quadra: power management, control tier, RF generation, signal chains, and the probe network that makes tabletop NMR quantum computing work at room temperature.</p>
+                                    <div class="tech-detail-rows">
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Type</span><span class="tech-detail-val">Blog article</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Topics</span><span class="tech-detail-val">NMR, RF, Raspberry Pi, Probe design</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Published</span><span class="tech-detail-val">May 21st, 2026</span></div>
+                                    </div>
+                                    <a href="/blog/4/" class="tech-tile-launch">Read article &rarr;</a>
+                                </div>
+
+                                <div class="tech-detail-panel" data-item="qubi-1">
+                                    <div class="tech-detail-header">
+                                        <div class="tech-detail-icon tech-detail-icon-img">
+                                            <img src="images/qubi1thumb.png" alt="Qubi Tutorial #1">
+                                        </div>
+                                        <div class="tech-detail-titles">
+                                            <h3 class="tech-detail-title"><a href="https://www.youtube.com/watch?v=lUor5_tTGYE" target="_blank" rel="noopener">Qubi Tutorial #1: Classical &amp; Quantum Computing</a></h3>
+                                            <p class="tech-detail-subtitle">By Trent Rosenthal &middot; May 15th, 2026</p>
+                                        </div>
+                                        <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                                    </div>
+                                    <div class="tech-detail-pills">
+                                        <span class="tech-pill">Video</span>
+                                        <span class="tech-pill">Foundations</span>
+                                        <span class="tech-pill">Beginner</span>
+                                    </div>
+                                    <p class="tech-detail-desc">Episode 1 of the Qubi Programming Language series. Founder &amp; CEO Trent Rosenthal explains the basics of classical and quantum computing: the foundation you need before writing your first Qubi program.</p>
+                                    <div class="tech-detail-rows">
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Series</span><span class="tech-detail-val">Qubi Programming Language</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Format</span><span class="tech-detail-val">YouTube tutorial</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Published</span><span class="tech-detail-val">May 15th, 2026</span></div>
+                                    </div>
+                                    <a href="https://www.youtube.com/watch?v=lUor5_tTGYE" target="_blank" rel="noopener" class="tech-tile-launch">Watch video &rarr;</a>
+                                </div>
+
+                                <div class="tech-detail-panel" data-item="qubi-2">
+                                    <div class="tech-detail-header">
+                                        <div class="tech-detail-icon tech-detail-icon-img">
+                                            <img src="images/qubi2thumb.png" alt="Qubi Tutorial #2">
+                                        </div>
+                                        <div class="tech-detail-titles">
+                                            <h3 class="tech-detail-title"><a href="https://www.youtube.com/watch?v=MmtWitxGbe0" target="_blank" rel="noopener">Qubi Tutorial #2: Introduction to Qubi</a></h3>
+                                            <p class="tech-detail-subtitle">By Trent Rosenthal &middot; May 15th, 2026</p>
+                                        </div>
+                                        <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                                    </div>
+                                    <div class="tech-detail-pills">
+                                        <span class="tech-pill">Video</span>
+                                        <span class="tech-pill">Qubi</span>
+                                        <span class="tech-pill">Beginner</span>
+                                    </div>
+                                    <p class="tech-detail-desc">Episode 2 of the Qubi Programming Language series. Trent Rosenthal gives a full introduction to the Qubi language: what it is, how it works, and how it lets you build quantum circuits today. More episodes covering the Circuit Simulator, quantum algorithms, and QubiAI are on the way.</p>
+                                    <div class="tech-detail-rows">
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Series</span><span class="tech-detail-val">Qubi Programming Language</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Format</span><span class="tech-detail-val">YouTube tutorial</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Published</span><span class="tech-detail-val">May 15th, 2026</span></div>
+                                    </div>
+                                    <a href="https://www.youtube.com/watch?v=MmtWitxGbe0" target="_blank" rel="noopener" class="tech-tile-launch">Watch video &rarr;</a>
+                                </div>
+
+                                <div class="tech-detail-panel" data-item="misc-1">
+                                    <div class="tech-detail-header">
+                                        <div class="tech-detail-icon tech-detail-icon-img">
+                                            <img src="images/misc1thumb.png" alt="Quadra Simulators Demo">
+                                        </div>
+                                        <div class="tech-detail-titles">
+                                            <h3 class="tech-detail-title"><a href="https://www.youtube.com/watch?v=TBKbAuFZHYU" target="_blank" rel="noopener">Qubibyte Quadra Simulators, Quick Demo</a></h3>
+                                            <p class="tech-detail-subtitle">By Trent Rosenthal &middot; February 9th, 2026</p>
+                                        </div>
+                                        <button type="button" class="tech-detail-close" aria-label="Back">&times;</button>
+                                    </div>
+                                    <div class="tech-detail-pills">
+                                        <span class="tech-pill">Video</span>
+                                        <span class="tech-pill">Demo</span>
+                                        <span class="tech-pill">Quadra</span>
+                                    </div>
+                                    <p class="tech-detail-desc">A 3-minute demonstration of the Qubibyte Quadra using Qubibyte's quantum circuit simulator and NMR simulator.</p>
+                                    <div class="tech-detail-rows">
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Topic</span><span class="tech-detail-val">Quadra simulator preview</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Format</span><span class="tech-detail-val">YouTube demo</span></div>
+                                        <div class="tech-tile-detail-row"><span class="tech-detail-label">Published</span><span class="tech-detail-val">February 9th, 2026</span></div>
+                                    </div>
+                                    <a href="https://www.youtube.com/watch?v=TBKbAuFZHYU" target="_blank" rel="noopener" class="tech-tile-launch">Watch video &rarr;</a>
+                                </div>
+
+                            </div>
+
+                        </div><!-- /.tech-explorer-cols -->
+                    </div><!-- /.tech-explorer -->
                 </div>
-            </div>
+
+                <!-- Mode toggle button -->
+                <button type="button" class="media-mode-toggle reveal reveal-delay-2" id="mediaModeToggle">
+                    <span class="media-mode-toggle-text">See Categories</span>
+                </button>
+
+            </div><!-- /.media-section-wrapper -->
         </div>
     </section>
 
     <!-- Company Section -->
     <section id="Company" class="text-center py-5">
         <div class="container">
-            <h2 class="section-header">Company</h2>
-            <div class="row g-4 mt-4 justify-content-center">
+            <h2 class="section-header reveal">Company</h2>
 
-                <!-- Executive -->
-                <div class="col-lg-4 col-md-6 col-12">
-                    <div class="team-card fade-in-up">
-                        <div class="team-card-header"
-                            style="background-image: url('images/rosenthal_banner_image.jpg'); background-size: cover; background-position: center;">
-                            <div class="team-leader-img-container">
-                                <img src="images/photoshoot_square_transparent.png" class="team-leader-img"
-                                    alt="Trent Rosenthal">
+            <!-- Carousel wrapper for mobile -->
+            <div class="team-carousel-wrapper">
+                <button class="team-carousel-btn team-carousel-prev" aria-label="Previous">&#10094;</button>
+
+                <div class="team-carousel">
+                    <div class="row g-4 mt-4 justify-content-center team-cards-row">
+
+                        <!-- Executive -->
+                        <div class="col-lg-4 col-md-6 col-12 team-card-col">
+                            <div class="team-card reveal">
+                                <div class="team-card-header"
+                                    style="background-image: url('images/rosenthal_banner_image.jpg'); background-size: cover; background-position: center;">
+                                    <div class="team-leader-img-container">
+                                        <img src="images/oct25_headshot.webp" class="team-leader-img"
+                                            alt="Trent Rosenthal" loading="eager" decoding="async">
+                                    </div>
+                                </div>
+                                <div class="team-card-body">
+                                    <h3 class="team-leader-name"><a href="https://trent-rosenthal.com"
+                                            target="_blank">Trent
+                                            Rosenthal</a></h3>
+                                    <p class="team-leader-role">Chief Executive Officer</p>
+                                    <p class="team-leader-tenure">Since January 1st, 2025</p>
+                                    <div class="team-divider"></div>
+                                    <h4 class="team-dept-title">Executive</h4>
+                                    <p class="team-dept-desc">Leading strategic direction and overall vision for
+                                        Qubibyte. The
+                                        executive team ensures alignment across all departments.</p>
+                                    <a href="departments/executive/" class="team-link">Learn More</a>
+                                </div>
                             </div>
                         </div>
-                        <div class="team-card-body">
-                            <h3 class="team-leader-name"><a href="https://trent-rosenthal.com" target="_blank">Trent
-                                    Rosenthal</a></h3>
-                            <p class="team-leader-role">Chief Executive Officer</p>
-                            <p class="team-leader-tenure">Since January 1st, 2025</p>
-                            <div class="team-divider"></div>
-                            <h4 class="team-dept-title">Executive</h4>
-                            <p class="team-dept-desc">Leading strategic direction and overall vision for Qubibyte. The
-                                executive team ensures alignment across all departments.</p>
-                            <a href="departments/executive/" class="team-link">Learn More</a>
+
+                        <!-- Operations -->
+                        <div class="col-lg-4 col-md-6 col-12 team-card-col">
+                            <div class="team-card reveal reveal-delay-1">
+                                <div class="team-card-header">
+                                    <div class="team-leader-img-container">
+                                        <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal"
+                                            loading="eager" decoding="async">
+                                    </div>
+                                </div>
+                                <div class="team-card-body">
+                                    <h3 class="team-leader-name">Trent Rosenthal</h3>
+                                    <p class="team-leader-role">Chief Operating Officer</p>
+                                    <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
+                                    <div class="team-divider"></div>
+                                    <h4 class="team-dept-title">Operations</h4>
+                                    <p class="team-dept-desc">Managing day-to-day operations, supply chains, and
+                                        production
+                                        processes. Ensuring efficient execution of business strategies.</p>
+                                    <a href="departments/operations/" class="team-link">Learn More</a>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Financial -->
+                        <div class="col-lg-4 col-md-6 col-12 team-card-col">
+                            <div class="team-card reveal reveal-delay-2">
+                                <div class="team-card-header">
+                                    <div class="team-leader-img-container">
+                                        <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal"
+                                            loading="eager" decoding="async">
+                                    </div>
+                                </div>
+                                <div class="team-card-body">
+                                    <h3 class="team-leader-name">Trent Rosenthal</h3>
+                                    <p class="team-leader-role">Chief Financial Officer</p>
+                                    <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
+                                    <div class="team-divider"></div>
+                                    <h4 class="team-dept-title">Financial</h4>
+                                    <p class="team-dept-desc">Overseeing financial planning, accounting, budgeting, and
+                                        investor
+                                        relations. Ensuring fiscal responsibility and sustainable growth.</p>
+                                    <a href="departments/financial/" class="team-link">Learn More</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technology -->
+                        <div class="col-lg-4 col-md-6 col-12 team-card-col">
+                            <div class="team-card reveal reveal-delay-3">
+                                <div class="team-card-header">
+                                    <div class="team-leader-img-container">
+                                        <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal"
+                                            loading="eager" decoding="async">
+                                    </div>
+                                </div>
+                                <div class="team-card-body">
+                                    <h3 class="team-leader-name">Trent Rosenthal</h3>
+                                    <p class="team-leader-role">Chief Technology Officer</p>
+                                    <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
+                                    <div class="team-divider"></div>
+                                    <h4 class="team-dept-title">Technology</h4>
+                                    <p class="team-dept-desc">Driving innovation in quantum computing architecture and
+                                        software.
+                                        Building the cutting-edge technology that powers our solutions.</p>
+                                    <a href="departments/technology/" class="team-link">Learn More</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Marketing -->
+                        <div class="col-lg-4 col-md-6 col-12 team-card-col">
+                            <div class="team-card reveal reveal-delay-4">
+                                <div class="team-card-header">
+                                    <div class="team-leader-img-container">
+                                        <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal"
+                                            loading="eager" decoding="async">
+                                    </div>
+                                </div>
+                                <div class="team-card-body">
+                                    <h3 class="team-leader-name">Trent Rosenthal</h3>
+                                    <p class="team-leader-role">Chief Marketing Officer</p>
+                                    <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
+                                    <div class="team-divider"></div>
+                                    <h4 class="team-dept-title">Marketing</h4>
+                                    <p class="team-dept-desc">Building brand awareness, engaging with customers, and
+                                        driving
+                                        market growth. Communicating Qubibyte's innovative solutions.</p>
+                                    <a href="departments/marketing/" class="team-link">Learn More</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Legal -->
+                        <div class="col-lg-4 col-md-6 col-12 team-card-col">
+                            <div class="team-card reveal reveal-delay-5">
+                                <div class="team-card-header">
+                                    <div class="team-leader-img-container">
+                                        <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal"
+                                            loading="eager" decoding="async">
+                                    </div>
+                                </div>
+                                <div class="team-card-body">
+                                    <h3 class="team-leader-name">Trent Rosenthal</h3>
+                                    <p class="team-leader-role">Chief Legal Officer</p>
+                                    <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
+                                    <div class="team-divider"></div>
+                                    <h4 class="team-dept-title">Legal</h4>
+                                    <p class="team-dept-desc">Ensuring compliance, managing intellectual property, and
+                                        contracts. Protecting Qubibyte's interests and maintaining legal integrity.</p>
+                                    <a href="departments/legal/" class="team-link">Learn More</a>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
-                <!-- Operations -->
-                <div class="col-lg-4 col-md-6 col-12">
-                    <div class="team-card fade-in-up" style="animation-delay: 0.1s;">
-                        <div class="team-card-header">
-                            <div class="team-leader-img-container">
-                                <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal">
-                            </div>
-                        </div>
-                        <div class="team-card-body">
-                            <h3 class="team-leader-name">Trent Rosenthal</h3>
-                            <p class="team-leader-role">Chief Operating Officer</p>
-                            <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
-                            <div class="team-divider"></div>
-                            <h4 class="team-dept-title">Operations</h4>
-                            <p class="team-dept-desc">Managing day-to-day operations, supply chains, and production
-                                processes. Ensuring efficient execution of business strategies.</p>
-                            <a href="departments/operations/" class="team-link">Learn More</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Financial -->
-                <div class="col-lg-4 col-md-6 col-12">
-                    <div class="team-card fade-in-up" style="animation-delay: 0.2s;">
-                        <div class="team-card-header">
-                            <div class="team-leader-img-container">
-                                <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal">
-                            </div>
-                        </div>
-                        <div class="team-card-body">
-                            <h3 class="team-leader-name">Trent Rosenthal</h3>
-                            <p class="team-leader-role">Chief Financial Officer</p>
-                            <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
-                            <div class="team-divider"></div>
-                            <h4 class="team-dept-title">Financial</h4>
-                            <p class="team-dept-desc">Overseeing financial planning, accounting, budgeting, and investor
-                                relations. Ensuring fiscal responsibility and sustainable growth.</p>
-                            <a href="departments/financial/" class="team-link">Learn More</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Technology -->
-                <div class="col-lg-4 col-md-6 col-12">
-                    <div class="team-card fade-in-up" style="animation-delay: 0.3s;">
-                        <div class="team-card-header">
-                            <div class="team-leader-img-container">
-                                <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal">
-                            </div>
-                        </div>
-                        <div class="team-card-body">
-                            <h3 class="team-leader-name">Trent Rosenthal</h3>
-                            <p class="team-leader-role">Chief Technology Officer</p>
-                            <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
-                            <div class="team-divider"></div>
-                            <h4 class="team-dept-title">Technology</h4>
-                            <p class="team-dept-desc">Driving innovation in quantum computing architecture and software.
-                                Building the cutting-edge technology that powers our solutions.</p>
-                            <a href="departments/technology/" class="team-link">Learn More</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Marketing -->
-                <div class="col-lg-4 col-md-6 col-12">
-                    <div class="team-card fade-in-up" style="animation-delay: 0.4s;">
-                        <div class="team-card-header">
-                            <div class="team-leader-img-container">
-                                <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal">
-                            </div>
-                        </div>
-                        <div class="team-card-body">
-                            <h3 class="team-leader-name">Trent Rosenthal</h3>
-                            <p class="team-leader-role">Chief Marketing Officer</p>
-                            <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
-                            <div class="team-divider"></div>
-                            <h4 class="team-dept-title">Marketing</h4>
-                            <p class="team-dept-desc">Building brand awareness, engaging with customers, and driving
-                                market growth. Communicating Qubibyte's innovative solutions.</p>
-                            <a href="departments/marketing/" class="team-link">Learn More</a>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Legal -->
-                <div class="col-lg-4 col-md-6 col-12">
-                    <div class="team-card fade-in-up" style="animation-delay: 0.5s;">
-                        <div class="team-card-header">
-                            <div class="team-leader-img-container">
-                                <img src="images/unknown_user.png" class="team-leader-img" alt="Trent Rosenthal">
-                            </div>
-                        </div>
-                        <div class="team-card-body">
-                            <h3 class="team-leader-name">Trent Rosenthal</h3>
-                            <p class="team-leader-role">Chief Legal Officer</p>
-                            <p class="team-leader-tenure">Acting since November 23rd, 2025</p>
-                            <div class="team-divider"></div>
-                            <h4 class="team-dept-title">Legal</h4>
-                            <p class="team-dept-desc">Ensuring compliance, managing intellectual property, and
-                                contracts. Protecting Qubibyte's interests and maintaining legal integrity.</p>
-                            <a href="departments/legal/" class="team-link">Learn More</a>
-                        </div>
-                    </div>
-                </div>
-
+                <button class="team-carousel-btn team-carousel-next" aria-label="Next">&#10095;</button>
             </div>
+
+            <!-- Carousel dots for mobile -->
+            <div class="team-carousel-dots">
+                <span class="carousel-dot active" data-index="0"></span>
+                <span class="carousel-dot" data-index="1"></span>
+                <span class="carousel-dot" data-index="2"></span>
+                <span class="carousel-dot" data-index="3"></span>
+                <span class="carousel-dot" data-index="4"></span>
+                <span class="carousel-dot" data-index="5"></span>
+            </div>
+
         </div>
     </section>
 
     <!-- Career Section -->
     <section id="Career" class="text-center py-5">
         <div class="container">
-            <h2 class="section-header">Join Our Team</h2>
+            <h2 class="section-header reveal">Join Our Team</h2>
             <div class="career-content">
-                <div class="career-intro">
+                <div class="career-intro reveal">
                     <p class="career-lead">Shape the Future of Quantum Computing</p>
                     <p class="career-description">At Qubibyte, we're building the next generation of quantum computing
                         solutions. We're looking for passionate individuals who want to make a meaningful impact in
                         technology, science, and innovation.</p>
                 </div>
                 <div class="career-highlights">
-                    <div class="career-highlight-item">
-                        <div class="highlight-icon">🚀</div>
+                    <div class="career-highlight-item reveal">
+                        <div class="highlight-icon">&#128640;</div>
                         <h3>Innovation First</h3>
                         <p>Work on cutting-edge quantum computing projects that push the boundaries of what's possible
                         </p>
                     </div>
-                    <div class="career-highlight-item">
-                        <div class="highlight-icon">🌍</div>
+                    <div class="career-highlight-item reveal reveal-delay-1">
+                        <div class="highlight-icon">&#127758;</div>
                         <h3>Global Impact</h3>
                         <p>Contribute to solutions that will transform industries from healthcare to energy</p>
                     </div>
-                    <div class="career-highlight-item">
-                        <div class="highlight-icon">💡</div>
+                    <div class="career-highlight-item reveal reveal-delay-2">
+                        <div class="highlight-icon">&#128161;</div>
                         <h3>Growth Opportunities</h3>
                         <p>Join a dynamic team where your ideas matter and your career can flourish</p>
                     </div>
                 </div>
-                <div class="career-cta">
+                <div class="career-cta reveal">
                     <p class="career-contact-text">Ready to be part of something extraordinary?</p>
-                    <a href="mailto:qubibyteorg@gmail.com" class="career-email-btn">
-                        Get in Touch →
-                    </a>
-                    <p class="career-note">Reach out to Founder & CEO Trent Rosenthal to learn more about opportunities
-                        at Qubibyte</p>
+                    <div style="margin-bottom: 20px;">
+                        <a href="/careers/" class="career-email-btn" style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+                            See Open Positions &rarr;
+                        </a>
+                    </div>
+                    <p class="career-note">Have questions? Reach out to us at <a href="mailto:qubibyteorg@gmail.com" style="color: #ffffff; text-decoration: none; font-weight: 600;">qubibyteorg@gmail.com</a></p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer style="background: linear-gradient(135deg, #554A9E 0%, #0687C9 100%); color: white; padding: 60px 0 30px;">
+    <footer class="site-footer">
         <div class="container">
             <div class="row">
                 <div class="col-md-4 col-12 mb-4">
-                    <img src="images/logo_white.png" alt="Qubibyte" style="width:120px; margin-bottom: 20px;">
-                    <p style="font-family: 'Khand', Arial, sans-serif; font-size: 1.1em; opacity: 0.9;">
-                        Everywhere, all at once.
-                    </p>
+                    <img src="images/logo_white.png" alt="Qubibyte" style="width:120px; margin-bottom: 16px;">
+                    <p class="footer-brand-text">Everywhere, all at once.</p>
                 </div>
                 <div class="col-md-4 col-12 mb-4">
-                    <h5 style="font-family: 'Khand', Arial, sans-serif; font-weight: bold; margin-bottom: 20px;">Quick
-                        Links</h5>
-                    <ul style="list-style: none; padding: 0;">
-                        <li style="margin-bottom: 10px;"><a href="#Products"
-                                style="color: white; text-decoration: none; font-family: 'Khand', Arial, sans-serif; opacity: 0.9; transition: opacity 0.3s;"
-                                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">Products</a>
-                        </li>
-                        <li style="margin-bottom: 10px;"><a href="#Blog"
-                                style="color: white; text-decoration: none; font-family: 'Khand', Arial, sans-serif; opacity: 0.9; transition: opacity 0.3s;"
-                                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">Blog</a></li>
-                        <li style="margin-bottom: 10px;"><a href="#Company"
-                                style="color: white; text-decoration: none; font-family: 'Khand', Arial, sans-serif; opacity: 0.9; transition: opacity 0.3s;"
-                                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">Company</a>
-                        </li>
-                        <li style="margin-bottom: 10px;"><a href="#Career"
-                                style="color: white; text-decoration: none; font-family: 'Khand', Arial, sans-serif; opacity: 0.9; transition: opacity 0.3s;"
-                                onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.9'">Career</a>
-                        </li>
+                    <h5 class="footer-heading">Quick Links</h5>
+                    <ul class="footer-link-list">
+                        <li><a href="javascript:void(0);" class="footer-link" data-section="Tech">Tech</a></li>
+                        <li><a href="javascript:void(0);" class="footer-link" data-section="Media">Media</a></li>
+                        <li><a href="javascript:void(0);" class="footer-link" data-section="Company">Company</a></li>
+                        <li><a href="javascript:void(0);" class="footer-link" data-section="Career">Career</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4 col-12 mb-4">
-                    <h5 style="font-family: 'Khand', Arial, sans-serif; font-weight: bold; margin-bottom: 20px;">Connect
-                    </h5>
-                    <div class="social-icons" style="position: relative; top: auto; right: auto; left: auto;">
-                        <a href="https://www.linkedin.com/company/qubibyte" target="_blank" style="filter: invert(1);">
+                    <h5 class="footer-heading">Connect</h5>
+                    <div class="footer-social">
+                        <a href="https://www.linkedin.com/company/qubibyte" target="_blank">
                             <img src="images/linkedin.png" alt="LinkedIn">
                         </a>
-                        <a href="https://twitter.com/qubibyte" target="_blank" style="filter: invert(1);">
+                        <a href="https://twitter.com/qubibyte" target="_blank">
                             <img src="images/x.png" alt="X">
                         </a>
-                        <a href="https://www.youtube.com/@qubibyte" target="_blank" style="filter: invert(1);">
+                        <a href="https://www.youtube.com/@qubibyte" target="_blank">
                             <img src="images/youtube.png" alt="YouTube">
                         </a>
                     </div>
-                    <p style="font-family: 'Khand', Arial, sans-serif; margin-top: 20px; opacity: 0.9;">
-                        <a href="mailto:qubibyteorg@gmail.com"
-                            style="color: white; text-decoration: none;">qubibyteorg@gmail.com</a>
-                    </p>
+                    <a href="mailto:qubibyteorg@gmail.com" class="footer-email-link">qubibyteorg@gmail.com</a>
                 </div>
             </div>
-            <hr style="border-color: rgba(255,255,255,0.2); margin: 40px 0 20px;">
-            <p style="text-align: center; font-family: 'Khand', Arial, sans-serif; opacity: 0.8; margin: 0;">
-                &copy; 2025 Qubibyte. All rights reserved.
-            </p>
+            <hr class="footer-divider">
+            <p class="footer-copyright">&copy; 2026 Qubibyte. All rights reserved.</p>
         </div>
     </footer>
+    </div><!-- #home-scale-root -->
 
+    <script>
+        function scrollToSection(sectionId) {
+            const section = document.getElementById(sectionId);
+            if (section) {
+                var navOffset = 80;
+                if (window.HomeScale && typeof window.HomeScale.navOffset === 'number') {
+                    navOffset = window.HomeScale.navOffset;
+                }
+                const top = section.getBoundingClientRect().top + window.pageYOffset - navOffset;
+                window.scrollTo({
+                    top: top,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        document.addEventListener('click', function (e) {
+            const target = e.target.closest('[data-section]');
+            if (target) {
+                e.preventDefault();
+                scrollToSection(target.getAttribute('data-section'));
+            }
+        });
+
+        (function () {
+            const params = new URLSearchParams(window.location.search);
+            const section = params.get('section');
+            if (section) {
+                history.replaceState(null, '', window.location.pathname);
+                function doScroll() {
+                    scrollToSection(section);
+                }
+                if (document.readyState === 'complete') {
+                    doScroll();
+                } else {
+                    window.addEventListener('load', doScroll);
+                }
+            }
+        })();
+
+        window.addEventListener('scroll', function () {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+    </script>
     <script type="text/javascript" src="blogs.js"></script>
-</body>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const navItems = document.querySelectorAll(".navbar-nav .nav-link, .navbar-brand");
-        const navbarToggler = document.querySelector(".navbar-toggler");
-        const navbarCollapse = document.querySelector(".navbar-collapse");
+    <!-- Pre-decode all carousel images to eliminate first-switch rendering delay -->
+    <script>
+        (function () {
+            // Force decode of all carousel images (team + product + blog)
+            // decode() converts downloaded bytes into ready-to-paint pixels
+            // Without this, the browser only decodes on first paint = visible flash
+            const selectors = '.team-leader-img, .product-image, .blog-card-img';
+            function preDecodeAll() {
+                document.querySelectorAll(selectors).forEach(function (img) {
+                    if (img.complete && img.naturalWidth > 0) {
+                        if (img.decode) img.decode().catch(function () { });
+                    } else {
+                        img.addEventListener('load', function () {
+                            if (img.decode) img.decode().catch(function () { });
+                        });
+                    }
+                });
+            }
+            // Run immediately and also after a short delay (for dynamically added images)
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', preDecodeAll);
+            } else {
+                preDecodeAll();
+            }
+            // Second pass after blogs.js has had time to build DOM
+            setTimeout(preDecodeAll, 500);
+        })();
+    </script>
 
-        navItems.forEach(function (item) {
-            item.addEventListener("click", function () {
-                // Only collapse if the navbar is open (not already collapsed)
-                if (navbarCollapse.classList.contains("show") && window.innerWidth < 768) {
-                    navbarToggler.click(); // Close the navbar
+    <!-- Navbar collapse on mobile click -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const navItems = document.querySelectorAll(".navbar-nav .nav-link, .navbar-brand");
+            const navbarToggler = document.querySelector(".navbar-toggler");
+            const navbarCollapse = document.querySelector(".navbar-collapse");
+
+            navItems.forEach(function (item) {
+                item.addEventListener("click", function () {
+                    if (navbarCollapse.classList.contains("show") && window.innerWidth < 768) {
+                        navbarToggler.click();
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Team Carousel for Mobile -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const carouselRow = document.querySelector('.team-cards-row');
+            const prevBtn = document.querySelector('.team-carousel-prev');
+            const nextBtn = document.querySelector('.team-carousel-next');
+            const dots = document.querySelectorAll('.carousel-dot');
+            const cards = document.querySelectorAll('.team-card-col');
+
+            // Preload all team card images
+            cards.forEach(card => {
+                const img = card.querySelector('img');
+                if (img && img.src) {
+                    const preload = new Image();
+                    preload.src = img.src;
+                }
+            });
+
+            let currentIndex = 0;
+            const totalCards = cards.length;
+
+            function updateCarousel() {
+                // Only apply transform on mobile
+                if (window.innerWidth < 768) {
+                    // Each card is 1/6 of the row (which is 600% of container)
+                    // So each slide = 100/6 = 16.667% of the row
+                    const slidePercent = 100 / totalCards;
+                    carouselRow.style.transform = `translateX(-${currentIndex * slidePercent}%)`;
+                } else {
+                    carouselRow.style.transform = 'none';
+                }
+
+                // Update dots
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index === currentIndex);
+                });
+            }
+
+            function goToSlide(index) {
+                currentIndex = Math.max(0, Math.min(index, totalCards - 1));
+                updateCarousel();
+            }
+
+            function nextSlide() {
+                currentIndex = (currentIndex + 1) % totalCards;
+                updateCarousel();
+            }
+
+            function prevSlide() {
+                currentIndex = (currentIndex - 1 + totalCards) % totalCards;
+                updateCarousel();
+            }
+
+            // Button handlers
+            if (nextBtn) nextBtn.addEventListener('click', nextSlide);
+            if (prevBtn) prevBtn.addEventListener('click', prevSlide);
+
+            // Dot handlers
+            dots.forEach((dot, index) => {
+                dot.addEventListener('click', () => goToSlide(index));
+            });
+
+            // Touch swipe support
+            let touchStartX = 0;
+            let touchEndX = 0;
+
+            const carousel = document.querySelector('.team-carousel');
+            if (carousel) {
+                carousel.addEventListener('touchstart', (e) => {
+                    touchStartX = e.changedTouches[0].screenX;
+                }, { passive: true });
+
+                carousel.addEventListener('touchend', (e) => {
+                    touchEndX = e.changedTouches[0].screenX;
+                    const diff = touchStartX - touchEndX;
+
+                    if (Math.abs(diff) > 50) {
+                        if (diff > 0) {
+                            nextSlide();
+                        } else {
+                            prevSlide();
+                        }
+                    }
+                }, { passive: true });
+            }
+
+            // Reset on resize
+            window.addEventListener('resize', updateCarousel);
+        });
+    </script>
+
+    <!-- Generic Explorer (3-stage drill-down) — used by Tech & Media -->
+    <script>
+        function initExplorer(explorer) {
+            if (!explorer) return;
+
+            const catRows = explorer.querySelectorAll('.tech-row-cat');
+            const itemRows = explorer.querySelectorAll('.tech-row-item');
+            const itemGroups = explorer.querySelectorAll('.tech-row-group');
+            const detailPanels = explorer.querySelectorAll('.tech-detail-panel');
+            const closeButtons = explorer.querySelectorAll('.tech-detail-close');
+            const backRows = explorer.querySelectorAll('.tech-back-row');
+            const crumbCat = explorer.querySelector('[data-crumb="cat"]');
+            const crumbItem = explorer.querySelector('[data-crumb="item"]');
+            const crumbItemSep = explorer.querySelector('[data-crumb-sep="item"]');
+
+            function setStage(stage) {
+                explorer.dataset.stage = String(stage);
+                updateBreadcrumb();
+            }
+
+            function getCatLabel(cat) {
+                const row = explorer.querySelector('.tech-row-cat[data-cat="' + cat + '"] .tech-row-label');
+                return row ? row.textContent.trim() : '';
+            }
+
+            function getItemLabel(item) {
+                const row = explorer.querySelector('.tech-row-item[data-item="' + item + '"] .tech-row-label');
+                return row ? row.textContent.trim() : '';
+            }
+
+            function updateBreadcrumb() {
+                const stage = explorer.dataset.stage;
+                const cat = explorer.dataset.cat;
+                const item = explorer.dataset.item;
+                if (!crumbCat || !crumbItem || !crumbItemSep) return;
+
+                if (stage === '1' || !cat) {
+                    crumbCat.textContent = '';
+                    crumbItem.textContent = '';
+                    crumbItem.style.display = 'none';
+                    crumbItemSep.style.display = 'none';
+                    return;
+                }
+
+                crumbCat.textContent = getCatLabel(cat);
+                crumbCat.classList.toggle('is-current', stage === '2');
+
+                if (stage === '3' && item) {
+                    crumbItem.textContent = getItemLabel(item);
+                    crumbItem.classList.add('is-current');
+                    crumbItem.style.display = '';
+                    crumbItemSep.style.display = '';
+                } else {
+                    crumbItem.textContent = '';
+                    crumbItem.classList.remove('is-current');
+                    crumbItem.style.display = 'none';
+                    crumbItemSep.style.display = 'none';
+                }
+            }
+
+            function selectCategory(cat) {
+                explorer.dataset.cat = cat;
+                explorer.dataset.item = '';
+                catRows.forEach(r => r.classList.toggle('active', r.dataset.cat === cat));
+                itemRows.forEach(r => {
+                    const matches = r.dataset.cat === cat;
+                    r.classList.toggle('is-hidden', !matches);
+                    r.classList.remove('active');
+                });
+                itemGroups.forEach(g => g.classList.toggle('is-hidden', g.dataset.cat !== cat));
+                detailPanels.forEach(p => p.classList.remove('is-active'));
+                setStage(2);
+            }
+
+            function selectItem(item) {
+                explorer.dataset.item = item;
+                itemRows.forEach(r => r.classList.toggle('active', r.dataset.item === item));
+                detailPanels.forEach(p => p.classList.toggle('is-active', p.dataset.item === item));
+                setStage(3);
+            }
+
+            function resetToStage1() {
+                explorer.dataset.cat = '';
+                explorer.dataset.item = '';
+                catRows.forEach(r => r.classList.remove('active'));
+                itemRows.forEach(r => { r.classList.remove('active'); r.classList.add('is-hidden'); });
+                itemGroups.forEach(g => g.classList.add('is-hidden'));
+                detailPanels.forEach(p => p.classList.remove('is-active'));
+                setStage(1);
+            }
+
+            function backToStage2() {
+                if (!explorer.dataset.cat) {
+                    resetToStage1();
+                    return;
+                }
+                explorer.dataset.item = '';
+                itemRows.forEach(r => r.classList.remove('active'));
+                detailPanels.forEach(p => p.classList.remove('is-active'));
+                setStage(2);
+            }
+
+            catRows.forEach(row => {
+                row.addEventListener('click', function () {
+                    const cat = row.dataset.cat;
+                    // Clicking the currently active category: at stage 3, step back to its
+                    // items list (stage 2). At stage 2, do nothing (already showing it).
+                    if (explorer.dataset.cat === cat && explorer.dataset.stage !== '1') {
+                        if (explorer.dataset.stage === '3') backToStage2();
+                        return;
+                    }
+                    selectCategory(cat);
+                });
+            });
+
+            itemRows.forEach(row => {
+                // Info icon: opens the detail panel (old behavior)
+                const infoBtn = row.querySelector('.tech-row-info');
+                if (infoBtn) {
+                    infoBtn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        const item = row.dataset.item;
+                        if (explorer.dataset.item === item && explorer.dataset.stage === '3') {
+                            backToStage2();
+                            return;
+                        }
+                        selectItem(item);
+                    });
+                }
+                // Clicking the row itself navigates directly to the destination
+                row.addEventListener('click', function () {
+                    const href = row.dataset.href;
+                    if (!href) return;
+                    const target = row.dataset.target;
+                    if (window.QubibyteSoftwareMode && window.QubibyteSoftwareMode.isSoftwareMode()) {
+                        window.QubibyteSoftwareMode.navigate(href, target);
+                    } else if (target === '_blank') {
+                        window.open(href, '_blank', 'noopener');
+                    } else {
+                        window.location.href = href;
+                    }
+                });
+            });
+
+            closeButtons.forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    backToStage2();
+                });
+            });
+
+            backRows.forEach(btn => {
+                btn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const target = btn.dataset.backTo;
+                    if (target === '1') resetToStage1();
+                    else if (target === '2') backToStage2();
+                });
+            });
+
+            if (crumbCat) {
+                crumbCat.addEventListener('click', function () {
+                    if (explorer.dataset.stage === '3') backToStage2();
+                });
+            }
+            if (crumbItem) {
+                crumbItem.addEventListener('click', function () {
+                    // current item — clicking does nothing useful but keep consistent
+                });
+            }
+
+            itemRows.forEach(r => r.classList.add('is-hidden'));
+            itemGroups.forEach(g => g.classList.add('is-hidden'));
+            updateBreadcrumb();
+
+            explorer.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    if (explorer.dataset.stage === '3') backToStage2();
+                    else if (explorer.dataset.stage === '2') resetToStage1();
+                }
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll('.tech-explorer').forEach(initExplorer);
+        });
+    </script>
+
+    <!-- Media: carousel <-> categories toggle -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const wrapper = document.getElementById('mediaSection');
+            const toggle = document.getElementById('mediaModeToggle');
+            if (!wrapper || !toggle) return;
+
+            const label = toggle.querySelector('.media-mode-toggle-text');
+
+            function applyMode(mode) {
+                wrapper.dataset.mode = mode;
+                if (label) {
+                    label.textContent = mode === 'explorer' ? 'See Carousel' : 'See Categories';
+                }
+                toggle.setAttribute('aria-pressed', mode === 'explorer' ? 'true' : 'false');
+
+                // Force-reveal any .reveal elements inside the newly-shown pane (they
+                // skip the intersection observer because they start inside display:none).
+                const pane = wrapper.querySelector('[data-mode-content="' + mode + '"]');
+                if (pane) {
+                    requestAnimationFrame(() => {
+                        pane.querySelectorAll('.reveal').forEach(el => el.classList.add('revealed'));
+                    });
+                }
+            }
+
+            applyMode(wrapper.dataset.mode || 'carousel');
+
+            toggle.addEventListener('click', function () {
+                const current = wrapper.dataset.mode || 'carousel';
+                applyMode(current === 'carousel' ? 'explorer' : 'carousel');
+                // Re-position to the Media section so the new view sits where the
+                // user expects (same spot as clicking the "Media" nav tab).
+                if (typeof scrollToSection === 'function') {
+                    scrollToSection('Media');
                 }
             });
         });
-    });
-</script>
+    </script>
 
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const text1 = "EVERYWHERE,";
-        const text2 = "ALL AT ONCE.";
-        const element1 = document.getElementById("introeverywhere");
-        const element2 = document.getElementById("introallatonce");
-        const missionElement = document.getElementById("introourmission");
-        const missionPar = document.getElementById("intropar");
-        const heroBadge = document.querySelector(".hero-badge");
-        const heroSubtitle = document.querySelector(".hero-subtitle");
+    <!-- Hero entrance animation -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const text1 = "EVERYWHERE,";
+            const text2 = "ALL AT ONCE.";
+            const element1 = document.getElementById("introeverywhere");
+            const element2 = document.getElementById("introallatonce");
+            const missionElement = document.getElementById("introourmission");
+            const missionPar = document.getElementById("intropar");
+            const heroBadge = document.querySelector(".hero-badge");
+            const heroSubtitle = document.querySelector(".hero-subtitle");
+            const missionCard = document.querySelector(".mission-card");
 
-        // Hide elements initially
-        element1.style.opacity = "0";
-        element2.style.opacity = "0";
-        missionElement.style.opacity = "0";
-        missionPar.style.opacity = "0";
-        if (heroBadge) heroBadge.style.opacity = "0";
-        if (heroSubtitle) heroSubtitle.style.opacity = "0";
-        element1.textContent = text1;
-        element2.textContent = text2;
+            // Hide elements initially but reserve space with invisible text
+            element1.style.visibility = "hidden";
+            element2.style.visibility = "hidden";
+            element1.textContent = text1;
+            element2.textContent = text2;
+            missionElement.style.opacity = "0";
+            missionPar.style.opacity = "0";
+            if (heroBadge) heroBadge.style.opacity = "0";
+            if (heroSubtitle) heroSubtitle.style.opacity = "0";
 
-        function delay(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
+            // Add cursor style
+            const cursorStyle = document.createElement('style');
+            cursorStyle.textContent = `
+                .typewriter-wrapper {
+                    position: relative;
+                    display: inline;
+                }
+                .typewriter-cursor {
+                    position: absolute;
+                    display: inline-block;
+                    width: 4px;
+                    height: 0.85em;
+                    background: currentColor;
+                    margin-left: 4px;
+                    animation: cursorBlink 0.7s infinite;
+                    transform: translateY(0.1em);
+                }
+                @keyframes cursorBlink {
+                    0%, 50% { opacity: 1; }
+                    51%, 100% { opacity: 0; }
+                }
+            `;
+            document.head.appendChild(cursorStyle);
 
-        async function animateEntrance() {
-            // Animate badge first
-            if (heroBadge) {
-                heroBadge.style.transition = "all 0.5s ease-out";
-                heroBadge.style.opacity = "1";
-                heroBadge.style.transform = "translateY(0)";
+            function delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
             }
 
-            await delay(300);
+            async function typeWriter(element, text, speed = 80) {
+                // Clear the placeholder and make visible
+                element.textContent = "";
+                element.style.visibility = "visible";
 
-            // Animate "EVERYWHERE," and "OUR MISSION" - slide and fade in from left
-            element1.style.transform = "translateX(-100px)";
-            element1.style.transition = "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)";
-            element1.style.opacity = "1";
-            element1.style.transform = "translateX(0)";
+                // Create wrapper to contain cursor positioning
+                const wrapper = document.createElement('span');
+                wrapper.className = 'typewriter-wrapper';
+                element.appendChild(wrapper);
 
-            missionElement.style.transition = "opacity 0.6s ease-in";
-            missionElement.style.opacity = "1";
+                const cursor = document.createElement('span');
+                cursor.className = 'typewriter-cursor';
+                wrapper.appendChild(cursor);
 
-            await delay(200);
+                for (let i = 0; i < text.length; i++) {
+                    const char = document.createTextNode(text[i]);
+                    wrapper.insertBefore(char, cursor);
+                    await delay(speed);
+                }
 
-            // Animate "ALL AT ONCE." and mission paragraph - slide and fade in from right
-            element2.style.transform = "translateX(100px)";
-            element2.style.transition = "all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)";
-            element2.style.opacity = "1";
-            element2.style.transform = "translateX(0)";
+                // Stop blinking and fade out cursor
+                cursor.style.animation = 'none';
+                cursor.style.opacity = '1';
+                await delay(200);
+                cursor.style.transition = 'opacity 0.15s';
+                cursor.style.opacity = '0';
+                await delay(150);
 
-            missionPar.style.transition = "opacity 0.6s ease-in";
-            missionPar.style.opacity = "1";
-
-            await delay(200);
-
-            // Animate subtitle
-            if (heroSubtitle) {
-                heroSubtitle.style.transition = "opacity 0.6s ease-in";
-                heroSubtitle.style.opacity = "1";
+                // Unwrap the text to clean up DOM
+                while (wrapper.firstChild) {
+                    if (wrapper.firstChild !== cursor) {
+                        element.insertBefore(wrapper.firstChild, wrapper);
+                    } else {
+                        wrapper.removeChild(cursor);
+                    }
+                }
+                wrapper.remove();
             }
-        }
 
-        animateEntrance();
-    });
-</script>
+            async function animateEntrance() {
+                // Wait for fonts to load, but start after 2s max so the user isn't staring at nothing.
+                // If fonts load after the timeout, font-display: swap in CSS will swap them in automatically.
+                await Promise.race([
+                    document.fonts.ready,
+                    delay(2000)
+                ]);
 
+                // Fade in badge and mission card together
+                if (heroBadge) {
+                    heroBadge.style.transition = "all 0.6s cubic-bezier(0.16, 1, 0.3, 1)";
+                    heroBadge.style.opacity = "1";
+                    heroBadge.style.transform = "translateY(0)";
+                }
 
+                // Fade in the mission card container (hidden via CSS opacity: 0)
+                if (missionCard) {
+                    missionCard.style.opacity = "1";
+                }
 
+                // Mission text content fades in right away
+                missionElement.style.transition = "opacity 0.7s ease-out";
+                missionElement.style.opacity = "1";
+                missionPar.style.transition = "opacity 0.7s ease-out 0.15s";
+                missionPar.style.opacity = "1";
 
-<script>
-    // Custom Audio Player Controls
-    document.addEventListener("DOMContentLoaded", function () {
-        const audio = document.getElementById('missionAudio');
-        const playBtn = document.getElementById('audioPlayBtn');
-        const playIcon = playBtn.querySelector('.play-icon');
-        const pauseIcon = playBtn.querySelector('.pause-icon');
-        const progressBar = document.getElementById('audioProgressBar');
-        const progressFill = document.getElementById('audioProgressFill');
-        const currentTimeEl = document.getElementById('audioCurrentTime');
-        const durationEl = document.getElementById('audioDuration');
+                await delay(400);
 
-        // Format time in MM:SS
-        function formatTime(seconds) {
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs.toString().padStart(2, '0')}`;
-        }
+                // Typewriter for EVERYWHERE,
+                await typeWriter(element1, text1, 70);
 
-        // Update duration when metadata loads
-        audio.addEventListener('loadedmetadata', function () {
-            durationEl.textContent = formatTime(audio.duration);
+                await delay(150);
+
+                // Typewriter for ALL AT ONCE.
+                await typeWriter(element2, text2, 70);
+
+                await delay(300);
+
+                // Fade in subtitle (Pioneering line waits)
+                if (heroSubtitle) {
+                    heroSubtitle.style.transition = "opacity 0.7s ease-out";
+                    heroSubtitle.style.opacity = "1";
+                }
+            }
+
+            animateEntrance();
         });
+    </script>
 
-        // Play/Pause toggle
-        playBtn.addEventListener('click', function () {
-            if (audio.paused) {
-                audio.play();
-                playIcon.style.display = 'none';
-                pauseIcon.style.display = 'inline';
-            } else {
-                audio.pause();
+    <!-- Audio Player -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const audio = document.getElementById('missionAudio');
+            const playBtn = document.getElementById('audioPlayBtn');
+            const playIcon = playBtn.querySelector('.play-icon');
+            const pauseIcon = playBtn.querySelector('.pause-icon');
+            const progressBar = document.getElementById('audioProgressBar');
+            const progressFill = document.getElementById('audioProgressFill');
+            const currentTimeEl = document.getElementById('audioCurrentTime');
+            const durationEl = document.getElementById('audioDuration');
+            let durationSet = false;
+
+            function formatTime(seconds) {
+                if (!seconds || !isFinite(seconds) || isNaN(seconds)) return '0:00';
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return mins + ':' + secs.toString().padStart(2, '0');
+            }
+
+            function trySetDuration() {
+                if (durationSet) return;
+                if (audio.duration && isFinite(audio.duration) && audio.duration > 0) {
+                    durationEl.textContent = formatTime(audio.duration);
+                    durationSet = true;
+                }
+            }
+
+            // Multiple events to catch duration â€” browsers are inconsistent
+            audio.addEventListener('loadedmetadata', trySetDuration);
+            audio.addEventListener('durationchange', trySetDuration);
+            audio.addEventListener('canplay', trySetDuration);
+            audio.addEventListener('canplaythrough', trySetDuration);
+
+            // Also check when play starts (catches cases where metadata loads late)
+            audio.addEventListener('playing', trySetDuration);
+
+            // If metadata is already loaded by the time JS runs
+            if (audio.readyState >= 1) {
+                trySetDuration();
+            }
+
+            playBtn.addEventListener('click', function () {
+                if (audio.paused) {
+                    audio.play().then(function () {
+                        trySetDuration();
+                    }).catch(function () { });
+                    playIcon.style.display = 'none';
+                    pauseIcon.style.display = 'inline';
+                } else {
+                    audio.pause();
+                    playIcon.style.display = 'inline';
+                    pauseIcon.style.display = 'none';
+                }
+            });
+
+            audio.addEventListener('timeupdate', function () {
+                trySetDuration();
+                if (audio.duration && isFinite(audio.duration)) {
+                    var progress = (audio.currentTime / audio.duration) * 100;
+                    progressFill.style.width = progress + '%';
+                }
+                currentTimeEl.textContent = formatTime(audio.currentTime);
+            });
+
+            progressBar.addEventListener('click', function (e) {
+                if (audio.duration && isFinite(audio.duration)) {
+                    var rect = progressBar.getBoundingClientRect();
+                    var percent = (e.clientX - rect.left) / rect.width;
+                    audio.currentTime = percent * audio.duration;
+                }
+            });
+
+            audio.addEventListener('ended', function () {
                 playIcon.style.display = 'inline';
                 pauseIcon.style.display = 'none';
+                progressFill.style.width = '0%';
+                currentTimeEl.textContent = '0:00';
+            });
+        });
+    </script>
+
+    <!-- Email Reveal -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const container = document.getElementById('emailRevealContainer');
+            const revealBtn = document.getElementById('emailRevealBtn');
+            const copyBtn = document.getElementById('emailCopyBtn');
+            const emailText = 'qubibyteorg@gmail.com';
+
+            if (!container || !revealBtn || !copyBtn) return;
+
+            revealBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                container.classList.add('expanded');
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!container.contains(e.target)) {
+                    container.classList.remove('expanded');
+                }
+            });
+
+            container.addEventListener('click', function (e) {
+                e.stopPropagation();
+            });
+
+            copyBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                navigator.clipboard.writeText(emailText).then(function () {
+                    copyBtn.classList.add('copied');
+                    copyBtn.textContent = '\u2713';
+                    setTimeout(function () {
+                        copyBtn.classList.remove('copied');
+                        copyBtn.textContent = '\uD83D\uDCCB';
+                    }, 2000);
+                }).catch(function () {
+                    const textArea = document.createElement('textarea');
+                    textArea.value = emailText;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                    copyBtn.classList.add('copied');
+                    copyBtn.textContent = '\u2713';
+                    setTimeout(function () {
+                        copyBtn.classList.remove('copied');
+                        copyBtn.textContent = '\uD83D\uDCCB';
+                    }, 2000);
+                });
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    container.classList.remove('expanded');
+                }
+            });
+        });
+    </script>
+
+    <!-- Scroll Reveal (Intersection Observer) -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const revealElements = document.querySelectorAll('.reveal');
+
+            const observer = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                    }
+                });
+            }, {
+                threshold: 0.1,
+                rootMargin: '0px 0px -40px 0px'
+            });
+
+            revealElements.forEach(function (el) {
+                observer.observe(el);
+            });
+        });
+    </script>
+
+    <!-- Quantum Particle Network Animation -->
+    <script>
+        (function () {
+            const canvas = document.getElementById('quantumCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (prefersReducedMotion) return;
+
+            let width, height, particles, animFrame;
+            const CONNECT_DIST = 160;
+            const PARTICLE_COLORS = [
+                'rgba(6, 135, 201, ',   // blue
+                'rgba(85, 74, 158, ',   // purple
+                'rgba(171, 111, 175, ', // pink-purple
+                'rgba(56, 189, 248, '   // light blue
+            ];
+
+            function resize() {
+                const section = document.getElementById('Home');
+                width = canvas.width = section.offsetWidth;
+                height = canvas.height = section.offsetHeight;
             }
-        });
 
-        // Update progress bar
-        audio.addEventListener('timeupdate', function () {
-            const progress = (audio.currentTime / audio.duration) * 100;
-            progressFill.style.width = progress + '%';
-            currentTimeEl.textContent = formatTime(audio.currentTime);
-        });
+            function createParticles() {
+                const isMobile = window.innerWidth < 768;
+                const count = isMobile ? 35 : 70;
+                particles = [];
+                for (let i = 0; i < count; i++) {
+                    const colorBase = PARTICLE_COLORS[Math.floor(Math.random() * PARTICLE_COLORS.length)];
+                    const brightness = 0.25 + Math.random() * 0.45;
+                    particles.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        vx: (Math.random() - 0.5) * 0.4,
+                        vy: (Math.random() - 0.5) * 0.4,
+                        r: 1.2 + Math.random() * 2,
+                        color: colorBase,
+                        alpha: brightness,
+                        pulse: Math.random() * Math.PI * 2,
+                        pulseSpeed: 0.008 + Math.random() * 0.015
+                    });
+                }
+            }
 
-        // Click on progress bar to seek
-        progressBar.addEventListener('click', function (e) {
-            const rect = progressBar.getBoundingClientRect();
-            const percent = (e.clientX - rect.left) / rect.width;
-            audio.currentTime = percent * audio.duration;
-        });
+            function animate() {
+                ctx.clearRect(0, 0, width, height);
 
-        // Reset when audio ends
-        audio.addEventListener('ended', function () {
-            playIcon.style.display = 'inline';
-            pauseIcon.style.display = 'none';
-            progressFill.style.width = '0%';
-            currentTimeEl.textContent = '0:00';
-        });
-    });
-</script>
+                // Update & draw connections
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.pulse += p.pulseSpeed;
+
+                    // Wrap around edges
+                    if (p.x < -10) p.x = width + 10;
+                    if (p.x > width + 10) p.x = -10;
+                    if (p.y < -10) p.y = height + 10;
+                    if (p.y > height + 10) p.y = -10;
+
+                    // Draw connections
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const q = particles[j];
+                        const dx = p.x - q.x;
+                        const dy = p.y - q.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < CONNECT_DIST) {
+                            const lineAlpha = (1 - dist / CONNECT_DIST) * 0.12;
+                            ctx.beginPath();
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(q.x, q.y);
+                            ctx.strokeStyle = 'rgba(100, 160, 220, ' + lineAlpha + ')';
+                            ctx.lineWidth = 0.6;
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                // Draw particles
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
+                    const pulseAlpha = p.alpha + Math.sin(p.pulse) * 0.15;
+                    const clampedAlpha = Math.max(0.1, Math.min(0.8, pulseAlpha));
+
+                    // Glow
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color + (clampedAlpha * 0.15) + ')';
+                    ctx.fill();
+
+                    // Core dot
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color + clampedAlpha + ')';
+                    ctx.fill();
+                }
+
+                animFrame = requestAnimationFrame(animate);
+            }
+
+            // Init
+            resize();
+            createParticles();
+            animate();
+
+            // Re-init on resize (debounced)
+            let resizeTimeout;
+            window.addEventListener('resize', function () {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(function () {
+                    resize();
+                    createParticles();
+                }, 250);
+            });
+
+            // Pause when not visible for performance
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden) {
+                    cancelAnimationFrame(animFrame);
+                } else {
+                    animFrame = requestAnimationFrame(animate);
+                }
+            });
+        })();
+    </script>
+</body>
 
 </html>

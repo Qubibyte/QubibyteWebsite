@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="/js/theme-boot-inline.js"></script>
+    <script src="/js/software-mode-boot-inline.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NMR Spectrometer Simulator | Qubibyte</title>
+    <meta name="description" content="Interactive NMR Spectrometer Simulator with adjustable permanent magnets, solvents, pulse sequences, and molecular structure viewer. Explore Nuclear Magnetic Resonance spectroscopy interactively.">
+    <meta name="keywords" content="NMR simulator, nuclear magnetic resonance, spectrometer, Qubibyte, NMR spectroscopy, Bloch sphere, FID signal, pulse sequence, molecular structure, chemistry simulation">
+    <meta name="author" content="Qubibyte">
+    <meta name="robots" content="index, follow">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="NMR Spectrometer Simulator | Qubibyte">
+    <meta property="og:description" content="Interactive NMR Spectrometer Simulator. Adjust magnetic fields, solvents, and pulse sequences. Visualize molecular structures, FID signals, and NMR spectra.">
+    <meta property="og:image" content="/images/logo.png">
+    <meta property="og:url" content="https://qubibyte.org/nmr/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="NMR Spectrometer Simulator | Qubibyte">
+    <meta name="twitter:description" content="Interactive NMR Spectrometer Simulator. Adjust magnetic fields, pulse sequences, and visualize molecular structures.">
+    <meta name="twitter:image" content="/images/logo.png">
+    <link rel="canonical" href="https://qubibyte.org/nmr/">
+    <link rel="icon" type="image/x-icon" href="/images/fav.png">
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/visualization.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link rel="stylesheet" href="/css/themes.css">
+    <script src="/js/theme.js"></script>
+    <script src="/js/software-mode.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="title-section">
+                <a href="/">
+                    <img src="/images/logo_white.png" alt="Qubibyte" class="logo">
+                </a>
+                <h1 class="title">NMR Spectrometer Simulator</h1>
+            </div>
+            <div class="header-controls">
+                <button id="tutorialBtn" class="btn btn-secondary">Tutorial</button>
+                <button id="resetBtn" class="btn btn-secondary">Reset All</button>
+                <button id="runBtn" class="btn btn-primary">Run Experiment</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Sidebar - Hardware Controls -->
+            <aside class="sidebar hardware-panel">
+                <div class="sidebar-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">🧲</span>
+                        Permanent Magnets (B₀)
+                    </h2>
+                    <div class="control-group">
+                        <label class="control-label">Field Strength</label>
+                        <div class="slider-container">
+                            <input type="range" id="b0Strength" min="0.1" max="3.0" step="0.05" value="1.5"
+                                class="slider">
+                            <div class="slider-value"><span id="b0StrengthValue">1.50</span> T</div>
+                        </div>
+                        <div class="info-text">Typical range: 0.1 - 3.0 Tesla</div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Magnet Gap Distance</label>
+                        <div class="slider-container">
+                            <input type="range" id="magnetGap" min="10" max="100" step="1" value="40" class="slider">
+                            <div class="slider-value"><span id="magnetGapValue">40</span> mm</div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Field Homogeneity</label>
+                        <div class="slider-container">
+                            <input type="range" id="fieldHomogeneity" min="50" max="100" step="1" value="85"
+                                class="slider">
+                            <div class="slider-value"><span id="fieldHomogeneityValue">85</span>%</div>
+                        </div>
+                        <div class="info-text">Affects peak linewidth</div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Temperature</label>
+                        <div class="slider-container">
+                            <input type="range" id="temperature" min="273" max="373" step="1" value="298"
+                                class="slider">
+                            <div class="slider-value"><span id="temperatureValue">298</span> K</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">📡</span>
+                        Transceiver Coil (B₁)
+                    </h2>
+                    <div class="control-group">
+                        <label class="control-label">Coil Diameter</label>
+                        <div class="slider-container">
+                            <input type="range" id="coilDiameter" min="5" max="30" step="0.5" value="12" class="slider">
+                            <div class="slider-value"><span id="coilDiameterValue">12</span> mm</div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Pulse Power</label>
+                        <div class="slider-container">
+                            <input type="range" id="pulsePower" min="1" max="100" step="1" value="50" class="slider">
+                            <div class="slider-value"><span id="pulsePowerValue">50</span> W</div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Receiver Gain</label>
+                        <div class="slider-container">
+                            <input type="range" id="receiverGain" min="1" max="100" step="1" value="50" class="slider">
+                            <div class="slider-value"><span id="receiverGainValue">50</span> dB</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">⚙️</span>
+                        Simulation Options
+                    </h2>
+                    <div class="control-group toggle-row">
+                        <label class="control-label">Add Noise</label>
+                        <label class="toggle">
+                            <input type="checkbox" id="noiseToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="control-group" id="noiseLevelGroup" style="display: none;">
+                        <label class="control-label">Noise Level</label>
+                        <div class="slider-container">
+                            <input type="range" id="noiseLevel" min="0" max="20" step="1" value="5" class="slider">
+                            <div class="slider-value"><span id="noiseLevelValue">5</span>%</div>
+                        </div>
+                    </div>
+                    <div class="control-group toggle-row">
+                        <label class="control-label">Show TMS Reference</label>
+                        <label class="toggle">
+                            <input type="checkbox" id="tmsToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center - Visualization -->
+            <main class="main-area">
+                <div class="visualization-tabs">
+                    <button class="viz-tab active" data-tab="spectrometer">3D Spectrometer</button>
+                    <button class="viz-tab" data-tab="molecule">Molecular Structure</button>
+                    <button class="viz-tab" data-tab="fid">FID Signal</button>
+                    <button class="viz-tab" data-tab="spectrum">NMR Spectrum</button>
+                    <button class="viz-tab" data-tab="bloch">Bloch Sphere</button>
+                </div>
+
+                <div class="visualization-container">
+                    <div id="spectrometerView" class="viz-panel active">
+                        <div id="spectrometer3D" class="canvas-3d"></div>
+                        <div class="spectrometer-legend">
+                            <div class="legend-item"><span class="legend-color magnet-n"></span> N Pole Magnet</div>
+                            <div class="legend-item"><span class="legend-color magnet-s"></span> S Pole Magnet</div>
+                            <div class="legend-item"><span class="legend-color coil"></span> RF Coil (B₁)</div>
+                            <div class="legend-item"><span class="legend-color sample"></span> Sample</div>
+                            <div class="legend-item"><span class="legend-color field-lines"></span> B₀ Field Lines</div>
+                        </div>
+                    </div>
+
+                    <div id="moleculeView" class="viz-panel">
+                        <canvas id="moleculeCanvas" class="molecule-canvas"></canvas>
+                        <div class="molecule-legend">
+                            <div class="molecule-legend-header">Element Colors</div>
+                            <div class="molecule-legend-grid">
+                                <span class="atom-badge atom-h">H</span>
+                                <span class="atom-badge atom-c">C</span>
+                                <span class="atom-badge atom-n">N</span>
+                                <span class="atom-badge atom-o">O</span>
+                                <span class="atom-badge atom-f">F</span>
+                                <span class="atom-badge atom-cl">Cl</span>
+                                <span class="atom-badge atom-s">S</span>
+                                <span class="atom-badge atom-p">P</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="fidView" class="viz-panel">
+                        <canvas id="fidCanvas"></canvas>
+                        <div class="fid-controls">
+                            <button id="acquireBtn" class="btn btn-primary">Acquire FID</button>
+                            <div class="acquisition-params">
+                                <div class="auto-adjust-row">
+                                    <label class="toggle-inline">
+                                        <input type="checkbox" id="autoAcqTime" checked>
+                                        <span class="toggle-slider-small"></span>
+                                    </label>
+                                    <span class="toggle-label">Auto-adjust time</span>
+                                </div>
+                                <label class="manual-acq-time">Acquisition Time:
+                                    <input type="number" id="acqTime" value="1.0" min="0.1" max="10" step="0.1"
+                                        class="input-small"> s
+                                </label>
+                                <label>Data Points:
+                                    <select id="numPoints" class="select-small">
+                                        <option value="1024">1024</option>
+                                        <option value="2048" selected>2048</option>
+                                        <option value="4096">4096</option>
+                                        <option value="8192">8192</option>
+                                    </select>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="spectrumView" class="viz-panel">
+                        <canvas id="spectrumCanvas"></canvas>
+                        <div class="spectrum-controls">
+                            <button id="zoomInBtn" class="btn btn-sm">Zoom In</button>
+                            <button id="zoomOutBtn" class="btn btn-sm">Zoom Out</button>
+                            <button id="resetZoomBtn" class="btn btn-sm">Reset</button>
+                            <button id="exportBtn" class="btn btn-sm btn-secondary">Export CSV</button>
+                        </div>
+                        <div class="spectrum-info" id="peakInfo">
+                            <span>Click "Run Experiment" to generate spectrum</span>
+                        </div>
+                    </div>
+
+                    <div id="blochView" class="viz-panel">
+                        <div id="blochSphere3D" class="canvas-3d"></div>
+                        <div class="bloch-panel-controls">
+                            <div class="bloch-buttons-row">
+                                <button id="applyPulseBtn" class="btn btn-primary btn-sm">90°</button>
+                                <button id="apply180PulseBtn" class="btn btn-secondary btn-sm">180°</button>
+                                <button id="apply45PulseBtn" class="btn btn-secondary btn-sm">45°</button>
+                                <button id="resetBlochBtn" class="btn btn-secondary btn-sm">Reset</button>
+                            </div>
+                            <div class="bloch-custom-row">
+                                <input type="number" id="customPulseAngle" min="0" max="360" value="30" step="5"
+                                    class="input-tiny">
+                                <span>°</span>
+                                <select id="pulsePhase" class="select-tiny">
+                                    <option value="x">X</option>
+                                    <option value="y">Y</option>
+                                    <option value="-x">-X</option>
+                                    <option value="-y">-Y</option>
+                                </select>
+                                <button id="applyCustomPulseBtn" class="btn btn-sm btn-primary">Apply</button>
+                            </div>
+                            <div class="bloch-state-grid">
+                                <div class="state-cell"><span class="state-val" id="thetaValue">0°</span><span
+                                        class="state-lbl">θ</span></div>
+                                <div class="state-cell"><span class="state-val" id="phiValue">0°</span><span
+                                        class="state-lbl">φ</span></div>
+                                <div class="state-cell"><span class="state-val" id="magnitudeValue">1.00</span><span
+                                        class="state-lbl">|M|</span></div>
+                                <div class="state-cell"><span class="state-val" id="stateLabel">|0⟩</span><span
+                                        class="state-lbl">State</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right Sidebar - Sample & Pulse Sequence -->
+            <aside class="sidebar sample-panel">
+                <div class="sidebar-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">🧪</span>
+                        Sample Configuration
+                    </h2>
+                    <div class="control-group">
+                        <label class="control-label">Sample Type</label>
+                        <select id="sampleType" class="select-control">
+                            <optgroup label="Reference">
+                                <option value="tms">TMS (Reference)</option>
+                            </optgroup>
+                            <optgroup label="Simple Molecules">
+                                <option value="water" selected>Water (H₂O)</option>
+                                <option value="ethanol">Ethanol (C₂H₅OH)</option>
+                                <option value="methanol">Methanol (CH₃OH)</option>
+                                <option value="acetone">Acetone (CH₃COCH₃)</option>
+                            </optgroup>
+                            <optgroup label="Solvents">
+                                <option value="chloroform">Chloroform (CHCl₃)</option>
+                                <option value="dichloromethane">Dichloromethane (CH₂Cl₂)</option>
+                                <option value="dmso">DMSO ((CH₃)₂SO)</option>
+                            </optgroup>
+                            <optgroup label="Aromatic">
+                                <option value="benzene">Benzene (C₆H₆)</option>
+                                <option value="toluene">Toluene (C₆H₅CH₃)</option>
+                            </optgroup>
+                            <optgroup label="Carboxylic Acids">
+                                <option value="acetic_acid">Acetic Acid (CH₃COOH)</option>
+                            </optgroup>
+                            <optgroup label="Pharmaceuticals">
+                                <option value="aspirin">Aspirin (C₉H₈O₄)</option>
+                                <option value="caffeine">Caffeine (C₈H₁₀N₄O₂)</option>
+                            </optgroup>
+                            <optgroup label="Sugars">
+                                <option value="glucose">Glucose (C₆H₁₂O₆)</option>
+                            </optgroup>
+                            <optgroup label="Other">
+                                <option value="custom">Custom Sample</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Solvent</label>
+                        <select id="solventType" class="select-control">
+                            <option value="CDCl3">CDCl₃ (Chloroform-d)</option>
+                            <option value="D2O">D₂O (Deuterium Oxide)</option>
+                            <option value="DMSO_d6">DMSO-d₆</option>
+                            <option value="CD3OD">CD₃OD (Methanol-d₄)</option>
+                            <option value="C6D6">C₆D₆ (Benzene-d₆)</option>
+                            <option value="Acetone_d6">Acetone-d₆</option>
+                        </select>
+                        <div class="info-text solvent-info">
+                            Residual ¹H: <span id="solventH1">7.26</span> ppm
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Sample Concentration</label>
+                        <div class="slider-container">
+                            <input type="range" id="sampleConcentration" min="10" max="100" step="5" value="100"
+                                class="slider">
+                            <div class="slider-value"><span id="sampleConcentrationValue">100</span>%</div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Sample Volume</label>
+                        <div class="slider-container">
+                            <input type="range" id="sampleVolume" min="0.1" max="2.0" step="0.1" value="0.5"
+                                class="slider">
+                            <div class="slider-value"><span id="sampleVolumeValue">0.5</span> mL</div>
+                        </div>
+                    </div>
+                    <div id="sampleInfo" class="sample-info">
+                        <div class="info-header">Sample Properties</div>
+                        <div class="info-row">
+                            <span>Molecular Formula:</span>
+                            <span id="molecularFormula">H₂O</span>
+                        </div>
+                        <div class="info-row">
+                            <span>Molecular Weight:</span>
+                            <span id="molecularWeight">18.015 g/mol</span>
+                        </div>
+                        <div class="info-row">
+                            <span>Number of ¹H Environments:</span>
+                            <span id="numProtons">1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">⚡</span>
+                        Pulse Sequence
+                    </h2>
+                    <div class="control-group">
+                        <label class="control-label">Sequence Type</label>
+                        <select id="pulseSequence" class="select-control">
+                            <optgroup label="1D Experiments">
+                                <option value="single_pulse">Single Pulse (zg)</option>
+                                <option value="inversion_recovery">Inversion Recovery (T₁)</option>
+                                <option value="spin_echo">Spin Echo (Hahn)</option>
+                                <option value="cpmg">CPMG (T₂)</option>
+                                <option value="dept">DEPT-135</option>
+                            </optgroup>
+                            <optgroup label="2D Experiments">
+                                <option value="cosy">COSY</option>
+                                <option value="hsqc">HSQC</option>
+                                <option value="noesy">NOESY</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Relaxation Delay (d1)</label>
+                        <div class="slider-container">
+                            <input type="range" id="relaxDelay" min="0.5" max="10" step="0.5" value="2.0"
+                                class="slider">
+                            <div class="slider-value"><span id="relaxDelayValue">2.0</span> s</div>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label">Number of Scans</label>
+                        <div class="slider-container">
+                            <input type="range" id="numScans" min="1" max="128" step="1" value="4" class="slider">
+                            <div class="slider-value"><span id="numScansValue">4</span></div>
+                        </div>
+                        <div class="info-text">SNR improves with √scans</div>
+                    </div>
+                    <div class="pulse-diagram" id="pulseDiagram">
+                        <!-- Pulse sequence diagram rendered here -->
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <h2 class="section-title">
+                        <span class="section-icon">📊</span>
+                        Results
+                    </h2>
+                    <div id="resultsPanel" class="results-panel">
+                        <div class="result-item">
+                            <span>Larmor Frequency:</span>
+                            <span id="larmorFreq">63.87 MHz</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Spectral Width:</span>
+                            <span id="spectralWidth">10.0 kHz</span>
+                        </div>
+                        <div class="result-item">
+                            <span>SNR:</span>
+                            <span id="snrValue">--</span>
+                        </div>
+                        <div class="result-item">
+                            <span>T₁ Estimate:</span>
+                            <span id="t1Value">--</span>
+                        </div>
+                        <div class="result-item">
+                            <span>T₂ Estimate:</span>
+                            <span id="t2Value">--</span>
+                        </div>
+                        <div class="result-item">
+                            <span>Peaks Detected:</span>
+                            <span id="peaksDetected">--</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Tutorial Modal -->
+    <div id="tutorialModal" class="modal">
+        <div class="modal-content large-modal">
+            <h3>NMR Spectrometer Simulator Tutorial</h3>
+            <div class="tutorial-content">
+                <div class="tutorial-step">
+                    <h4>1. Understanding NMR</h4>
+                    <p>Nuclear Magnetic Resonance (NMR) spectroscopy uses the magnetic properties of atomic nuclei to
+                        determine physical and chemical properties of molecules. When placed in a strong magnetic field
+                        (B₀), nuclei like ¹H precess at a characteristic Larmor frequency.</p>
+                </div>
+                <div class="tutorial-step">
+                    <h4>2. Hardware Components</h4>
+                    <p><strong>Permanent Magnets:</strong> Generate the main B₀ field (horizontal direction). Higher
+                        field strength = better resolution and sensitivity.</p>
+                    <p><strong>Transceiver Coil:</strong> The RF coil produces B₁ pulses perpendicular to B₀ to excite
+                        the nuclei, then detects the NMR signal.</p>
+                </div>
+                <div class="tutorial-step">
+                    <h4>3. Solvents and References</h4>
+                    <p><strong>Deuterated Solvents:</strong> CDCl₃, D₂O, DMSO-d₆ etc. provide a deuterium lock signal
+                        and minimize solvent peaks.</p>
+                    <p><strong>TMS Reference:</strong> Tetramethylsilane defines 0 ppm for ¹H and ¹³C NMR. Toggle it in
+                        the options.</p>
+                </div>
+                <div class="tutorial-step">
+                    <h4>4. Running an Experiment</h4>
+                    <p>1. Select a sample and appropriate solvent.<br>
+                        2. Adjust B₀ field strength and other parameters.<br>
+                        3. Choose a pulse sequence (start with "Single Pulse").<br>
+                        4. Click "Run Experiment" to acquire data.<br>
+                        5. View the FID, spectrum, and molecular structure in different tabs.</p>
+                </div>
+                <div class="tutorial-step">
+                    <h4>5. Pulse Sequences</h4>
+                    <p><strong>Single Pulse (zg):</strong> Basic 90° pulse and acquire - standard 1D NMR.</p>
+                    <p><strong>Spin Echo:</strong> 90°-τ-180°-τ-acquire. Refocuses field inhomogeneity to measure true
+                        T₂.</p>
+                    <p><strong>CPMG:</strong> Multiple 180° refocusing pulses for T₂ measurement.</p>
+                    <p><strong>COSY, HSQC:</strong> 2D experiments showing correlations between nuclei.</p>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="closeTutorialBtn" class="btn btn-primary">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/physics.js"></script>
+    <script src="js/samples.js"></script>
+    <script src="js/visualization3d.js"></script>
+    <script src="js/spectrum.js"></script>
+    <script src="js/bloch.js"></script>
+    <script src="js/molecule.js"></script>
+    <script src="js/ui.js"></script>
+</body>
+
+</html>

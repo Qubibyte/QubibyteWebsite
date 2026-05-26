@@ -1,0 +1,131 @@
+/**
+ * Home page — proportional 16:9 desktop (720p ≈ scaled 1080p).
+ * Navbar stays fixed on the viewport (normal behavior).
+ * Only #home-scale-root content is built at 1920px and transform-scaled (992–1919px).
+ */
+
+/*
+ * Social icons — % of home-content height (1080p reference).
+ * Works at 1080p directly; at 720p the same % lives in the 1920 canvas and
+ * transform:scale shrinks it to match (vw inside the canvas would not).
+ */
+@media (min-width: 768px) {
+    body.qubibyte-home .social-icons {
+        top: calc(6 / var(--layout-ref-h, 1080) * 100%) !important;
+        right: 2% !important;
+        gap: calc(12 * 100vw / var(--layout-ref-w, 1920)) !important;
+        z-index: 10 !important;
+    }
+
+    body.qubibyte-home .social-icons a img {
+        width: calc(36 * 100vw / var(--layout-ref-w, 1920)) !important;
+        height: auto !important;
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1919.99px) {
+    html:has(body.qubibyte-home) {
+        overflow-x: hidden;
+        scroll-padding-top: var(--navbar-offset, calc(80 * 100vw / var(--layout-ref-w, 1920)));
+    }
+
+    body.qubibyte-home {
+        overflow-x: hidden;
+        margin: 0;
+    }
+
+    body.qubibyte-home #home-scale-root {
+        width: 1920px;
+        transform-origin: top left;
+        will-change: transform;
+    }
+
+    body.qubibyte-home #introeverywhere,
+    body.qubibyte-home #introallatonce {
+        font-size: 7rem !important;
+        letter-spacing: 0.3rem !important;
+        line-height: 1.05 !important;
+        text-align: left !important;
+        white-space: nowrap !important;
+    }
+
+    body.qubibyte-home .hero-subtitle {
+        font-size: 1.6em !important;
+        text-align: left !important;
+    }
+
+    body.qubibyte-home .section-header {
+        font-size: 3.5em !important;
+    }
+
+    body.qubibyte-home .hero-badge {
+        font-size: 1.35em !important;
+    }
+
+    body.qubibyte-home #introourmission {
+        font-size: 3rem !important;
+        text-align: left !important;
+    }
+
+    body.qubibyte-home #intropar {
+        font-size: 1.65em !important;
+        text-align: left !important;
+    }
+
+    /* 1920 design-space px (scaled by transform) */
+    body.qubibyte-home .hero-text-container {
+        text-align: left !important;
+        padding: 20px 50px !important;
+    }
+
+    body.qubibyte-home .mission-container {
+        text-align: left !important;
+        padding: 40px 20px !important;
+    }
+
+    body.qubibyte-home .mission-card {
+        padding: 48px !important;
+    }
+
+    body.qubibyte-home .home-content {
+        /* Values are 1080p design-space; #home-scale-root transform scales them */
+        padding-top: var(--navbar-offset, calc(80 * 100vw / var(--layout-ref-w, 1920))) !important;
+        min-height: 1080px !important;
+    }
+
+    /* Same proportions as 1080p — scale with the 1920 canvas, not vw */
+    body.qubibyte-home .social-icons {
+        top: calc(6 / var(--layout-ref-h, 1080) * 100%) !important;
+        gap: 12px !important;
+    }
+
+    body.qubibyte-home .social-icons a img {
+        width: 36px !important;
+        height: auto !important;
+    }
+
+    body.qubibyte-home .nav-link {
+        font-size: 1.2em !important;
+        padding: var(--navbar-link-py, calc(8 * 100vw / var(--layout-ref-w, 1920))) var(--navbar-link-px, calc(16 * 100vw / var(--layout-ref-w, 1920))) !important;
+    }
+
+    body.qubibyte-home #Home .row > .col-lg-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+        width: 50%;
+    }
+
+    body.qubibyte-home section {
+        min-height: 1080px !important;
+    }
+
+    body.qubibyte-home #Home {
+        min-height: 1080px !important;
+        align-items: center !important;
+    }
+
+    body.qubibyte-home .hero-home-row {
+        min-height: 1080px !important;
+        padding-top: 0 !important;
+    }
+}

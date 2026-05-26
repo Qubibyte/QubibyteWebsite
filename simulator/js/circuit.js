@@ -74,10 +74,14 @@ class QuantumCircuit {
     }
 
     removeGate(qubit, column) {
-        this.gates = this.gates.filter(gate => 
-            !(gate.qubit === qubit && gate.column === column) &&
-            !(gate.target === qubit && gate.column === column)
-        );
+        this.gates = this.gates.filter((gate) => {
+            if (gate.column !== column) return true;
+            const joint = gate.params && gate.params.jointQubits;
+            if (Array.isArray(joint) && joint.length > 0) {
+                return !joint.includes(qubit);
+            }
+            return !(gate.qubit === qubit || gate.target === qubit);
+        });
         this.updateMaxColumn();
     }
 
@@ -96,9 +100,13 @@ class QuantumCircuit {
     }
 
     getGatesOnQubit(qubit) {
-        return this.gates.filter(gate => 
-            gate.qubit === qubit || gate.target === qubit
-        );
+        return this.gates.filter((gate) => {
+            const joint = gate.params && gate.params.jointQubits;
+            if (Array.isArray(joint) && joint.length > 0) {
+                return joint.includes(qubit);
+            }
+            return gate.qubit === qubit || gate.target === qubit;
+        });
     }
 
     getNextColumn() {
@@ -248,6 +256,11 @@ class QuantumCircuit {
                 const angle = params.angle !== undefined ? params.angle : Math.PI / 2;
                 const axis = type.substring(1); // 'X', 'Y', or 'Z'
                 this.state.applyRotationGate(axis, qubit, angle);
+            } else if (params && Array.isArray(params.jointQubits) && params.jointQubits.length > 0) {
+                const mat = this.state.getGateMatrix(type);
+                if (mat && mat.length > 0) {
+                    this.state.applyGateGeneral(mat, [...params.jointQubits]);
+                }
             } else {
                 // Single qubit gate
                 this.state.applyGate(type, qubit);

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script src="/js/theme-boot-inline.js"></script>
+    <script src="/js/software-mode-boot-inline.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Preload critical fonts to prevent layout shift / flicker -->
+    <link rel="preload" as="font" href="/fonts/Khand-Medium.ttf" type="font/ttf" crossorigin>
+    <link rel="preload" as="font" href="/fonts/JockeyOne-Regular.ttf" type="font/ttf" crossorigin>
+    <link rel="preload" as="font" href="/fonts/Khand-Regular.ttf" type="font/ttf" crossorigin>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <title>Careers at Qubibyte - Join the Quantum Revolution</title>
+    <meta name="description"
+        content="Join the Qubibyte C-Suite team and shape the future of quantum computing. Apply for COO, CFO, CTO, CMO, and CLO positions.">
+    <meta name="author" content="Qubibyte">
+    <link rel="icon" type="image/x-icon" href="/images/fav.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link href="../newindex.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/careers.css">
+    <link rel="stylesheet" href="/css/themes.css">
+    <link rel="stylesheet" href="/css/theme-picker.css">
+    <script src="/js/theme.js"></script>
+    <script src="/js/theme-picker.js"></script>
+    <script src="/js/software-mode.js"></script>
+</head>
+
+<body class="careers-page">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="/"><img src="../images/logo_white.png" alt="Qubibyte"
+                    style="width:100px;"></img></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/?section=Tech">Tech</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/?section=Media">Media</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/?section=Company">Company</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/?section=Career">Career</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Careers Hero -->
+    <header class="careers-hero">
+        <div class="container">
+            <a href="/?section=Career" class="back-link">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Back to Home
+            </a>
+            <div class="section-tagline">Careers</div>
+            <h1 class="careers-title">Join Our Team</h1>
+            <p class="careers-lead">
+                Help us define the boundaries of quantum computing. We are currently building out Qubibyte's executive team to scale operations and accelerate market adoption.
+            </p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="careers-content">
+        <div class="container">
+            <!-- LIST VIEW -->
+            <div id="listingView">
+                <h2 class="text-center careers-section-heading">Open Executive Positions</h2>
+                
+                <div class="positions-grid">
+                    <!-- COO -->
+                    <div class="position-card">
+                        <div class="position-header-row">
+                            <div>
+                                <h3 class="position-title">Chief Operating Officer (COO)</h3>
+                                <div class="position-meta">
+                                    <span class="meta-badge meta-badge-accent">C-Suite</span>
+                                    <span class="meta-badge">Full-time</span>
+                                    <span class="meta-badge">San Francisco, CA / Onsite</span>
+                                </div>
+                            </div>
+                            <button class="apply-btn" onclick="startApplication('Chief Operating Officer (COO)')">Apply Now</button>
+                        </div>
+                        <p class="position-description">
+                            Drive Qubibyte's operational strategy, scale day-to-day execution, optimize supply chains for our portable quantum hardware, and align cross-functional teams to deliver on our product roadmap.
+                        </p>
+                    </div>
+
+                    <!-- CTO -->
+                    <div class="position-card">
+                        <div class="position-header-row">
+                            <div>
+                                <h3 class="position-title">Chief Technology Officer (CTO)</h3>
+                                <div class="position-meta">
+                                    <span class="meta-badge meta-badge-accent">C-Suite</span>
+                                    <span class="meta-badge">Full-time</span>
+                                    <span class="meta-badge">San Francisco, CA / Onsite</span>
+                                </div>
+                            </div>
+                            <button class="apply-btn" onclick="startApplication('Chief Technology Officer (CTO)')">Apply Now</button>
+                        </div>
+                        <p class="position-description">
+                            Architect the next generation of Qubibyte's liquid-state NMR computers, expand the Qubi programming language ecosystem, scale our cloud simulators, and lead our world-class engineering team.
+                        </p>
+                    </div>
+
+                    <!-- CFO -->
+                    <div class="position-card">
+                        <div class="position-header-row">
+                            <div>
+                                <h3 class="position-title">Chief Financial Officer (CFO)</h3>
+                                <div class="position-meta">
+                                    <span class="meta-badge meta-badge-accent">C-Suite</span>
+                                    <span class="meta-badge">Full-time</span>
+                                    <span class="meta-badge">San Francisco, CA / Onsite</span>
+                                </div>
+                            </div>
+                            <button class="apply-btn" onclick="startApplication('Chief Financial Officer (CFO)')">Apply Now</button>
+                        </div>
+                        <p class="position-description">
+                            Lead global financial operations, capital allocation, investor relations, and strategic growth modeling. Secure funding rounds and ensure fiscal efficiency as we transition to commercial shipping.
+                        </p>
+                    </div>
+
+                    <!-- CMO -->
+                    <div class="position-card">
+                        <div class="position-header-row">
+                            <div>
+                                <h3 class="position-title">Chief Marketing Officer (CMO)</h3>
+                                <div class="position-meta">
+                                    <span class="meta-badge meta-badge-accent">C-Suite</span>
+                                    <span class="meta-badge">Full-time</span>
+                                    <span class="meta-badge">San Francisco, CA / Onsite</span>
+                                </div>
+                            </div>
+                            <button class="apply-btn" onclick="startApplication('Chief Marketing Officer (CMO)')">Apply Now</button>
+                        </div>
+                        <p class="position-description">
+                            Define Qubibyte's brand voice, drive developer adoption of our simulators, lead global product launch campaigns, and expand our reach to universities, research labs, and enterprises.
+                        </p>
+                    </div>
+
+                    <!-- CLO -->
+                    <div class="position-card">
+                        <div class="position-header-row">
+                            <div>
+                                <h3 class="position-title">Chief Legal Officer (CLO)</h3>
+                                <div class="position-meta">
+                                    <span class="meta-badge meta-badge-accent">C-Suite</span>
+                                    <span class="meta-badge">Full-time</span>
+                                    <span class="meta-badge">San Francisco, CA / Onsite</span>
+                                </div>
+                            </div>
+                            <button class="apply-btn" onclick="startApplication('Chief Legal Officer (CLO)')">Apply Now</button>
+                        </div>
+                        <p class="position-description">
+                            Manage intellectual property portfolio, negotiate strategic partnerships, ensure regulatory compliance, and advise the executive team on corporate governance and international expansion.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- APPLICATION FORM VIEW -->
+            <div id="applicationView" class="form-container">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <button class="btn-cancel" onclick="showListing()" style="padding: 8px 20px;">&larr; Back to Listings</button>
+                    <span class="meta-badge meta-badge-accent" style="font-size: 1em; font-family: 'Khand', sans-serif;" id="selectedPositionBadge">COO</span>
+                </div>
+                <h2 class="form-section-title" id="formTitle">Apply for Position</h2>
+                <p class="form-subtitle">Please complete the form below. All fields marked with * are required.</p>
+
+                <form id="jobForm" novalidate onsubmit="submitJobForm(event)">
+                    <input type="hidden" id="appPosition" name="position">
+
+                    <div class="row g-4">
+                        <!-- Full Name -->
+                        <div class="col-md-6 col-12">
+                            <label class="form-group-label" for="fullName">Full Name *</label>
+                            <input type="text" class="form-control form-control-qubi" id="fullName" placeholder="John Doe" required>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="col-md-6 col-12">
+                            <label class="form-group-label" for="email">Email Address *</label>
+                            <input type="email" class="form-control form-control-qubi" id="email" placeholder="john.doe@example.com" required>
+                            <div class="invalid-feedback-qubi" id="emailError">Please enter a valid email address (e.g. name@example.com).</div>
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="col-md-6 col-12">
+                            <label class="form-group-label" for="phone">Phone Number *</label>
+                            <input type="tel" class="form-control form-control-qubi" id="phone" placeholder="+1 (555) 000-0000" required>
+                            <div class="invalid-feedback-qubi" id="phoneError">Please enter a valid phone number (7-20 digits, spaces/dashes allowed).</div>
+                        </div>
+
+                        <!-- LinkedIn -->
+                        <div class="col-md-6 col-12">
+                            <label class="form-group-label" for="linkedin">LinkedIn URL</label>
+                            <input type="url" class="form-control form-control-qubi" id="linkedin" placeholder="https://linkedin.com/in/username">
+                        </div>
+
+                        <!-- Portfolio / Website -->
+                        <div class="col-12">
+                            <label class="form-group-label" for="website">Portfolio or Personal Website</label>
+                            <input type="url" class="form-control form-control-qubi" id="website" placeholder="https://myportfolio.com">
+                        </div>
+
+                        <!-- Resume Upload -->
+                        <div class="col-12">
+                            <label class="form-group-label">Resume / CV *</label>
+                            <div class="file-upload-wrapper">
+                                <input type="file" class="file-upload-input" id="resume" accept=".pdf,.doc,.docx" required onchange="handleFileChange(this)">
+                                <div class="file-upload-text" id="resumeText">
+                                    <span>&#128196; <strong>Click to upload</strong> or drag and drop your resume file here</span>
+                                    <div class="careers-file-hint">PDF, DOC, or DOCX formats accepted (Max 10MB)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Work Authorization -->
+                        <div class="col-md-6 col-12">
+                            <label class="form-group-label" for="workAuth">Are you legally authorized to work in the United States? *</label>
+                            <select class="form-select form-control-qubi" id="workAuth" required>
+                                <option value="">Select an option...</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+
+                        <!-- Visa Sponsorship -->
+                        <div class="col-md-6 col-12">
+                            <label class="form-group-label" for="visaRequired">Will you now or in the future require visa sponsorship? *</label>
+                            <select class="form-select form-control-qubi" id="visaRequired" required>
+                                <option value="">Select an option...</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+
+                    </div>
+
+                    <button type="submit" class="btn-submit">Submit Application</button>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="applicationSuccessModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content modal-qubi-content">
+                <div class="modal-header border-0 pb-0">
+                    <h3 class="modal-title-qubi" id="successModalLabel">
+                        <span class="careers-modal-warning">&#9888;</span> Direct Submission Unavailable
+                    </h3>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="careers-modal-body-text">
+                        Direct submission via the portal is currently disabled. However, we would love to review your credentials! 
+                        Please follow these steps:
+                    </p>
+                    <ol class="careers-modal-steps">
+                        <li>Click the <strong>Copy to Clipboard</strong> button below to copy all of your formatted application responses.</li>
+                        <li>Email your application data to <a href="mailto:qubibyteorg@gmail.com">qubibyteorg@gmail.com</a>.</li>
+                        <li><strong>Make sure to attach your resume file</strong> to the email as well.</li>
+                    </ol>
+
+                    <div class="data-clipboard-box" id="formattedDataBox"></div>
+
+                    <button type="button" class="btn-copy-modal" id="btnCopyData" onclick="copyApplicationData()">
+                        Copy Application to Clipboard
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="site-footer-careers">
+        <div class="container">
+            <p>
+                &copy; 2026 Qubibyte. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        let currentFileName = '';
+        let applicationDataString = '';
+
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const emailError = document.getElementById('emailError');
+        const phoneError = document.getElementById('phoneError');
+
+        function validateEmail(email) {
+            const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return re.test(String(email).toLowerCase());
+        }
+
+        function validatePhone(phone) {
+            const re = /^\+?[0-9\s\-()]{7,20}$/;
+            return re.test(String(phone));
+        }
+
+        // Inline live validation
+        emailInput.addEventListener('input', function() {
+            if (validateEmail(emailInput.value)) {
+                emailInput.classList.remove('is-invalid');
+                emailInput.classList.add('is-valid');
+                emailError.style.display = 'none';
+            } else {
+                emailInput.classList.remove('is-valid');
+                if (emailInput.value !== '') {
+                    emailInput.classList.add('is-invalid');
+                    emailError.style.display = 'block';
+                }
+            }
+        });
+
+        phoneInput.addEventListener('input', function() {
+            if (validatePhone(phoneInput.value)) {
+                phoneInput.classList.remove('is-invalid');
+                phoneInput.classList.add('is-valid');
+                phoneError.style.display = 'none';
+            } else {
+                phoneInput.classList.remove('is-valid');
+                if (phoneInput.value !== '') {
+                    phoneInput.classList.add('is-invalid');
+                    phoneError.style.display = 'block';
+                }
+            }
+        });
+
+        // Add change listeners for required selects to remove invalid class on choice
+        document.querySelectorAll('#jobForm select[required]').forEach(select => {
+            select.addEventListener('change', function() {
+                if (select.value !== "") {
+                    select.classList.remove('is-invalid');
+                    select.classList.add('is-valid');
+                } else {
+                    select.classList.remove('is-valid');
+                    select.classList.add('is-invalid');
+                }
+            });
+        });
+
+        function startApplication(positionName) {
+            document.getElementById('listingView').style.display = 'none';
+            const formContainer = document.getElementById('applicationView');
+            formContainer.style.display = 'block';
+            
+            document.getElementById('appPosition').value = positionName;
+            document.getElementById('formTitle').textContent = `Apply for ${positionName}`;
+            document.getElementById('selectedPositionBadge').textContent = positionName.match(/\(([^)]+)\)/)?.[1] || positionName;
+
+            // Scroll to form
+            window.scrollTo({
+                top: formContainer.offsetTop - 100,
+                behavior: 'smooth'
+            });
+        }
+
+        function showListing() {
+            document.getElementById('applicationView').style.display = 'none';
+            document.getElementById('listingView').style.display = 'block';
+            document.getElementById('jobForm').reset();
+            resetFileUpload();
+            
+            // Remove validation classes
+            document.querySelectorAll('#jobForm .form-control-qubi').forEach(el => {
+                el.classList.remove('is-invalid', 'is-valid');
+            });
+            emailError.style.display = 'none';
+            phoneError.style.display = 'none';
+
+            window.scrollTo({
+                top: document.getElementById('listingView').offsetTop - 100,
+                behavior: 'smooth'
+            });
+        }
+
+        function handleFileChange(input) {
+            const file = input.files[0];
+            const textEl = document.getElementById('resumeText');
+            if (file) {
+                currentFileName = file.name;
+                textEl.innerHTML = `<span class="careers-file-success">&#10004; File Selected: ${file.name}</span><div class="careers-file-replace-hint">Click to replace file</div>`;
+                input.classList.remove('is-invalid');
+                input.classList.add('is-valid');
+            } else {
+                resetFileUpload();
+            }
+        }
+
+        function resetFileUpload() {
+            currentFileName = '';
+            document.getElementById('resumeText').innerHTML = `<span>&#128196; <strong>Click to upload</strong> or drag and drop your resume file here</span><div class="careers-file-hint">PDF, DOC, or DOCX formats accepted (Max 10MB)</div>`;
+            document.getElementById('resume').classList.remove('is-invalid', 'is-valid');
+        }
+
+        function submitJobForm(event) {
+            event.preventDefault();
+
+            let isValid = true;
+
+            // Validate Email
+            if (!validateEmail(emailInput.value)) {
+                emailInput.classList.add('is-invalid');
+                emailInput.classList.remove('is-valid');
+                emailError.style.display = 'block';
+                isValid = false;
+            } else {
+                emailInput.classList.remove('is-invalid');
+                emailError.style.display = 'none';
+            }
+
+            // Validate Phone
+            if (!validatePhone(phoneInput.value)) {
+                phoneInput.classList.add('is-invalid');
+                phoneInput.classList.remove('is-valid');
+                phoneError.style.display = 'block';
+                isValid = false;
+            } else {
+                phoneInput.classList.remove('is-invalid');
+                phoneError.style.display = 'none';
+            }
+
+            // Validate all required inputs/selects are filled
+            const requiredFields = document.querySelectorAll('#jobForm [required]');
+            requiredFields.forEach(field => {
+                if (!field.value || field.value.trim() === "") {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    if (field !== emailInput && field !== phoneInput && field.id !== 'resume') {
+                        field.classList.remove('is-invalid');
+                        field.classList.add('is-valid');
+                    }
+                }
+            });
+
+            // Resume check
+            const resumeInput = document.getElementById('resume');
+            if (!resumeInput.files || resumeInput.files.length === 0) {
+                resumeInput.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                const firstInvalid = document.querySelector('.is-invalid');
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstInvalid.focus();
+                }
+                return;
+            }
+
+            // Collect all answers
+            const position = document.getElementById('appPosition').value;
+            const name = document.getElementById('fullName').value;
+            const email = emailInput.value;
+            const phone = phoneInput.value;
+            const linkedin = document.getElementById('linkedin').value || 'Not provided';
+            const website = document.getElementById('website').value || 'Not provided';
+            
+            const workAuth = document.getElementById('workAuth').value;
+            const visaRequired = document.getElementById('visaRequired').value;
+
+            // Format data beautifully
+            applicationDataString = `==================================================
+QUBIBYTE JOB APPLICATION DATA
+==================================================
+Position: ${position}
+Submitted: ${new Date().toLocaleString()}
+
+APPLICANT INFORMATION:
+Name: ${name}
+Email: ${email}
+Phone: ${phone}
+
+LINKS:
+LinkedIn: ${linkedin}
+Website: ${website}
+
+ATTACHED RESUME FILE NAME:
+${currentFileName || 'resume.pdf'}
+
+WORK AUTHORIZATION:
+Legally Authorized to Work in US: ${workAuth}
+Visa Sponsorship Required: ${visaRequired}
+==================================================`;
+
+            // Display in modal box
+            document.getElementById('formattedDataBox').textContent = applicationDataString;
+
+            // Trigger bootstrap modal
+            const myModal = new bootstrap.Modal(document.getElementById('applicationSuccessModal'));
+            myModal.show();
+        }
+
+        function copyApplicationData() {
+            navigator.clipboard.writeText(applicationDataString).then(function() {
+                const btn = document.getElementById('btnCopyData');
+                btn.textContent = 'Application Data Copied!';
+                btn.classList.add('copied');
+                
+                setTimeout(function() {
+                    btn.textContent = 'Copy Application to Clipboard';
+                    btn.classList.remove('copied');
+                }, 3000);
+            }).catch(function(err) {
+                alert('Could not copy to clipboard. Please select the text inside the box above and copy manually.');
+            });
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,203 @@
+{
+    "ytvid": {
+        "text": "Qubibyte Blog #4: How to Design an NMR Quantum Computer",
+        "link": "https://www.youtube.com/embed/QAKJeNtcYmM",
+        "author": "Qubibyte",
+        "date": "May 21st, 2026"
+    },
+    "title": "Qubibyte Blog #4: How to Design an NMR Quantum Computer",
+    "author": "Trent Rosenthal",
+    "date": "May 21st, 2026",
+    "content": [
+        "Hello, I'm Trent Rosenthal, the Founder & CEO of Qubibyte.",
+        "Today, we are sharing an inside look at the engineering and architectural design choices behind Qubibyte Quadra, our compact, tabletop liquid-state NMR quantum computer. This post is written as a tutorial: if you are new to NMR hardware, we explain the physics and electronics as we go, not just the part numbers.",
+        "As a standalone desktop instrument operating at room temperature (~25°C) and powered by a standard AC adapter, the Quadra supports 1 to 4 qubits using a liquid-state molecular sample. The system requires no external PC, instead utilizing an integrated touchscreen interface running our custom HMI powered by an onboard Raspberry Pi 5. This post outlines the signal paths, components, and design choices of the system, including what has been built and what is currently being finalized.",
+
+        {
+            "type": "heading",
+            "text": "NMR Basics: What Quadra Is Actually Measuring"
+        },
+        "Before we talk about circuit boards, it helps to understand what an NMR quantum computer is doing at the physics level.",
+        "<strong>Nuclear spins as qubits:</strong> Many atomic nuclei (such as hydrogen-¹H or carbon-¹³C in our sample molecules) behave like tiny magnets because they have intrinsic angular momentum, called <em>spin</em>. In a magnetic field, each spin can point roughly \"up\" or \"down\" relative to that field. Those two orientations are the |0⟩ and |1⟩ states of an NMR qubit.",
+        "<strong>B₀ — the static magnetic field:</strong> A permanent magnet inside Quadra creates a strong, uniform static field labeled B₀. This field defines the energy difference between spin-up and spin-down. Stronger B₀ generally means faster precession and (for a given nucleus) a higher operating frequency, but also demands more careful RF and probe design.",
+        "<strong>Larmor frequency:</strong> When you tip a spin away from alignment with B₀, it does not simply flip and stop — it <em>precesses</em>, spinning around the B₀ axis like a gyroscope. The rotation rate is the <strong>Larmor frequency</strong>, given by γ·B₀ (gamma is a nucleus-specific constant). Quadra must transmit and receive RF energy at exactly this frequency for each target nucleus in the sample. If you are off by even a few kilohertz, excitation efficiency collapses and you will not see a clean signal.",
+        "<strong>B₁ — the RF excitation field:</strong> The probe coil carries a pulsed radio-frequency current that creates a small oscillating magnetic field B₁ perpendicular to B₀. A properly timed B₁ pulse rotates the spin state — the quantum version of applying a gate. Pulse <em>duration</em> and <em>amplitude</em> together set the rotation angle (for example, a 90° pulse tips spins from longitudinal to transverse plane).",
+        "<strong>FID — Free Induction Decay:</strong> After a 90° pulse, spins precess in phase and collectively induce a tiny oscillating voltage in the receive coil. That voltage is the <strong>FID</strong>: a sinusoid whose amplitude decays over time as spins dephase and relax. The FID is not decorative — it is the raw measurement from which we extract spectrum, timing, and (after calibration) quantum state information.",
+        "<strong>FFT — Fast Fourier Transform:</strong> The FID lives in the <em>time domain</em> (volts vs. microseconds). Chemists and quantum engineers usually work in the <em>frequency domain</em> (signal vs. Hz). An <strong>FFT</strong> converts the digitized FID into a spectrum of peaks. Each peak corresponds to a nucleus or group of nuclei at a slightly different effective Larmor frequency (due to chemical environment). Peak areas and frequencies tell you populations and couplings.",
+        "<strong>T₁ and T₂ relaxation:</strong> T₁ is the longitudinal relaxation time (spins returning to equilibrium along B₀). T₂ is the transverse dephasing time (the envelope of the FID shrinking). Short T₂ means less usable signal after each pulse. Liquid-state samples at room temperature have T₂ values that make NMR workable for small qubit counts but limit how deep circuits can run before coherence is lost.",
+        "With that vocabulary in place, Quadra's hardware job is straightforward to state: create B₀, synthesize precise B₁ pulses at the Larmor frequency, capture the FID, digitize it, FFT it, and present results on-screen.",
+
+        {
+            "type": "heading",
+            "text": "How Quadra Works"
+        },
+        "At its core, Quadra generates precisely timed radio-frequency (RF) pulses at the Larmor frequency of a target nucleus, excites nuclear spins inside the static magnetic field (B₀), then switches to receive mode to capture the FID signal. A two-tier computing architecture handles everything from the user interface to microsecond-precision pulse timing, all within a single compact enclosure.",
+        "No cryogenics. No vacuum chambers. No dilution refrigerators. Just a permanent magnet, an RF coil, and a carefully designed signal chain sitting on a desk and powered by a standard wall outlet.",
+
+        {
+            "type": "heading",
+            "text": "System Block Diagram"
+        },
+        "Before diving into each subsystem, here's a high-level view of how everything connects:",
+        {
+            "type": "image",
+            "src": "/images/quadra_block_diagram.png",
+            "alt": "Quadra system block diagram showing power, control, RF generation, TX/RX signal chains, and probe subsystems"
+        },
+        "Read the diagram left-to-right as a story. <strong>Power</strong> enters at 12 V and feeds both computers. The <strong>Raspberry Pi 5</strong> runs the touchscreen UI, compiles pulse programs, runs FFTs, and simulates circuits. The <strong>Pi Pico 2</strong> is the real-time engine: it tells the DDS what frequency to output, gates that output into pulses, and flips the transmit/receive switch at microsecond boundaries. The <strong>AD9851 DDS</strong> generates the continuous sine wave at the Larmor frequency. The <strong>TX chain</strong> cleans and amplifies that sine into a high-power pulse for the coil. The <strong>probe network</strong> (matching and tuning capacitors plus the solenoid coil) efficiently transfers energy into the sample. After the pulse, the <strong>T/R switch</strong> reconnects the coil to the <strong>RX chain</strong> (LNA, filters, ADC) so the microvolt FID can be digitized and sent back to the Pi 5 for FFT and display.",
+
+        {
+            "type": "heading",
+            "text": "Signal Flow at a Glance"
+        },
+        "Here's the end-to-end signal flow, step by step. Each step names the physical quantity being moved (power, digital commands, RF voltage, or spin state):",
+        "<strong>1. Power entry:</strong> AC mains (120 V wall power) is converted to a regulated 12 VDC rail by the QFWB-65-12-US01 supply. Fuses, a PTC, a TVS diode, and a Schottky diode protect downstream electronics from shorts, sustained overcurrent, voltage spikes, and reverse connection.",
+        "<strong>2. Boot:</strong> The Raspberry Pi 5 powers on, loads the Qubi control software, and displays the user interface on the 7\" touchscreen.",
+        "<strong>3. Pulse definition:</strong> The operator defines pulse parameters (flip angle, duration, and target frequency) via the touchscreen UI. A 90° pulse on ¹H, for example, means \"apply B₁ long enough to rotate spins from z to the x-y plane at this Larmor frequency.\"",
+        "<strong>4. Sequence handoff:</strong> The RPi 5 sends the pulse sequence to the Pi Pico 2. Linux on the Pi 5 is excellent for UI and math but is not deterministic at microsecond scale; that is why timing-critical work is offloaded.",
+        "<strong>5. RF generation (DDS):</strong> The Pico 2 loads a 32-bit frequency word into the AD9851 DDS, which outputs a continuous sine wave at the Larmor frequency (up to 180 MHz with the on-chip 6× PLL). DDS means the frequency is set by digital arithmetic, not by tuning an analog knob.",
+        "<strong>6. Pulse gating:</strong> The Pico 2 enables/disables the DDS output to form a rectangular RF envelope — the actual pulse. Gate timing accuracy determines whether you hit 90.0° or 87.3°.",
+        "<strong>7. TX chain:</strong> The RF pulse passes through a lowpass filter (removes DDS harmonics), a mixer stage (frequency translation if needed), and a power amplifier (raises voltage so the coil can produce a strong enough B₁ field).",
+        "<strong>8. Probe excitation:</strong> The pulse enters an impedance-matched, resonant LC network and drives the solenoid coil. Energy stored in the resonator makes the coil an efficient antenna at exactly the Larmor frequency.",
+        "<strong>9. T/R switch to receive:</strong> Microseconds after the pulse ends, the Pico 2 routes the coil to the receive path. The FID begins immediately; slow switching clips the first data points.",
+        "<strong>10. FID capture:</strong> Precessing spins induce a voltage typically in the microvolt range. The LNA boosts it above the ADC noise floor without adding excessive noise of its own.",
+        "<strong>11. Processing & display:</strong> The RPi 5 runs an FFT on the digitized FID. Peaks in the spectrum, exponential fits to the FID envelope (for T₁/T₂), and quantum state visualizations appear on the touchscreen.",
+
+        {
+            "type": "heading",
+            "text": "Subsystem 1: Power Management"
+        },
+        "Every instrument starts with clean, protected DC power. Quadra runs from a single 12 V / 60 W AC-to-DC supply (QFWB-65-12-US01) through a DC barrel jack (DCJ200-10-A-K1-K).",
+        "<strong>Why 12 V?</strong> It is a practical middle ground: high enough to feed buck converters for 5 V logic (Pi boards) and RF sub-circuits, low enough to keep wire gauges and connector ratings reasonable on a desktop unit.",
+        "<strong>Fast-blow fuse (0679L9100-01, 10 A):</strong> Opens quickly on a dead short — for example, a damaged PCB trace — to prevent fire or supply damage.",
+        "<strong>PTC resettable fuse (0ZCF0500FF2A, 5 A hold / 10 A trip):</strong> A polymer device that increases resistance when hot. It catches sustained but non-catastrophic overcurrent (marginal shorts, mis-wired loads) and resets when cooled, which is convenient during bring-up.",
+        "<strong>TVS diode (TVS1400DRVR):</strong> A transient voltage suppressor that clamps spikes (ESD hits, inductive kick, supply surges) near 14 V before they reach sensitive ICs.",
+        "<strong>Schottky diode (STPS10M60SFY):</strong> Blocks reverse current if polarity is wrong at the barrel jack. Low forward drop minimizes wasted power in normal operation.",
+        "<strong>Power switch (KRE2ANA1BBD) and terminal block (Phoenix 1729128):</strong> The switch is the operator-facing disconnect; the terminal block distributes 12 V to multiple PCB rails in a serviceable way.",
+
+        {
+            "type": "heading",
+            "text": "Subsystem 2: Control & Computing"
+        },
+        "Quadra uses a two-tier computing architecture that cleanly separates high-level processing from hard real-time control.",
+        "<strong>Raspberry Pi 5 (2 GB RAM, 32 GB SD):</strong> The \"slow\" computer in the best sense — it runs everything where millisecond jitter is acceptable: pulse sequence editing, FFT, quantum state simulation, file I/O, and the 7\" touchscreen UI (RPi Touch Display 2, 1280×720). When you design a circuit in Qubi and press Run, the Pi 5 prepares a machine-readable schedule of events (frequency words, pulse widths, RX windows).",
+        "<strong>Pi Pico 2 (RP2350):</strong> The \"fast\" computer. It has no full operating system competing for CPU time. It bit-bangs or streams control signals to the AD9851, gates RF output, and drives the T/R switch with deterministic latency. The RP2350's <strong>PIO (Programmable I/O)</strong> blocks are state machines in hardware — they toggle pins on clock cycles, not after a scheduler decides to wake up. That is how we keep pulse edges repeatable to roughly microsecond scale.",
+        "<strong>SC1148 cooling fan:</strong> Sustained FFTs and UI rendering warm the Pi 5. Active cooling prevents thermal throttling during long lab sessions.",
+        "Rule of thumb: if a task cares about <em>which microsecond</em>, it runs on the Pico 2. If it cares about <em>which millisecond</em> or human interaction, it runs on the Pi 5.",
+
+        {
+            "type": "heading",
+            "text": "Subsystem 3: RF Generation (AD9851 DDS)"
+        },
+        "The core RF source is an <strong>AD9851</strong> Direct Digital Synthesis (DDS) integrated circuit.",
+        "<strong>What is DDS?</strong> Instead of an analog oscillator tuned with capacitors, DDS keeps a digital phase accumulator running at a high reference clock. Each clock tick advances phase; the top bits of phase index into a sine lookup table (implemented as a DAC). The result is a stair-step sine wave that can be low-pass filtered to a clean tone. Changing frequency means changing how fast phase advances — there is no PLL lock wait and no drift from variable capacitors.",
+        "<strong>Frequency tuning word:</strong> The Pico 2 writes a 32-bit word that sets output frequency with fine resolution. For NMR, that matters because different nuclei and shimming conditions shift the exact Larmor frequency by kilohertz — you need digital precision, not \"close enough.\"",
+        "<strong>6× PLL multiplier:</strong> Multiplies the external reference so the internal clock can run faster, extending usable output to about 180 MHz — well above typical ¹H Larmor frequencies on compact permanent magnets.",
+        "<strong>Pulse gating:</strong> The DDS outputs continuously while enabled. The Pico 2 asserts enable for exactly the pulse width computed from flip angle and B₁ calibration. Disable the DDS and the transmit chain goes quiet.",
+        "<strong>Why not a VCO or analog PLL alone?</strong> Voltage-controlled oscillators drift with temperature. PLLs lock slowly and can have phase jumps. DDS gives phase-continuous hops and repeatable timing — exactly what you want when tomorrow's experiment must match yesterday's calibration.",
+
+        {
+            "type": "heading",
+            "text": "Subsystem 4: TX Signal Chain"
+        },
+        "Between the DDS output and the probe coil, the transmit chain conditions and amplifies the RF pulse through three stages. Think of it as \"make the sine pure, move it in frequency if needed, then make it loud enough to rotate spins.\"",
+        "<strong>Lowpass filter (LPF):</strong> DDS outputs contain harmonics of the fundamental because of the sampled DAC waveform. Those harmonics would waste power and can excite off-resonance nuclei. The LPF attenuates everything above the intended NMR frequency so the sample sees a single clean tone.",
+        "<strong>Mixer:</strong> A mixer multiplies two sinusoids, producing sum and difference frequencies. In superheterodyne radios this shifts an intermediate frequency (IF) to RF. Quadra may use mixing to translate DDS output to the exact probe frequency while keeping the DDS itself on a convenient clock-friendly frequency. LO/IF/RF labels on the schematic refer to local oscillator, intermediate, and final RF ports on that mixer.",
+        "<strong>RF power amplifier (PA):</strong> The DDS and filter output milliwatts; the coil needs watts-class voltage during short pulses to achieve a few gauss of B₁ in the sample volume. The PA is a linear amplifier (not a digital switch) so the pulse envelope shape is preserved. Final PA selection depends on required B₁ field, duty cycle, and how much heat we can dissipate in the enclosure.",
+
+        {
+            "type": "heading",
+            "text": "Subsystem 5: Probe & Resonant Network"
+        },
+        "The probe is where quantum information meets classical electronics. It is an LC resonator immersed in B₀ with the sample at its center.",
+        "<strong>Probe coil (solenoid):</strong> A wire helix whose axis is aligned with B₀. In transmit mode, AC current in the coil creates B₁ perpendicular to B₀ (geometry matters — misalignment reduces flip angle). In receive mode, the same coil acts as a pickup loop for the precessing magnetization.",
+        "<strong>Why resonance?</strong> The coil has inductance L. Parasitic capacitance exists, but we deliberately add capacitors to form an LC tank. At resonance, impedance drops and current is large for a given drive voltage — you get stronger B₁ per watt and higher SNR on receive.",
+        "<strong>CMatch (matching capacitor, BFC280831659 trimmer):</strong> Adjusts the network so the input impedance seen by the 50 Ω TX cable is close to 50 Ω. Mismatch causes reflections; reflected power does not tip spins.",
+        "<strong>CTune (tuning capacitor, second BFC280831659):</strong> Sets the resonant frequency to the Larmor frequency. If CTune is wrong, the tank is off-resonance, pulse power disappears, and the FID is weak.",
+        "<strong>B₀ permanent magnet (selection TBD):</strong> Sets field strength and therefore Larmor frequency, SNR (generally higher field → stronger signal), and homogeneity requirements. We are balancing cost, fringe field safety, and 1–4 qubit chemistry.",
+        "<strong>Sample tube (selection TBD):</strong> Holds the liquid NMR sample (dissolved molecule with NMR-active nuclei) in the most uniform region of B₁ and B₀, typically the coil center.",
+
+        {
+            "type": "heading",
+            "text": "Subsystem 6: Transmit / Receive Switch"
+        },
+        "You cannot simultaneously blast watts into the coil and expect to measure microvolts from the same port — the transmit signal would swamp or destroy the receiver. A <strong>T/R switch</strong> is a high-speed RF relay or PIN diode network that connects the coil to either the PA (TX) or the LNA (RX).",
+        "<strong>Timing:</strong> The FID starts the instant the transmit envelope ends. Every microsecond the switch lingers in TX mode is a slice of FID lost. The Pico 2 schedules RX mode entry relative to the trailing edge of the pulse.",
+        "<strong>Protection:</strong> In TX, the switch isolates the sensitive LNA from PA voltage. Without isolation, front-end transistors saturate or fail.",
+        "The specific switch element (relay vs. solid-state) is still being finalized based on switching speed, insertion loss, and isolation specs at our Larmor frequency.",
+
+        {
+            "type": "heading",
+            "text": "Subsystem 7: RX Signal Chain"
+        },
+        "Receive engineering is about preserving microvolt signals buried in wideband noise.",
+        "<strong>FID voltage level:</strong> After a 90° pulse, coherent precession induces a decaying sine in the coil. Amplitude might be on the order of microvolts to low millivolts depending on sample, field, and coil geometry — far below what a computer ADC can use directly.",
+        "<strong>Low Noise Amplifier (LNA):</strong> The first amplifier after the coil sets the system noise figure. Every dB of LNA noise directly reduces SNR in the spectrum. We select LNAs with low noise figure and adequate bandwidth at the Larmor frequency. Gain must be high enough to overcome ADC quantization noise but not so high that the ADC clips on strong signals.",
+        "<strong>Bandpass / highpass filter (planned):</strong> Rejects out-of-band interference — FM broadcast, switch-mode supply harmonics, Wi-Fi bleed — that the LNA would otherwise amplify along with the FID.",
+        "<strong>ADC (planned):</strong> An analog-to-digital converter samples the filtered FID at sufficient rate (Nyquist: sample faster than twice the highest frequency of interest). The resulting time-series array is what the Pi 5 FFTs. Bit depth and sample rate trade dynamic range against data size.",
+        "Together, LNA + filter + ADC answer one question: \"Can we faithfully digitize the FID envelope before T₂ dephasing erases it?\"",
+
+        {
+            "type": "heading",
+            "text": "Software & Processing"
+        },
+        "All software runs on the onboard Raspberry Pi 5; no external computer is needed.",
+        "<strong>Pulse sequence editor:</strong> You compose experiments as timed RF events and delays — the same conceptual model as rotating frames in magnetic resonance. The Qubi language used in our <a href='/simulator/' style='color:#AB6FAF;'>web-based quantum circuit simulator</a> will be the native programming interface for hardware execution, so circuits you test in the browser map to real pulses on Quadra.",
+        "<strong>Real-time handoff:</strong> The Pi 5 compiles a sequence into a timeline of Pico 2 commands (set frequency word, assert gate, wait τ microseconds, assert T/R RX, start ADC capture window). The Pico 2 executes that timeline open-loop with PIO-timed edges.",
+        "<strong>Signal processing (FFT):</strong> Digitized FID samples s(t) become spectrum S(f). Peak positions reveal chemical shift; peak integrals relate to spin populations; splitting patterns reveal J-coupling between nuclei. For quantum state tomography, multiple experiments with different readout pulses build up the density matrix.",
+        "<strong>Quantum state visualization:</strong> Beyond the raw spectrum, the UI presents relaxation curves (exponential fits to FID magnitude for T₁/T₂), population bars, and tomography plots so you can see how the state evolved through your pulse program.",
+        "<strong>Simulation mode:</strong> Run the pulse sequence against a mathematical spin model before consuming sample time. Catch timing errors, wrong flip angles, or impossible delays on-screen first.",
+
+        {
+            "type": "heading",
+            "text": "Component Reference"
+        },
+        "For those who want the full parts list, here is every component currently specified in the Quadra architecture, with a plain-language explanation of each role:",
+        {
+            "type": "table",
+            "headers": ["Subsystem", "Component", "Part Number", "What It Does"],
+            "rows": [
+                ["Power", "AC-DC Supply", "QFWB-65-12-US01", "Converts wall AC to 12 V DC — the single power source for the whole instrument"],
+                ["Power", "DC Barrel Jack", "DCJ200-10-A-K1-K", "Mechanical connector where the external power brick plugs in"],
+                ["Power", "Power Switch", "KRE2ANA1BBD", "Front-panel switch that fully disconnects 12 V from the system"],
+                ["Power", "TVS Diode", "TVS1400DRVR", "Clamps voltage spikes before they reach ICs (ESD, surges)"],
+                ["Power", "Schottky Diode", "STPS10M60SFY", "Blocks current if power polarity is reversed at the jack"],
+                ["Power", "Fast-Blow Fuse", "0679L9100-01", "Hard overcurrent protection — opens on dead short"],
+                ["Power", "PTC Fuse", "0ZCF0500FF2A", "Self-resetting overcurrent protection for softer faults"],
+                ["Power", "Terminal Block", "Phoenix 1729128", "Distributes 12 V to multiple boards safely and serviceably"],
+                ["Control", "Main SBC", "Raspberry Pi 5", "Runs UI, FFT, Qubi compiler, and simulation (2 GB RAM, 32 GB SD)"],
+                ["Control", "Touchscreen", "RPi Touch Display 2", "7\" operator display — pulse entry and results without a laptop"],
+                ["Control", "Real-Time MCU", "Pi Pico 2 (RP2350)", "Microsecond DDS gating, T/R switching, and PIO-timed I/O"],
+                ["Control", "Cooling Fan", "SC1148", "Keeps Pi 5 cool during sustained DSP and UI load"],
+                ["RF Gen", "DDS IC", "AD9851", "Digital sine generator — sets Larmor frequency from a 32-bit word"],
+                ["Probe", "Trimmer Caps (×2)", "BFC280831659", "CMatch: 50 Ω impedance match; CTune: sets LC resonance to Larmor f"],
+                ["TX", "Lowpass Filter", "N/A", "Removes DDS harmonics so only fundamental excites the sample"],
+                ["TX", "Mixer", "TBD", "Translates DDS frequency to probe RF via LO/IF mixing"],
+                ["TX", "RF Power Amplifier", "TBD", "Boosts pulse power so B₁ is strong enough for target flip angles"],
+                ["T/R", "T/R Switch", "TBD", "Routes coil to PA during pulse, to LNA during FID acquisition"],
+                ["RX", "LNA", "TBD", "First-stage amplifier — sets receive noise floor and SNR"],
+                ["RX", "ADC", "TBD", "Converts analog FID to digital samples for FFT on the Pi 5"],
+                ["Probe", "B₀ Magnet", "TBD", "Permanent magnet — creates static field that defines Larmor frequency"],
+                ["Probe", "Sample Tube", "TBD", "Holds liquid NMR sample inside uniform B₁ and B₀ region"]
+            ]
+        },
+
+        {
+            "type": "heading",
+            "text": "Why NMR for Quantum Computing?"
+        },
+        "Nuclear Magnetic Resonance was one of the first physical platforms used to demonstrate quantum algorithms — Shor's algorithm was first run on an NMR system. NMR qubits are nuclear spins in molecules, manipulated by precisely timed RF pulses. Because they operate at room temperature (unlike superconducting or trapped-ion systems that require cryogenics or vacuum), NMR platforms can be built into compact, accessible form factors.",
+        "The tradeoff: liquid-state NMR scales to a modest number of qubits (typically 1 to 10), and readout produces ensemble-averaged measurements rather than single-shot projective measurements on individual molecules. That means you are working with statistical spin populations, not clicking a detector on one atom. For teaching pulse sequences, prototyping algorithms, and studying decoherence in a real spectrometer, that is often exactly what you want.",
+        "We're not claiming NMR will compete with superconducting systems on qubit count or gate fidelity at scale. We're claiming it's the right technology for making quantum computing physically accessible to universities, research labs, and individual researchers at a price point that doesn't require a government grant.",
+
+        {
+            "type": "heading",
+            "text": "Current Development Status"
+        },
+        "Quadra is in active hardware assembly and development. I want to be transparent about where things stand.",
+        "The control architecture (RPi 5, Pico 2, AD9851 DDS), power management subsystem, and probe resonant network are specified and in integration. These are the subsystems with finalized component selections and PCB layouts.",
+        "Several components (including the T/R switch, RF power amplifier, LNA, mixer, ADC, B₀ permanent magnet, and sample tubes) are identified in the system architecture but are not yet finalized in the bill of materials. These are components where the specific part selection depends on test results from the subsystems that are already built.",
+        "We're building Quadra in the open because we think that's how engineering should work. Follow our progress for updates as we finalize each subsystem, and check back on the <a href='/products/quadra/' style='color:#AB6FAF;'>Quadra product page</a> for the latest specifications.",
+        "If you have questions about the architecture, want to discuss NMR hardware design, or are interested in what we're building, reach out. This is the kind of project that benefits from community input."
+    ]
+}

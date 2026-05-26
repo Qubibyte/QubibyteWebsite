@@ -691,11 +691,11 @@ const NMRSamples = {
         description: '3 ¹⁹F qubits - SpinQ Triangulum molecule. Different chemical environments distinguish each F.',
         formula: 'CF₂=CFI',
         nuclei: [
-            { id: 0, element: '19F', label: 'Fa', chemicalShift: -85.0,
+            { id: 0, element: '19F', label: 'F₁', chemicalShift: -85.0,
               environment: 'F trans to I, strongly deshielded' },
-            { id: 1, element: '19F', label: 'Fb', chemicalShift: -118.0,
+            { id: 1, element: '19F', label: 'F₂', chemicalShift: -118.0,
               environment: 'F cis to I, moderately shielded' },
-            { id: 2, element: '19F', label: 'Fc', chemicalShift: -190.0,
+            { id: 2, element: '19F', label: 'F₃', chemicalShift: -190.0,
               environment: 'F on CFI carbon, most shielded' }
         ],
         jCouplings: [
@@ -984,13 +984,13 @@ const NMRSamples = {
         description: 'Common refrigerant with 4 distinguishable ¹⁹F environments',
         formula: 'CF₃-CHF',
         nuclei: [
-            { id: 0, element: '19F', label: 'Fa', chemicalShift: -72.0,
+            { id: 0, element: '19F', label: 'F₁', chemicalShift: -72.0,
               environment: 'CF₃ fluorine (equivalent, 3F)' },
-            { id: 1, element: '19F', label: 'Fb', chemicalShift: -218.0,
+            { id: 1, element: '19F', label: 'F₂', chemicalShift: -218.0,
               environment: 'CHF fluorine' },
-            { id: 2, element: '19F', label: 'Fc', chemicalShift: -73.0,
+            { id: 2, element: '19F', label: 'F₃', chemicalShift: -73.0,
               environment: 'CF₃ fluorine (slightly different)' },
-            { id: 3, element: '19F', label: 'Fd', chemicalShift: -74.0,
+            { id: 3, element: '19F', label: 'F₄', chemicalShift: -74.0,
               environment: 'CF₃ fluorine (slightly different)' }
         ],
         jCouplings: [
@@ -1063,15 +1063,15 @@ const NMRSamples = {
         description: '5 ¹⁹F qubits - different positions on aromatic ring',
         formula: 'C₆F₅OH',
         nuclei: [
-            { id: 0, element: '19F', label: 'Fo1', chemicalShift: -163.0,
+            { id: 0, element: '19F', label: 'F₁', chemicalShift: -163.0,
               environment: 'ortho-F adjacent to OH, H-bonding' },
-            { id: 1, element: '19F', label: 'Fo2', chemicalShift: -163.5,
+            { id: 1, element: '19F', label: 'F₂', chemicalShift: -163.5,
               environment: 'ortho-F, symmetric position' },
-            { id: 2, element: '19F', label: 'Fm1', chemicalShift: -167.0,
+            { id: 2, element: '19F', label: 'F₃', chemicalShift: -167.0,
               environment: 'meta-F position' },
-            { id: 3, element: '19F', label: 'Fm2', chemicalShift: -167.5,
+            { id: 3, element: '19F', label: 'F₄', chemicalShift: -167.5,
               environment: 'meta-F, symmetric position' },
-            { id: 4, element: '19F', label: 'Fp', chemicalShift: -170.0,
+            { id: 4, element: '19F', label: 'F₅', chemicalShift: -170.0,
               environment: 'para-F, opposite to OH' }
         ],
         jCouplings: [
@@ -2361,9 +2361,17 @@ class NMRPhysicsEngine {
                                 description: 'CNOT completion'
                             });
                         } else {
+                            // CZ gate: phase flip on |11⟩ state
+                            // Standard implementation: J-evolution for time 1/(2J)
+                            // followed by refocusing pulses to implement phase gate
+                            // For simplicity in visualization, we show the evolution time
+                            // The actual implementation requires refocusing pulses, but for
+                            // visualization purposes, we show the delay
+                            const czTau = 1 / (2 * Math.abs(J));
                             pulses.push({
-                                type: 'delay', gate: 'CZ-J', duration: 2 * tau,
-                                description: `CZ via J (τ=${(2*tau*1000).toFixed(1)}ms)`
+                                type: 'delay', gate: 'CZ-J', duration: czTau,
+                                qubit: qubit, control: control,
+                                description: `CZ: J-evol (τ=${(czTau*1000).toFixed(1)}ms) for phase gate`
                             });
                         }
                     } else {

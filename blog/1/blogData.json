@@ -5,7 +5,7 @@
         "author": "Qubibyte",
         "date": "March 7th, 2025"
     },
-    "title": "The Declaration of Qubibyte & Announcement of Qubibyte Quadra",
+    "title": "Qubibyte Blog #1: The Declaration of Qubibyte & Announcement of Qubibyte Quadra",
     "author": "Trent Rosenthal",
     "date": "March 7th, 2025",
     "content": [
@@ -15,13 +15,15 @@
         {
             "type": "image",
             "src": "https://www.globaltimes.cn/Portals/0/attachment/2024/2024-09-05/77f516f6-0160-43d3-99a4-642e6ceac8bd.png",
-            "alt": "Global Quantum Patents By Country"
+            "alt": "Global Quantum Patents By Country",
+            "size": "small"
         },
         "We do lead in quantum computing patents, but not quantum communications or quantum sensing, but it may not be for long with strong Chinese competitors such as Origin Quantum, QuantumCTek, SpinQ, and many others.",
         {
             "type": "image",
             "src": "https://quantumconsortium.org/wp-content/uploads/2024/12/Picture14.png",
-            "alt": "Global Statistics On Quantum Patents"
+            "alt": "Global Statistics On Quantum Patents",
+            "size": "small"
         },
         "We'd have a lot at risk if this sort of technology gets into the wrong hands. Your favorite cryptocurrency, Bitcoin, will be totally and utterly obliterated, instantly reaching a near-zero evaluation following the first major attack on it. A consensus is yet to be reached, and is continuously pushed back and deemed “redundant”, towards implementing a quantum-proof algorithm to prevent its complete and total eradication.",
         "It's not just Bitcoin, however, but anything that uses any modern encryption algorithm or hashing function will be at risk. Your data, your bank accounts, everything, will soon have its security compromised if no change is made.",
