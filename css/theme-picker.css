@@ -1,12 +1,12 @@
 /**
  * Navbar theme picker — uses site theme tokens (themes.css).
- * Sizing/spacing: calc(* 100vw / 1920) for 720p/1080p parity.
+ * Sizing: 1080p px baseline; mobile overrides at bottom.
  */
 
 .theme-picker-nav-item {
     display: flex;
     align-items: center;
-    margin-left: calc(8 * 100vw / 1920);
+    margin-left: 8px;
     flex-shrink: 0;
     position: relative;
     z-index: 1001;
@@ -22,11 +22,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: calc(42 * 100vw / 1920);
-    height: calc(42 * 100vw / 1920);
+    width: 42px;
+    height: 42px;
     padding: 0;
-    border: calc(1 * 100vw / 1920) solid transparent;
-    border-radius: var(--radius-sm, calc(8 * 100vw / 1920));
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm, 8px);
     background: transparent;
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
@@ -43,8 +43,8 @@
 }
 
 .theme-picker-icon {
-    width: calc(22 * 100vw / 1920);
-    height: calc(22 * 100vw / 1920);
+    width: 22px;
+    height: 22px;
     object-fit: contain;
     display: block;
     pointer-events: none;
@@ -52,20 +52,20 @@
 
 .theme-picker-menu {
     position: absolute;
-    top: calc(100% + (8 * 100vw / 1920));
+    top: calc(100% + 8px);
     right: 0;
-    min-width: calc(168 * 100vw / 1920);
-    padding: calc(6 * 100vw / 1920);
+    min-width: 168px;
+    padding: 6px;
     margin: 0;
     list-style: none;
     background: var(--bg-card, #141428);
-    border: calc(1 * 100vw / 1920) solid var(--border-default, rgba(255, 255, 255, 0.12));
-    border-radius: var(--radius-sm, calc(10 * 100vw / 1920));
+    border: 1px solid var(--border-default, rgba(255, 255, 255, 0.12));
+    border-radius: var(--radius-sm, 10px);
     box-shadow: var(--shadow-md, 0 8px 30px rgba(0, 0, 0, 0.35));
     z-index: 1100;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(calc(-6 * 100vw / 1920));
+    transform: translateY(-6px);
     transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
 }
 
@@ -78,17 +78,17 @@
 .theme-picker-option {
     display: flex;
     align-items: center;
-    gap: calc(10 * 100vw / 1920);
+    gap: 10px;
     width: 100%;
-    padding: calc(10 * 100vw / 1920) calc(12 * 100vw / 1920);
+    padding: 10px 12px;
     border: none;
-    border-radius: calc(8 * 100vw / 1920);
+    border-radius: 8px;
     background: transparent;
     color: var(--text-primary, #f1f5f9);
     font-family: var(--font-display, 'Khand', sans-serif);
-    font-size: calc(15.2 * 100vw / 1920);
+    font-size: 15px;
     font-weight: 500;
-    letter-spacing: calc(0.4 * 100vw / 1920);
+    letter-spacing: 0.4px;
     text-align: left;
     cursor: pointer;
     transition: background 0.15s ease;
@@ -101,16 +101,16 @@
 .theme-picker-option.is-active {
     background: rgba(6, 135, 201, 0.18);
     color: var(--text-primary, #f1f5f9);
-    outline: calc(1 * 100vw / 1920) solid rgba(6, 135, 201, 0.45);
+    outline: 1px solid rgba(6, 135, 201, 0.45);
 }
 
 .theme-picker-swatch {
     flex-shrink: 0;
-    width: calc(18 * 100vw / 1920);
-    height: calc(18 * 100vw / 1920);
-    border-radius: calc(4 * 100vw / 1920);
-    border: calc(1 * 100vw / 1920) solid rgba(255, 255, 255, 0.2);
-    box-shadow: inset 0 0 0 calc(1 * 100vw / 1920) rgba(0, 0, 0, 0.15);
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.15);
 }
 
 .theme-picker-swatch[data-theme="dark"] {
@@ -135,46 +135,82 @@ html[data-theme="light"] .theme-picker-icon {
 }
 
 html[data-theme="light"] .theme-picker-menu {
-    box-shadow: 0 calc(8 * 100vw / 1920) calc(28 * 100vw / 1920) rgba(0, 0, 0, 0.12);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+}
+
+.theme-picker-nav-item--toolbar {
+    display: none;
 }
 
 @media (max-width: 767.98px) {
-    .theme-picker-nav-item {
-        width: 100%;
-        margin: calc(8 * 100vw / 1920) 0 calc(4 * 100vw / 1920);
-        padding: 0 calc(8 * 100vw / 1920);
+    .theme-picker-nav-item--desktop {
+        display: none !important;
     }
 
-    .theme-picker {
+    .theme-picker-nav-item--toolbar {
+        display: flex;
+        align-items: center;
+        margin: 0 0 0 auto;
+        padding: 0;
+        flex-shrink: 0;
+        position: relative;
+    }
+
+    .theme-picker-nav-item--toolbar .theme-picker-btn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .theme-picker-nav-item--toolbar .theme-picker-menu {
+        position: absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        width: auto;
+        margin-top: 0;
+        display: block;
+    }
+
+    .theme-picker-nav-item--toolbar .theme-picker-menu:not(.is-open) {
+        display: none;
+    }
+
+    /* Legacy: picker still inside collapsed nav on pages without navbar-actions */
+    .theme-picker-nav-item:not(.theme-picker-nav-item--desktop):not(.theme-picker-nav-item--toolbar) {
+        width: 100%;
+        margin: 8px 0 4px;
+        padding: 0 8px;
+    }
+
+    .theme-picker-nav-item:not(.theme-picker-nav-item--desktop):not(.theme-picker-nav-item--toolbar) .theme-picker {
         width: 100%;
     }
 
-    .theme-picker-btn {
+    .theme-picker-nav-item:not(.theme-picker-nav-item--desktop):not(.theme-picker-nav-item--toolbar) .theme-picker-btn {
         width: 100%;
         justify-content: flex-start;
-        gap: calc(10 * 100vw / 1920);
-        padding: calc(8 * 100vw / 1920) calc(12 * 100vw / 1920);
+        gap: 10px;
+        padding: 8px 12px;
         height: auto;
     }
 
-    .theme-picker-btn::after {
+    .theme-picker-nav-item:not(.theme-picker-nav-item--desktop):not(.theme-picker-nav-item--toolbar) .theme-picker-btn::after {
         content: 'Theme';
         font-family: var(--font-display, 'Khand', sans-serif);
-        font-size: calc(16 * 100vw / 1920);
+        font-size: 16px;
         color: var(--text-secondary);
-        letter-spacing: calc(0.5 * 100vw / 1920);
+        letter-spacing: 0.5px;
     }
 
-    .theme-picker-menu {
+    .theme-picker-nav-item:not(.theme-picker-nav-item--desktop):not(.theme-picker-nav-item--toolbar) .theme-picker-menu {
         position: static;
         width: 100%;
-        margin-top: calc(6 * 100vw / 1920);
+        margin-top: 6px;
         transform: none;
         box-shadow: none;
-        border: calc(1 * 100vw / 1920) solid var(--border-subtle);
+        border: 1px solid var(--border-subtle);
     }
 
-    .theme-picker-menu:not(.is-open) {
+    .theme-picker-nav-item:not(.theme-picker-nav-item--desktop):not(.theme-picker-nav-item--toolbar) .theme-picker-menu:not(.is-open) {
         display: none;
     }
 }

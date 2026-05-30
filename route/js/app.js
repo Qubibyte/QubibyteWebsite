@@ -594,4 +594,12 @@
     }
 
     document.addEventListener('DOMContentLoaded', init);
+
+    window.addEventListener('qubibyte-theme-change', () => {
+        if (renderer) renderer.render();
+        if (chartRouteLength?.data?.length) chartRouteLength.draw();
+        if (chartComputeTime?.data?.length) chartComputeTime.draw();
+        if (chartConvergence?.data?.length) chartConvergence.draw();
+        if (chartProbDist?.data?.length) chartProbDist.draw();
+    });
 })();

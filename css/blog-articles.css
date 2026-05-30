@@ -1,6 +1,6 @@
 /**
- * Blog article pages — theme-aware, proportional 1920×1080 reference.
- * Requires /css/themes.css, /newindex.css (--layout-ref-w/h), html[data-theme].
+ * Blog article pages — theme-aware, 1080p px baseline (readable at all viewport sizes).
+ * Requires /css/themes.css, /newindex.css, html[data-theme].
  */
 
 body.blog-page {
@@ -11,33 +11,36 @@ body.blog-page {
 body.blog-page #Home {
     background: var(--blog-page-bg) !important;
     min-height: auto !important;
-    padding-top: calc(88 * 100vw / var(--layout-ref-w, 1920));
-    padding-bottom: calc(64 * 100vw / var(--layout-ref-w, 1920));
+    padding-top: 88px;
+    padding-bottom: 64px;
 }
 
 body.blog-page .blog-article-shell {
-    margin-top: calc(24 * 100vw / var(--layout-ref-w, 1920));
+    margin-top: 24px;
 }
 
 body.blog-page #articlediv {
-    font-size: calc(16 * 100vw / var(--layout-ref-w, 1920));
-    max-width: calc(1200 * 100vw / var(--layout-ref-w, 1920));
+    font-size: 18px;
+    max-width: 1200px;
     margin-left: auto;
     margin-right: auto;
+    padding: 0 32px;
     text-align: left;
+    box-sizing: border-box;
 }
 
 #articlediv h2 {
     color: var(--blog-heading) !important;
     font-family: 'Khand', 'Inter', sans-serif;
-    font-size: 2.2em;
-    margin-bottom: calc(16 * 100vw / var(--layout-ref-w, 1920));
+    font-size: 40px;
+    line-height: 1.2;
+    margin-bottom: 20px;
 }
 
 #articlediv p {
     color: var(--blog-body-text) !important;
     font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
-    font-size: 1.15em;
+    font-size: 20px;
     line-height: 1.85;
     margin-bottom: 1.2em;
     text-align: left;
@@ -52,57 +55,55 @@ nav.navbar.fixed-top {
     background: var(--blog-navbar-bg) !important;
 }
 
-/* Images — proportional to 1080p (not 85vw, which overshoots on 720p) */
 #articlediv .blogimage {
     display: block;
-    margin: calc(24 * 100vw / var(--layout-ref-w, 1920)) auto;
+    margin: 24px auto;
     width: auto;
     height: auto;
-    /* Fill article column width; height scales with 1080p reference */
     max-width: 100% !important;
-    max-height: calc(810 * 100vh / var(--layout-ref-h, 1080)) !important;
+    max-height: 720px !important;
     object-fit: contain;
-    border-radius: calc(8 * 100vw / var(--layout-ref-w, 1920));
-    border: calc(1 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-image-border);
+    border-radius: 8px;
+    border: 1px solid var(--blog-image-border);
     background-color: var(--blog-image-bg);
 }
 
-/* UI photos, diagrams — smaller than full-width charts */
 #articlediv .blogimage.blogimage--small {
-    max-width: min(100%, calc(480 * 100vw / var(--layout-ref-w, 1920))) !important;
-    max-height: calc(320 * 100vh / var(--layout-ref-h, 1080)) !important;
+    max-width: min(100%, 480px) !important;
+    max-height: 360px !important;
 }
 
 .blog-video-wrap {
     display: flex;
     justify-content: center;
-    margin: calc(24 * 100vw / var(--layout-ref-w, 1920)) 0;
+    margin: 24px 0;
 }
 
 #youtubevideo {
-    width: calc(648 * 100vw / var(--layout-ref-w, 1920)) !important;
-    height: calc(432 * 100vh / var(--layout-ref-h, 1080)) !important;
+    width: 648px !important;
+    height: 432px !important;
     max-width: 100% !important;
     border: 0 !important;
-    border-radius: calc(12 * 100vw / var(--layout-ref-w, 1920)) !important;
+    border-radius: 12px !important;
 }
 
 .blog-section-heading {
     color: var(--blog-heading) !important;
     font-family: 'Khand', 'Inter', sans-serif;
-    font-size: 1.7em;
+    font-size: 30px;
     font-weight: 600;
+    line-height: 1.25;
     margin: 2em 0 0.8em;
     padding-bottom: 0.3em;
-    border-bottom: calc(1 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-section-border);
+    border-bottom: 1px solid var(--blog-section-border);
 }
 
 #articlediv code {
     background: var(--blog-code-inline-bg);
-    padding: calc(2 * 100vw / var(--layout-ref-w, 1920)) calc(6 * 100vw / var(--layout-ref-w, 1920));
-    border-radius: calc(4 * 100vw / var(--layout-ref-w, 1920));
+    padding: 2px 6px;
+    border-radius: 4px;
     font-family: 'Courier New', monospace;
-    font-size: 0.88em;
+    font-size: 17px;
     color: var(--blog-code-inline-fg);
 }
 
@@ -118,15 +119,15 @@ nav.navbar.fixed-top {
 .blog-component-table-wrapper {
     overflow-x: auto;
     margin: 1.6em 0 2em;
-    border-radius: calc(10 * 100vw / var(--layout-ref-w, 1920));
-    border: calc(1 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-table-wrap-border);
+    border-radius: 10px;
+    border: 1px solid var(--blog-table-wrap-border);
 }
 
 .blog-component-table {
     width: 100%;
     border-collapse: collapse;
     font-family: 'Khand', 'Inter', sans-serif;
-    font-size: 0.98em;
+    font-size: 17px;
 }
 
 .blog-component-table thead {
@@ -134,21 +135,21 @@ nav.navbar.fixed-top {
 }
 
 .blog-component-table th {
-    padding: calc(12 * 100vw / var(--layout-ref-w, 1920)) calc(16 * 100vw / var(--layout-ref-w, 1920));
+    padding: 12px 16px;
     text-align: left;
     color: var(--blog-table-head-fg);
     font-weight: 600;
-    font-size: 1.02em;
-    border-bottom: calc(2 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-table-head-border);
+    font-size: 18px;
+    border-bottom: 2px solid var(--blog-table-head-border);
     white-space: nowrap;
 }
 
 .blog-component-table td {
-    padding: calc(10 * 100vw / var(--layout-ref-w, 1920)) calc(16 * 100vw / var(--layout-ref-w, 1920));
+    padding: 10px 16px;
     color: var(--blog-table-cell-fg);
-    border-bottom: calc(1 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-table-row-border);
+    border-bottom: 1px solid var(--blog-table-row-border);
     font-family: 'Source Serif 4', Georgia, serif;
-    font-size: 0.95em;
+    font-size: 17px;
 }
 
 .blog-component-table tbody tr:hover {
@@ -161,11 +162,11 @@ nav.navbar.fixed-top {
 
 .blog-component-table .part-num {
     font-family: 'Courier New', monospace;
-    font-size: 0.88em;
+    font-size: 16px;
     color: var(--blog-table-part-fg);
     background: var(--blog-table-part-bg);
-    padding: calc(1 * 100vw / var(--layout-ref-w, 1920)) calc(5 * 100vw / var(--layout-ref-w, 1920));
-    border-radius: calc(3 * 100vw / var(--layout-ref-w, 1920));
+    padding: 1px 5px;
+    border-radius: 3px;
 }
 
 .blog-component-table .tbd {
@@ -175,41 +176,41 @@ nav.navbar.fixed-top {
 
 .qubi-code-block {
     background: var(--blog-code-block-bg);
-    border: calc(1 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-code-block-border);
-    border-radius: calc(10 * 100vw / var(--layout-ref-w, 1920));
+    border: 1px solid var(--blog-code-block-border);
+    border-radius: 10px;
     margin: 1.4em auto 1.6em;
-    max-width: min(100%, calc(560 * 100vw / var(--layout-ref-w, 1920)));
+    max-width: min(100%, 560px);
     overflow: hidden;
     text-align: left;
 }
 
 .qubi-code-header {
     background: var(--blog-code-header-bg);
-    padding: calc(9 * 100vw / var(--layout-ref-w, 1920)) calc(16 * 100vw / var(--layout-ref-w, 1920));
+    padding: 9px 16px;
     font-family: 'Inter', 'Segoe UI', sans-serif;
-    font-size: 0.78em;
+    font-size: 14px;
     font-weight: 500;
     color: var(--blog-code-header-fg);
-    border-bottom: calc(1 * 100vw / var(--layout-ref-w, 1920)) solid var(--blog-code-block-border);
+    border-bottom: 1px solid var(--blog-code-block-border);
     display: flex;
     align-items: center;
-    gap: calc(8 * 100vw / var(--layout-ref-w, 1920));
+    gap: 8px;
 }
 
 .qubi-code-lang {
     background: var(--blog-code-lang-bg);
     color: var(--blog-code-lang-fg);
-    font-size: 0.85em;
+    font-size: 13px;
     font-weight: 600;
-    padding: calc(2 * 100vw / var(--layout-ref-w, 1920)) calc(7 * 100vw / var(--layout-ref-w, 1920));
-    border-radius: calc(4 * 100vw / var(--layout-ref-w, 1920));
-    letter-spacing: calc(0.4 * 100vw / var(--layout-ref-w, 1920));
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.4px;
 }
 
 .qubi-code-body {
-    padding: calc(16 * 100vw / var(--layout-ref-w, 1920)) calc(20 * 100vw / var(--layout-ref-w, 1920));
+    padding: 16px 20px;
     font-family: 'Courier New', 'Fira Code', monospace;
-    font-size: 0.92em;
+    font-size: 16px;
     line-height: 1.65;
     color: var(--blog-code-body-fg);
     overflow-x: auto;
@@ -233,26 +234,59 @@ html[data-theme="light"] .hl-keyword { color: #4f46e5; }
 html[data-theme="light"] .hl-comment,
 html[data-theme="light"] .hl-py-comment { color: #64748b; }
 
+/* Compact desktop / 720p landscape — same readable type, tighter gutters only */
+@media (min-width: 768px) and (max-width: 1280px) {
+    body.blog-page #Home {
+        padding-top: 80px;
+        padding-bottom: 56px;
+    }
+
+    body.blog-page #articlediv {
+        padding: 0 24px;
+    }
+}
+
 @media (max-width: 767.98px) {
     body.blog-page #Home {
-        padding-top: calc(72 * 100vw / var(--layout-ref-w, 1920));
+        padding-top: 72px;
+        padding-bottom: 48px;
     }
 
     body.blog-page #articlediv {
         max-width: 100%;
+        padding: 0 18px;
+        font-size: 17px;
     }
 
     #articlediv h2 {
-        font-size: 1.6em;
+        font-size: 32px;
     }
 
     #articlediv p {
-        font-size: 1.05em;
-        line-height: 1.75;
+        font-size: 18px;
+        line-height: 1.8;
     }
 
     .blog-section-heading {
-        font-size: 1.35em;
+        font-size: 26px;
+    }
+
+    #articlediv code {
+        font-size: 16px;
+    }
+
+    .blog-component-table {
+        font-size: 16px;
+    }
+
+    .blog-component-table th {
+        font-size: 17px;
+        padding: 10px 12px;
+    }
+
+    .blog-component-table td {
+        font-size: 16px;
+        padding: 9px 12px;
     }
 
     .qubi-code-block {
@@ -260,6 +294,12 @@ html[data-theme="light"] .hl-py-comment { color: #64748b; }
     }
 
     .qubi-code-body {
-        font-size: 0.82em;
+        font-size: 15px;
+    }
+
+    #youtubevideo {
+        width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 16 / 9;
     }
 }

@@ -64,6 +64,7 @@ class SimpleChart {
         const barGap = Math.max(4, Math.min(12, cw / barCount * 0.2));
         const barWidth = Math.max(8, (cw - barGap * (barCount + 1)) / barCount);
 
+        const tc = window.QubibyteSubpageColors?.get?.() || {};
         // Y-axis grid lines
         const yTicks = this.calcTicks(0, maxVal, 5);
         ctx.font = '10px "JetBrains Mono",monospace';
@@ -71,13 +72,13 @@ class SimpleChart {
         ctx.textBaseline = 'middle';
         for (const tick of yTicks) {
             const y = pad.top + ch * (1 - tick / maxVal);
-            ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+            ctx.strokeStyle = tc.chartGrid || 'rgba(255,255,255,0.04)';
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(pad.left, y);
             ctx.lineTo(w - pad.right, y);
             ctx.stroke();
-            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.fillStyle = tc.chartLabel || 'rgba(255,255,255,0.25)';
             ctx.fillText(this.fmtVal(tick), pad.left - 8, y);
         }
 
@@ -132,6 +133,8 @@ class SimpleChart {
         }
         if (maxVal === 0 || maxLen === 0) return;
 
+        const tc = window.QubibyteSubpageColors?.get?.() || {};
+
         // Y-axis grid
         const yTicks = this.calcTicks(0, maxVal, 5);
         ctx.font = '10px "JetBrains Mono",monospace';
@@ -139,13 +142,13 @@ class SimpleChart {
         ctx.textBaseline = 'middle';
         for (const tick of yTicks) {
             const y = pad.top + ch * (1 - tick / maxVal);
-            ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+            ctx.strokeStyle = tc.chartGrid || 'rgba(255,255,255,0.04)';
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(pad.left, y);
             ctx.lineTo(w - pad.right, y);
             ctx.stroke();
-            ctx.fillStyle = 'rgba(255,255,255,0.25)';
+            ctx.fillStyle = tc.chartLabel || 'rgba(255,255,255,0.25)';
             ctx.fillText(this.fmtVal(tick), pad.left - 8, y);
         }
 

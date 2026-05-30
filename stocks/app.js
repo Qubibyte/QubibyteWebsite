@@ -151,61 +151,71 @@
     }
 
     // ======================== RENDER CHART (async) ========================
-    async function renderChart() {
+    async function renderChart(skipFetch) {
         if (!selected) return;
 
-        showLoading();
-        hideChartError();
+        if (!skipFetch) {
+            showLoading();
+            hideChartError();
 
-        try {
-            chartData = await fetchChartData(selected, timeframe);
-        } catch (e) {
-            chartData = errorResult('Unexpected error');
+            try {
+                chartData = await fetchChartData(selected, timeframe);
+            } catch (e) {
+                chartData = errorResult('Unexpected error');
+            }
+
+            hideLoading();
         }
 
-        hideLoading();
-
         if (!chartData || chartData.source === 'error' || !chartData.data || chartData.data.length < 2) {
-            const msg = (chartData && chartData.error) ? chartData.error : 'Unable to load market data';
-            showChartError(msg);
-            chartBarPrice.textContent = '—';
-            chartBarChange.textContent = '';
-            chartBarChange.className = 'chart-bar-change';
-            if (chartBarSrc) { chartBarSrc.textContent = '● ERROR'; chartBarSrc.className = 'chart-bar-src sim'; }
-            xAxis.innerHTML = '';
-            yAxisEl.innerHTML = '';
-            geo = null;
+            if (!skipFetch) {
+                const msg = (chartData && chartData.error) ? chartData.error : 'Unable to load market data';
+                showChartError(msg);
+                chartBarPrice.textContent = '—';
+                chartBarChange.textContent = '';
+                chartBarChange.className = 'chart-bar-change';
+                if (chartBarSrc) { chartBarSrc.textContent = '● ERROR'; chartBarSrc.className = 'chart-bar-src sim'; }
+                xAxis.innerHTML = '';
+                yAxisEl.innerHTML = '';
+                geo = null;
+            }
             return;
         }
 
         const data = chartData.data;
 
-        // Update chart bar with real price/change from fetched data
-        const lp = chartData.livePrice;
-        const lc = chartData.liveChange;
-        const isUp = lc >= 0;
-        chartBarPrice.textContent = `$${lp.toFixed(2)}`;
-        chartBarChange.textContent = `${isUp ? '+' : ''}${lc.toFixed(2)}%`;
-        chartBarChange.className = `chart-bar-change ${isUp ? 'up' : 'down'}`;
+        if (!skipFetch) {
+            // Update chart bar with real price/change from fetched data
+            const lp = chartData.livePrice;
+            const lc = chartData.liveChange;
+            const isUpBar = lc >= 0;
+            chartBarPrice.textContent = `$${lp.toFixed(2)}`;
+            chartBarChange.textContent = `${isUpBar ? '+' : ''}${lc.toFixed(2)}%`;
+            chartBarChange.className = `chart-bar-change ${isUpBar ? 'up' : 'down'}`;
 
-        // Show data source indicator (market hours aware)
-        if (chartBarSrc) {
-            if (chartData.source === 'live') {
-                if (isMarketOpen()) {
-                    chartBarSrc.textContent = '● LIVE';
-                    chartBarSrc.className = 'chart-bar-src live';
+            // Show data source indicator (market hours aware)
+            if (chartBarSrc) {
+                if (chartData.source === 'live') {
+                    if (isMarketOpen()) {
+                        chartBarSrc.textContent = '● LIVE';
+                        chartBarSrc.className = 'chart-bar-src live';
+                    } else {
+                        chartBarSrc.textContent = '● CLOSED';
+                        chartBarSrc.className = 'chart-bar-src closed';
+                    }
+                } else if (chartData.source === 'private') {
+                    chartBarSrc.textContent = '● PRIVATE';
+                    chartBarSrc.className = 'chart-bar-src private';
                 } else {
-                    chartBarSrc.textContent = '● CLOSED';
-                    chartBarSrc.className = 'chart-bar-src closed';
+                    chartBarSrc.textContent = '● SIM';
+                    chartBarSrc.className = 'chart-bar-src sim';
                 }
-            } else if (chartData.source === 'private') {
-                chartBarSrc.textContent = '● PRIVATE';
-                chartBarSrc.className = 'chart-bar-src private';
-            } else {
-                chartBarSrc.textContent = '● SIM';
-                chartBarSrc.className = 'chart-bar-src sim';
             }
         }
+
+        const lc = chartData.liveChange;
+        const isUp = lc >= 0;
+        const subpage = window.QubibyteSubpageColors?.get?.() || {};
 
         // ---- DRAW ----
         const dpr = window.devicePixelRatio || 1;
@@ -231,7 +241,7 @@
 
         // Grid
         const gridN = 5;
-        ctx.strokeStyle = 'rgba(255,255,255,0.035)';
+        ctx.strokeStyle = subpage.chartGrid || 'rgba(255,255,255,0.035)';
         ctx.lineWidth = 1;
         for (let i = 0; i <= gridN; i++) {
             const y = pad.top + (i / gridN) * (h - pad.top - pad.bottom);
@@ -516,5 +526,9 @@
     } else {
         init();
     }
+
+    window.addEventListener('qubibyte-theme-change', () => {
+        if (chartData && selected) renderChart(true);
+    });
 
 })();

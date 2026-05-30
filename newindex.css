@@ -55,17 +55,13 @@
 
 /* ======================== DESIGN TOKENS ======================== */
 :root {
-    /* 1080p (1920×1080) layout reference — use calc(N * 100vw / var(--layout-ref-w)) for proportional spacing */
-    --layout-ref-w: 1920;
-    --layout-ref-h: 1080;
-
-    /* Navbar — proportional to 1920 reference (no px) */
-    --navbar-pad-y: calc(12 * 100vw / var(--layout-ref-w));
-    --navbar-pad-y-scrolled: calc(8 * 100vw / var(--layout-ref-w));
-    --navbar-logo-w: calc(100 * 100vw / var(--layout-ref-w));
-    --navbar-link-py: calc(8 * 100vw / var(--layout-ref-w));
-    --navbar-link-px: calc(16 * 100vw / var(--layout-ref-w));
-    --navbar-offset: calc(80 * 100vw / var(--layout-ref-w));
+    /* Navbar — 1080p baseline (px); tweak in desktop/tablet media queries */
+    --navbar-pad-y: 12px;
+    --navbar-pad-y-scrolled: 8px;
+    --navbar-logo-w: 100px;
+    --navbar-link-py: 8px;
+    --navbar-link-px: 16px;
+    --navbar-offset: 80px;
 
     /* Brand Colors */
     --color-primary: #554A9E;
@@ -210,11 +206,10 @@ section {
     z-index: 1000;
 }
 
-/* Proportional to 1920px-wide reference (same visual weight at 720p and 1080p) */
 .navbar > .container {
     max-width: 100%;
-    padding-left: calc(72 * 100vw / var(--layout-ref-w));
-    padding-right: calc(68 * 100vw / var(--layout-ref-w));
+    padding-left: 72px;
+    padding-right: 68px;
 }
 
 .navbar .navbar-brand {
@@ -231,8 +226,8 @@ section {
 }
 
 .navbar .navbar-nav {
-    padding-right: calc(4 * 100vw / var(--layout-ref-w));
-    gap: calc(4 * 100vw / var(--layout-ref-w));
+    padding-right: 4px;
+    gap: 4px;
 }
 
 .navbar.scrolled {
@@ -255,10 +250,10 @@ section {
     font-family: var(--font-display);
     font-weight: 500;
     font-size: 1.2em;
-    letter-spacing: calc(0.5 * 100vw / var(--layout-ref-w));
+    letter-spacing: 0.5px;
     position: relative;
     transition: all var(--transition-base);
-    margin: 0 calc(4 * 100vw / var(--layout-ref-w));
+    margin: 0 4px;
     padding: var(--navbar-link-py) var(--navbar-link-px) !important;
     color: var(--text-secondary) !important;
     border-radius: var(--radius-sm);
@@ -416,7 +411,7 @@ section {
 .home-content {
     position: relative;
     z-index: 1;
-    padding-top: calc(80 * 100vw / var(--layout-ref-w));
+    padding-top: 80px;
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
@@ -984,7 +979,32 @@ section {
     position: relative;
 }
 
+/* Align breadcrumb with the active main panel (items / detail column). */
+.tech-explorer:not([data-stage="1"]) {
+    display: grid;
+    grid-template-columns: 96px minmax(0, 1fr) 0fr;
+    column-gap: 16px;
+    row-gap: 14px;
+    align-items: stretch;
+}
+
+.tech-explorer[data-stage="3"] {
+    grid-template-columns: 88px 88px minmax(0, 1fr);
+}
+
+.tech-explorer:not([data-stage="1"]) .tech-breadcrumb {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+}
+
+.tech-explorer[data-stage="3"] .tech-breadcrumb {
+    grid-column: 3;
+}
+
 .tech-explorer-cols {
+    grid-column: 1 / -1;
     display: grid;
     gap: 16px;
     grid-template-columns: minmax(0, 1fr) 0fr 0fr;
@@ -997,11 +1017,18 @@ section {
 }
 
 .tech-explorer[data-stage="2"] .tech-explorer-cols {
-    grid-template-columns: 96px minmax(0, 1fr) 0fr;
+    grid-template-columns: 96px minmax(0, 1fr);
+    column-gap: 16px;
 }
 
 .tech-explorer[data-stage="3"] .tech-explorer-cols {
     grid-template-columns: 88px 88px minmax(0, 1fr);
+}
+
+/* Stage 1: one full-width category column — no dead gap from collapsed tracks */
+.tech-explorer[data-stage="1"] .tech-explorer-cols {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
 }
 
 .tech-col {
@@ -1031,7 +1058,22 @@ section {
     border-color: transparent;
     pointer-events: none;
     visibility: hidden;
+    min-width: 0;
+    max-width: 0;
+    overflow: hidden;
+    position: absolute;
+    width: 0;
+    height: 0;
     transition: opacity 0.35s var(--ease-out), visibility 0s linear 0.35s;
+}
+
+.tech-explorer[data-stage="2"] .tech-col-items,
+.tech-explorer[data-stage="3"] .tech-col-items,
+.tech-explorer[data-stage="3"] .tech-col-detail {
+    position: relative;
+    width: auto;
+    height: auto;
+    max-width: none;
 }
 
 /* Stage 1: cat column is just a transparent container holding the big bars.
@@ -1039,8 +1081,10 @@ section {
 .tech-explorer[data-stage="1"] .tech-col-cat {
     background: transparent;
     border-color: transparent;
-    padding: 6px 12px;
+    padding: 6px 0;
     overflow: visible;
+    width: 100%;
+    max-width: 100%;
 }
 
 /* Slim columns (icon-only stacks): transparent container — only the active icon
@@ -1416,18 +1460,29 @@ section {
 .tech-breadcrumb {
     display: flex;
     align-items: center;
-    gap: 6px;
+    justify-content: space-between;
+    gap: 12px;
     padding: 12px 18px;
     background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
+    border: 1px solid var(--border-default);
     border-radius: var(--radius-md);
     font-family: var(--font-body);
     overflow: hidden;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    box-sizing: border-box;
     opacity: 1;
     max-height: 80px;
     transition: opacity 0.35s var(--ease-out), max-height 0.4s var(--ease-out),
         padding 0.4s var(--ease-out), border-color 0.4s var(--ease-out);
+}
+
+.tech-breadcrumb-trail {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-wrap: wrap;
 }
 
 .tech-explorer[data-stage="1"] .tech-breadcrumb {
@@ -1443,26 +1498,29 @@ section {
     display: inline-flex;
     align-items: center;
     padding: 6px 14px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--border-subtle);
+    background: color-mix(in srgb, var(--text-primary) 5%, var(--bg-card));
+    border: 1px solid var(--border-default);
     border-radius: 99px;
     color: var(--text-secondary);
     font-family: var(--font-display);
     font-weight: 600;
     font-size: 1em;
     cursor: pointer;
-    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .tech-crumb:hover {
-    background: rgba(6, 135, 201, 0.14);
+    background: color-mix(in srgb, var(--color-secondary) 12%, var(--bg-card));
     color: var(--text-primary);
     border-color: var(--color-secondary);
     transform: translateY(-1px);
 }
 
 .tech-crumb.is-current {
-    background: linear-gradient(135deg, rgba(6, 135, 201, 0.22), rgba(85, 74, 158, 0.22));
+    background: linear-gradient(135deg,
+            color-mix(in srgb, var(--color-secondary) 18%, var(--bg-card)),
+            color-mix(in srgb, var(--color-primary) 14%, var(--bg-card)));
     color: var(--text-primary);
     border-color: var(--color-secondary);
     cursor: default;
@@ -1478,6 +1536,51 @@ section {
     line-height: 1;
     padding: 0 2px;
     user-select: none;
+}
+
+.tech-breadcrumb-back {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    padding: 6px 14px;
+    background: color-mix(in srgb, var(--text-primary) 4%, var(--bg-card));
+    border: 1px solid var(--border-default);
+    border-radius: 99px;
+    color: var(--text-secondary);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.95em;
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+        transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tech-breadcrumb-back-icon {
+    font-size: 1.15em;
+    line-height: 1;
+    color: var(--color-secondary-light);
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.tech-breadcrumb-back:hover {
+    background: color-mix(in srgb, var(--color-secondary) 14%, var(--bg-card));
+    border-color: var(--color-secondary);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px -8px var(--color-secondary-glow);
+}
+
+.tech-breadcrumb-back:hover .tech-breadcrumb-back-icon {
+    color: var(--color-secondary);
+    transform: translateX(-2px);
+}
+
+.tech-breadcrumb-back:active {
+    transform: translateY(0);
 }
 
 /* === Detail panel === */
@@ -2230,8 +2333,8 @@ section {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: clamp(4px, 1.5vw, 12px);
-    padding: 0 clamp(8px, 2vw, 20px);
+    gap: 12px;
+    padding: 0 20px;
     white-space: nowrap;
     overflow: hidden;
     opacity: 0;
@@ -2247,7 +2350,7 @@ section {
 
 .email-text {
     font-family: var(--font-body);
-    font-size: clamp(0.65em, 2.8vw, 1.05em);
+    font-size: 1.05em;
     font-weight: 600;
     color: var(--color-primary);
     user-select: all;
@@ -2644,7 +2747,7 @@ section {
     aspect-ratio: 4 / 3;
     object-fit: contain;
     display: block;
-    background: rgba(0, 0, 0, 0.25);
+    background: color-mix(in srgb, var(--bg-card, #141428) 97%, var(--text-muted, #64748b));
 }
 
 .blog-card-info {
@@ -2810,8 +2913,146 @@ section {
     margin: 3px 0;
 }
 
-/* Mobile/tablet: standard single-card carousel — arrows on the sides, dots below
-   (modelled on the team/company carousel for consistency). */
+/* Compact desktop / 720p landscape (992–1280px) — px sizing, 3-up carousel */
+@media (min-width: 992px) and (max-width: 1280px) {
+    :root {
+        --navbar-logo-w: 88px;
+        --navbar-offset: 72px;
+        --section-padding: 80px;
+    }
+
+    .navbar > .container {
+        padding-left: 48px;
+        padding-right: 44px;
+    }
+
+    section {
+        padding: 80px 0 48px;
+        min-height: auto;
+    }
+
+    #Home {
+        min-height: 100vh;
+    }
+
+    .home-content {
+        padding-top: 72px;
+    }
+
+    #introeverywhere,
+    #introallatonce {
+        font-size: 5rem;
+        letter-spacing: 0.25rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.35em;
+    }
+
+    .hero-badge {
+        font-size: 1.2em !important;
+        padding: 10px 24px;
+    }
+
+    #introourmission {
+        font-size: 2.5rem;
+    }
+
+    #intropar {
+        font-size: 1.35em;
+    }
+
+    .mission-card {
+        padding: 36px;
+    }
+
+    .section-header {
+        font-size: 2.75em;
+        margin-bottom: 28px;
+    }
+
+    #Media {
+        --media-thumb: 190px;
+        padding-top: 72px !important;
+        padding-bottom: 32px !important;
+    }
+
+    #Media .blog-carousel-wrapper {
+        padding: 0 44px;
+        max-width: 1100px;
+    }
+
+    #Media .blog-card-col {
+        flex: 0 0 calc(100% / 3);
+        width: calc(100% / 3);
+        min-width: calc(100% / 3);
+        padding: 0 8px;
+    }
+
+    #Media .blog-card-link {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    #Media .blog-card-img {
+        width: var(--media-thumb);
+        height: var(--media-thumb);
+        aspect-ratio: 1 / 1;
+        object-fit: contain;
+        display: block;
+        margin: 0 auto;
+        background: color-mix(in srgb, var(--bg-card, #141428) 97%, var(--text-muted, #64748b));
+        border-radius: 10px 10px 0 0;
+    }
+
+    #Media .blog-card-info {
+        width: 100%;
+        padding: 12px 10px 14px;
+        box-sizing: border-box;
+    }
+
+    #Media .blog-card-title {
+        font-size: 18px;
+        line-height: 1.32;
+        min-height: 48px;
+        margin-bottom: 6px;
+    }
+
+    #Media .blog-card-meta {
+        font-size: 15px;
+        gap: 6px;
+    }
+
+    #Media .blog-card-type {
+        font-size: 13px;
+        padding: 4px 10px;
+        margin-top: 8px;
+    }
+
+    #Media .blog-info-card {
+        display: none;
+    }
+
+    #Media .blog-carousel-dots {
+        display: none;
+    }
+
+    #Media .blog-carousel-btn {
+        width: 42px;
+        height: 42px;
+        font-size: 18px;
+        top: calc(var(--media-thumb) / 2);
+    }
+
+    #Media .media-mode-toggle {
+        font-size: 16px;
+        padding: 10px 24px;
+        margin-top: 0;
+    }
+}
+
+/* Mobile/tablet: single-card carousel */
 @media (max-width: 991.99px) {
     .blog-carousel-wrapper {
         max-width: 100%;
@@ -2838,18 +3079,25 @@ section {
 
     .blog-card-img {
         aspect-ratio: 4 / 3;
+        max-height: none;
+    }
+
+    #Media .blog-card-title {
+        font-size: 1rem;
+    }
+
+    #Media .blog-card-meta {
+        font-size: 0.82rem;
     }
 
     .blog-info-card {
         display: none;
     }
 
-    /* Show dots on mobile */
     .blog-carousel-dots {
         display: flex;
     }
 
-    /* Arrows sit just inside the wrapper edges, overlaying the card */
     .blog-carousel-prev {
         left: 8px;
     }
@@ -2911,6 +3159,17 @@ section {
     .mission-container {
         padding: 10px 15px;
         text-align: center;
+    }
+
+    #Home .home-content > .social-icons {
+        position: relative;
+        top: auto;
+        right: auto;
+        justify-content: center;
+        display: flex;
+        gap: 12px;
+        margin-top: 30px;
+        margin-bottom: 20px;
     }
 
     .mission-card {
@@ -2985,6 +3244,7 @@ section {
         position: relative;
         left: auto;
         right: auto;
+        top: auto;
         justify-content: center;
         display: flex;
         gap: 12px;
@@ -3024,14 +3284,69 @@ section {
         font-size: 0.95em;
     }
 
+    .navbar > .container {
+        padding-left: 12px;
+        padding-right: 12px;
+        align-items: center;
+    }
+
+    .navbar-brand {
+        margin-right: 0;
+        flex-shrink: 0;
+    }
+
+    .theme-picker-nav-item--toolbar {
+        margin-left: auto;
+    }
+
+    .navbar-toggler {
+        margin: 0 0 0 auto;
+        padding: 6px 8px;
+        border: none;
+        flex-shrink: 0;
+    }
+
+    .theme-picker-nav-item--toolbar + .navbar-toggler {
+        margin-left: 4px;
+    }
+
+    .navbar-collapse.show,
+    .navbar-collapse.collapsing {
+        padding-top: 12px;
+    }
+
+    #Tech > .container,
+    #Media > .container {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .tech-explorer,
+    .tech-explorer-cols,
+    .tech-explorer[data-stage="1"] .tech-col-cat {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+
+    .tech-explorer[data-stage="1"] .tech-col-cat {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    .tech-row:hover,
+    .tech-explorer[data-stage="1"] .tech-row-cat:hover {
+        transform: none;
+    }
+
     .navbar-brand img {
-        width: calc(80 * 100vw / var(--layout-ref-w)) !important;
-        max-width: calc(80 * 100vw / var(--layout-ref-w)) !important;
+        width: 80px !important;
+        max-width: 80px !important;
     }
 
     .nav-link {
         font-size: 1em;
-        padding: calc(10 * 100vw / var(--layout-ref-w)) calc(12 * 100vw / var(--layout-ref-w)) !important;
+        padding: 10px 12px !important;
     }
 
     .product-card {
@@ -3214,14 +3529,31 @@ section {
         margin-top: 8px;
     }
 
+    .tech-explorer:not([data-stage="1"]) {
+        grid-template-columns: 52px minmax(0, 1fr) 0fr;
+        column-gap: 10px;
+        row-gap: 10px;
+    }
+
+    .tech-explorer[data-stage="3"] {
+        grid-template-columns: 46px 46px minmax(0, 1fr);
+    }
+
     .tech-explorer-cols {
         min-height: 420px;
-        gap: 10px;
+        row-gap: 10px;
+        column-gap: 10px;
         grid-template-columns: minmax(0, 1fr) 0fr 0fr;
     }
 
+    .tech-explorer[data-stage="1"] .tech-explorer-cols {
+        grid-template-columns: minmax(0, 1fr);
+        column-gap: 0;
+    }
+
     .tech-explorer[data-stage="2"] .tech-explorer-cols {
-        grid-template-columns: 52px minmax(0, 1fr) 0fr;
+        grid-template-columns: 52px minmax(0, 1fr);
+        column-gap: 10px;
     }
 
     .tech-explorer[data-stage="3"] .tech-explorer-cols {
@@ -3249,13 +3581,27 @@ section {
 
     .tech-breadcrumb {
         padding: 10px 12px;
-        gap: 4px;
+        gap: 8px;
         font-size: 0.92em;
+    }
+
+    .tech-breadcrumb-trail {
+        gap: 4px;
     }
 
     .tech-crumb {
         padding: 5px 10px;
         font-size: 0.9em;
+    }
+
+    .tech-breadcrumb-back {
+        padding: 5px 10px;
+        font-size: 0.88em;
+        gap: 4px;
+    }
+
+    .tech-breadcrumb-back-label {
+        display: none;
     }
 
     /* Match the slim-mode row sizing so the back button reads as just another icon. */
@@ -3413,13 +3759,14 @@ section {
 
 /* ======================== RESPONSIVE — TABLET+ ======================== */
 @media (min-width: 768px) {
-    .social-icons {
+    #Home .home-content > .social-icons {
         position: absolute;
-        top: 0px;
-        right: 2%;
+        top: 4px;
         display: flex;
         gap: 12px;
-        z-index: 10;
+        z-index: 11;
+        margin: 0;
+        /* right: set by alignHomeSocialIcons() */
     }
 
     .social-icons a img {
@@ -3436,6 +3783,13 @@ section {
 
     .card-realtitle {
         font-size: 1.35em;
+    }
+}
+
+/* 1080p+ — can sit higher without clipping the navbar */
+@media (min-width: 1281px) {
+    #Home .home-content > .social-icons {
+        top: -28px;
     }
 }
 
