@@ -1,0 +1,154 @@
+/**
+ * Department pages — theme-aware layout (shared across all departments).
+ */
+
+body.department-page {
+    background: var(--bg-primary, #0a0a1a);
+    color: var(--text-primary, #f1f5f9);
+}
+
+.department-hero {
+    color: #fff;
+    padding: 120px 0 80px;
+    text-align: center;
+}
+
+.department-hero.dept-technology {
+    background: linear-gradient(135deg, #AB6FAF 0%, #554A9E 100%);
+}
+
+.department-hero.dept-executive {
+    background: linear-gradient(135deg, #0687C9 0%, #AB6FAF 100%);
+}
+
+.department-hero.dept-marketing {
+    background: linear-gradient(135deg, #FF6B6B 0%, #AB6FAF 100%);
+}
+
+.department-hero.dept-financial {
+    background: linear-gradient(135deg, #0687C9 0%, #00A86B 100%);
+}
+
+.department-hero.dept-legal,
+.department-hero.dept-operations {
+    background: linear-gradient(135deg, #554A9E 0%, #0687C9 100%);
+}
+
+.department-content {
+    padding: 60px 0;
+    background: var(--bg-primary, #0a0a1a);
+}
+
+.department-info-card {
+    background: var(--bg-card, #141428);
+    border-radius: 20px;
+    padding: 40px;
+    margin-bottom: 30px;
+    box-shadow: var(--shadow-card, 0 4px 20px rgba(0, 0, 0, 0.3));
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    border: 1px solid var(--border-default, rgba(255, 255, 255, 0.06));
+    color: var(--text-primary, #f1f5f9);
+}
+
+.department-info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-card-hover, 0 8px 15px rgba(0, 0, 0, 0.5));
+}
+
+.department-info-card .section-header {
+    font-size: 2.5em;
+    text-align: left;
+    margin-bottom: 20px;
+    color: var(--text-primary);
+}
+
+.department-info-card .section-header::after {
+    display: none;
+}
+
+.department-card-description {
+    font-size: 1.1em;
+    line-height: 1.8;
+    color: var(--text-secondary) !important;
+}
+
+.department-card-description li {
+    color: var(--text-secondary) !important;
+}
+
+.department-info-card strong {
+    color: var(--text-primary);
+}
+
+.department-info-card a {
+    color: var(--color-accent, #AB6FAF);
+    text-decoration: none;
+}
+
+.department-info-card a:hover {
+    color: var(--color-secondary, #0687C9);
+    text-decoration: underline;
+}
+
+.department-tenure {
+    color: var(--color-secondary, #0687C9);
+}
+
+.department-meta {
+    color: var(--text-muted) !important;
+}
+
+.department-hero-title {
+    font-size: 3.5em;
+    margin-bottom: 20px;
+    color: #fff;
+}
+
+.department-hero-lead {
+    font-size: 1.5em;
+    max-width: 800px;
+    margin: 0 auto;
+    font-family: 'Khand', Arial, sans-serif;
+    color: rgba(255, 255, 255, 0.92);
+}
+
+.back-link {
+    color: #fff;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 30px;
+    transition: opacity 0.3s ease;
+}
+
+.back-link:hover {
+    opacity: 0.8;
+    color: #fff;
+}
+
+.department-footer {
+    background: var(--bg-deepest, #060614);
+    padding: 40px 0;
+    text-align: center;
+    border-top: 1px solid var(--border-default);
+}
+
+.department-footer p {
+    font-family: 'Inter', 'Khand', sans-serif;
+    color: var(--text-muted);
+    margin: 0;
+    font-size: 0.85em;
+}
+
+html[data-theme="light"] .department-info-card {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme="light"] .department-info-card:hover {
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+}
+
+html[data-theme="light"] .department-footer {
+    background: var(--bg-secondary);
+}

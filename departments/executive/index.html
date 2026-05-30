@@ -33,77 +33,16 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <link href="../../newindex.css" rel="stylesheet">
-    <style>
-        .department-hero {
-            background: linear-gradient(135deg, #0687C9 0%, #AB6FAF 100%);
-            color: white;
-            padding: 120px 0 80px;
-            text-align: center;
-        }
-
-        .department-content {
-            padding: 60px 0;
-        }
-
-        .department-info-card {
-            background: #141428;
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            color: #f1f5f9;
-        }
-
-        .department-info-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
-        }
-
-        .department-content {
-            background: #0a0a1a;
-        }
-
-        body {
-            background: #0a0a1a;
-        }
-
-        .back-link {
-            color: white;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 30px;
-            transition: opacity 0.3s ease;
-        }
-
-        .back-link:hover {
-            opacity: 0.8;
-            color: white;
-        }
-
-        .department-card-description {
-            color: #ffffff !important;
-        }
-
-        .department-card-description li {
-            color: #ffffff !important;
-        }
-
-        .section-header::after {
-            display: none;
-        }
-    </style>
-    <link rel="stylesheet" href="/css/themes.css">
+    <link href="/css/departments.css" rel="stylesheet">
+<link rel="stylesheet" href="/css/themes.css">
+    <link rel="stylesheet" href="/css/subpage-themes.css">
     <link rel="stylesheet" href="/css/theme-picker.css">
     <script src="/js/theme.js"></script>
     <script src="/js/theme-picker.js"></script>
     <script src="/js/software-mode.js"></script>
 </head>
 
-<body>
+<body class="department-page">
     <nav class="navbar navbar-expand-md navbar-dark fixed-top">
         <div class="container">
             <a class="navbar-brand" href="../../index.html"><img src="../../images/logo_white.png" alt="Qubibyte"
@@ -122,7 +61,7 @@
         </div>
     </nav>
 
-    <div class="department-hero">
+    <div class="department-hero dept-executive">
         <div class="container">
             <a href="/?section=Company" class="back-link">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -130,10 +69,9 @@
                 </svg>
                 Back to Company
             </a>
-            <h1 class="department-card-title" style="font-size: 3.5em; margin-bottom: 20px; color: white;">Executive
+            <h1 class="department-hero-title">Executive
                 Department</h1>
-            <p class="lead"
-                style="font-size: 1.5em; max-width: 800px; margin: 0 auto; font-family: 'Khand', Arial, sans-serif;">
+            <p class="department-hero-lead">
                 Leading strategic direction and driving the vision that powers Qubibyte's innovation in quantum
                 computing.
             </p>
@@ -146,9 +84,9 @@
                 <div class="col-lg-8 offset-lg-2">
                     <div class="department-info-card">
                         <h2 class="section-header"
-                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Overview
+                           >Overview
                         </h2>
-                        <p class="department-card-description" style="font-size: 1.1em; line-height: 1.8;">
+                        <p class="department-card-description">
                             The Executive Department at Qubibyte serves as the strategic nucleus of our organization,
                             responsible for setting the company's vision, mission, and long-term goals. Our executive
                             leadership team works collaboratively to ensure all departments are aligned with our core
@@ -158,9 +96,9 @@
 
                     <div class="department-info-card">
                         <h2 class="section-header"
-                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">
+                           >
                             Responsibilities</h2>
-                        <ul class="department-card-description" style="font-size: 1.1em; line-height: 2;">
+                        <ul class="department-card-description">
                             <li>Strategic planning and vision setting for long-term growth</li>
                             <li>Oversight and coordination across all organizational departments</li>
                             <li>High-level decision-making on company direction and investments</li>
@@ -172,27 +110,27 @@
 
                     <div class="department-info-card">
                         <h2 class="section-header"
-                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Leadership
+                           >Leadership
                         </h2>
-                        <p class="department-card-description" style="font-size: 1.1em; line-height: 1.8;">
-                            Our executive team is led by <strong style="color: #ffffff;">Trent Rosenthal</strong>, Chief
+                        <p class="department-card-description">
+                            Our executive team is led by <strong>Trent Rosenthal</strong>, Chief
                             Executive Officer,
-                            who has been at the helm since <strong style="color: #0687C9;">January 1st, 2025</strong>.
+                            who has been at the helm since <strong class="department-tenure">January 1st, 2025</strong>.
                             The executive department works in
                             close collaboration with department heads across Operations, Financial, Technology,
                             Marketing, and Legal to ensure cohesive execution of Qubibyte's mission.
                         </p>
                         <p class="department-card-description"
-                            style="font-size: 1.1em; line-height: 1.8; margin-top: 15px; color: #b0b0b0;">
-                            <strong style="color: #ffffff;">Trent Rosenthal</strong> - Chief Executive Officer<br>
-                            <strong style="color: #ffffff;">Tenure:</strong> January 1st, 2025 - Present
+                            class="department-meta">
+                            <strong>Trent Rosenthal</strong> - Chief Executive Officer<br>
+                            <strong>Tenure:</strong> January 1st, 2025 - Present
                         </p>
                     </div>
 
                     <div class="department-info-card">
                         <h2 class="section-header"
-                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Vision</h2>
-                        <p class="department-card-description" style="font-size: 1.1em; line-height: 1.8;">
+                           >Vision</h2>
+                        <p class="department-card-description">
                             The Executive Department is committed to positioning Qubibyte as a global leader in
                             quantum computing solutions. We envision a future where quantum computing is accessible,
                             practical, and transformative across industries including nuclear fusion, materials science,
@@ -205,10 +143,9 @@
         </div>
     </div>
 
-    <footer
-        style="background: #060614; padding: 40px 0; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.06);">
+    <footer class="department-footer">
         <div class="container">
-            <p style="font-family: 'Inter', 'Khand', sans-serif; color: #64748b; margin: 0; font-size: 0.85em;">
+            <p>
                 &copy; 2026 Qubibyte. All rights reserved.
             </p>
         </div>

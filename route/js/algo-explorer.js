@@ -137,12 +137,13 @@
     }
 
     function renderAlgoDemo(ctx, w, h, key, info, prog, time) {
+        const tc = window.QubibyteSubpageColors?.get?.() || {};
         ctx.clearRect(0, 0, w, h);
-        ctx.fillStyle = '#0a0a1a';
+        ctx.fillStyle = tc.bg || '#0a0a1a';
         ctx.fillRect(0, 0, w, h);
 
         // Draw faint grid
-        ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+        ctx.strokeStyle = tc.grid || 'rgba(255,255,255,0.03)';
         ctx.lineWidth = 0.5;
         for (let x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
         for (let y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
@@ -393,7 +394,7 @@
                 ctx.arc(nd.x, nd.y, 4, 0, Math.PI * 2);
                 ctx.fillStyle = color;
                 ctx.fill();
-                ctx.fillStyle = '#0a0a1a';
+                ctx.fillStyle = tc.bg || '#0a0a1a';
                 ctx.font = 'bold 6px Inter';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';

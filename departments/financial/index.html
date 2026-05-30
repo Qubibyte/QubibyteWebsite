@@ -32,77 +32,16 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <link href="../../newindex.css" rel="stylesheet">
-    <style>
-        .department-hero {
-            background: linear-gradient(135deg, #0687C9 0%, #00A86B 100%);
-            color: white;
-            padding: 120px 0 80px;
-            text-align: center;
-        }
-
-        .department-content {
-            padding: 60px 0;
-        }
-
-        .department-info-card {
-            background: #141428;
-            border-radius: 20px;
-            padding: 40px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            transition: transform 0.3s ease;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            color: #f1f5f9;
-        }
-
-        .department-info-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5);
-        }
-
-        .department-content {
-            background: #0a0a1a;
-        }
-
-        body {
-            background: #0a0a1a;
-        }
-
-        .back-link {
-            color: white;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 30px;
-            transition: opacity 0.3s ease;
-        }
-
-        .back-link:hover {
-            opacity: 0.8;
-            color: white;
-        }
-
-        .department-card-description {
-            color: #ffffff !important;
-        }
-
-        .department-card-description li {
-            color: #ffffff !important;
-        }
-
-        .section-header::after {
-            display: none;
-        }
-    </style>
-    <link rel="stylesheet" href="/css/themes.css">
+    <link href="/css/departments.css" rel="stylesheet">
+<link rel="stylesheet" href="/css/themes.css">
+    <link rel="stylesheet" href="/css/subpage-themes.css">
     <link rel="stylesheet" href="/css/theme-picker.css">
     <script src="/js/theme.js"></script>
     <script src="/js/theme-picker.js"></script>
     <script src="/js/software-mode.js"></script>
 </head>
 
-<body>
+<body class="department-page">
     <nav class="navbar navbar-expand-md navbar-dark fixed-top">
         <div class="container">
             <a class="navbar-brand" href="../../index.html"><img src="../../images/logo_white.png" alt="Qubibyte"
@@ -121,7 +60,7 @@
         </div>
     </nav>
 
-    <div class="department-hero">
+    <div class="department-hero dept-financial">
         <div class="container">
             <a href="/?section=Company" class="back-link">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -129,10 +68,9 @@
                 </svg>
                 Back to Company
             </a>
-            <h1 class="department-card-title" style="font-size: 3.5em; margin-bottom: 20px; color: white;">Financial
+            <h1 class="department-hero-title">Financial
                 Department</h1>
-            <p class="lead"
-                style="font-size: 1.5em; max-width: 800px; margin: 0 auto; font-family: 'Khand', Arial, sans-serif;">
+            <p class="department-hero-lead">
                 Ensuring fiscal responsibility and sustainable growth through strategic financial management.
             </p>
         </div>
@@ -144,9 +82,9 @@
                 <div class="col-lg-8 offset-lg-2">
                     <div class="department-info-card">
                         <h2 class="section-header"
-                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Overview
+                           >Overview
                         </h2>
-                        <p class="department-card-description" style="font-size: 1.1em; line-height: 1.8;">
+                        <p class="department-card-description">
                             The Financial Department at Qubibyte is responsible for all aspects of financial planning,
                             accounting, and fiscal management. We ensure the company maintains strong financial health
                             while supporting strategic investments in quantum computing innovation. Our team provides
@@ -156,9 +94,9 @@
 
                     <div class="department-info-card">
                         <h2 class="section-header"
-                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">
+                           >
                             Responsibilities</h2>
-                        <ul class="department-card-description" style="font-size: 1.1em; line-height: 2;">
+                        <ul class="department-card-description">
                             <li>Financial planning, budgeting, and forecasting</li>
                             <li>Accounting and financial reporting</li>
                             <li>Cash flow management and treasury operations</li>
@@ -171,9 +109,9 @@
 
                     <div class="department-info-card">
                         <h2 class="section-header"
-                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Strategic
+                           >Strategic
                             Financial Management</h2>
-                        <p class="department-card-description" style="font-size: 1.1em; line-height: 1.8;">
+                        <p class="department-card-description">
                             As a quantum computing startup, Qubibyte requires careful financial planning to balance
                             significant R&D investments with operational needs. Our Financial Department works closely
                             with the Technology and Operations teams to ensure resources are allocated effectively,
@@ -183,9 +121,9 @@
 
                     <div class="department-info-card">
                         <h2 class="section-header"
-                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Supporting
+                           >Supporting
                             Growth</h2>
-                        <p class="department-card-description" style="font-size: 1.1em; line-height: 1.8;">
+                        <p class="department-card-description">
                             The Financial Department plays a crucial role in Qubibyte's growth strategy. We manage
                             relationships with investors, ensure compliance with financial regulations, and provide
                             transparency and accountability in all financial matters. Our goal is to build a financially
@@ -196,22 +134,22 @@
 
                     <div class="department-info-card">
                         <h2 class="section-header"
-                            style="font-size: 2.5em; text-align: left; margin-bottom: 20px; color: #ffffff;">Leadership
+                           >Leadership
                         </h2>
-                        <p class="department-card-description" style="font-size: 1.1em; line-height: 1.8;">
-                            The Financial Department is led by <strong style="color: #ffffff;">Trent Rosenthal</strong>,
+                        <p class="department-card-description">
+                            The Financial Department is led by <strong>Trent Rosenthal</strong>,
                             Chief Financial Officer (Acting),
-                            who has been serving in this acting capacity since <strong style="color: #0687C9;">November
+                            who has been serving in this acting capacity since <strong class="department-tenure">November
                                 23rd, 2025</strong>.
                             The financial team ensures fiscal responsibility and sustainable growth while supporting
                             strategic investments
                             in quantum computing innovation.
                         </p>
                         <p class="department-card-description"
-                            style="font-size: 1.1em; line-height: 1.8; margin-top: 15px; color: #b0b0b0;">
-                            <strong style="color: #ffffff;">Trent Rosenthal</strong> - Chief Financial Officer
+                            class="department-meta">
+                            <strong>Trent Rosenthal</strong> - Chief Financial Officer
                             (Acting)<br>
-                            <strong style="color: #ffffff;">Tenure:</strong> November 23rd, 2025 - Present (Acting)
+                            <strong>Tenure:</strong> November 23rd, 2025 - Present (Acting)
                         </p>
                     </div>
                 </div>
@@ -219,10 +157,9 @@
         </div>
     </div>
 
-    <footer
-        style="background: #060614; padding: 40px 0; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.06);">
+    <footer class="department-footer">
         <div class="container">
-            <p style="font-family: 'Inter', 'Khand', sans-serif; color: #64748b; margin: 0; font-size: 0.85em;">
+            <p>
                 &copy; 2026 Qubibyte. All rights reserved.
             </p>
         </div>

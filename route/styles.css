@@ -13,24 +13,6 @@
     --color-accent: #AB6FAF;
     --color-accent-light: #C487C7;
 
-    --bg-deepest: #060614;
-    --bg-primary: #0a0a1a;
-    --bg-secondary: #0f0f23;
-    --bg-card: #141428;
-    --bg-card-hover: #1a1a35;
-    --bg-surface: #1e1e3a;
-    --bg-elevated: #252545;
-
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --text-muted: #64748b;
-    --text-link: #38bdf8;
-
-    --border-subtle: rgba(255, 255, 255, 0.06);
-    --border-default: rgba(255, 255, 255, 0.10);
-    --border-hover: rgba(255, 255, 255, 0.18);
-    --border-accent: rgba(85, 74, 158, 0.4);
-
     --gradient-primary: linear-gradient(135deg, #554A9E 0%, #0687C9 100%);
     --gradient-accent: linear-gradient(135deg, #0687C9 0%, #AB6FAF 100%);
     --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
@@ -92,17 +74,17 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
+    background: var(--subpage-scrollbar);
     border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.20);
+    background: var(--subpage-scrollbar-hover);
 }
 
 ::selection {
-    background: rgba(6, 135, 201, 0.3);
-    color: #fff;
+    background: var(--subpage-selection-bg);
+    color: var(--subpage-selection-fg);
 }
 
 /* ======================== TOP BAR ======================== */
@@ -112,7 +94,7 @@ body {
     left: 0;
     right: 0;
     height: var(--topbar-height);
-    background: rgba(10, 10, 26, 0.92);
+    background: var(--subpage-topbar-bg);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
     border-bottom: 1px solid var(--border-subtle);
@@ -213,7 +195,7 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--subpage-control-bg-strong);
     border: 1px solid var(--border-subtle);
     color: var(--text-secondary);
     padding: 7px 14px;
@@ -227,7 +209,7 @@ body {
 }
 
 .topbar-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--subpage-control-bg-hover);
     color: var(--text-primary);
     border-color: var(--border-hover);
 }
@@ -253,7 +235,7 @@ body {
 .sidebar {
     width: var(--sidebar-width);
     min-width: var(--sidebar-width);
-    background: rgba(10, 10, 26, 0.95);
+    background: var(--subpage-panel-bg);
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
@@ -314,7 +296,7 @@ body {
     -webkit-appearance: none;
     appearance: none;
     height: 4px;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--subpage-range-track);
     border-radius: 2px;
     outline: none;
     cursor: pointer;
@@ -358,7 +340,7 @@ body {
 .control-select {
     width: 100%;
     padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--subpage-control-bg);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
@@ -381,7 +363,7 @@ body {
 .control-input {
     width: 100%;
     padding: 8px 12px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--subpage-control-bg);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     color: var(--text-primary);
@@ -461,7 +443,7 @@ body {
 }
 
 .algo-item:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--subpage-control-bg-soft);
     color: var(--text-primary);
 }
 
@@ -510,7 +492,7 @@ body {
     flex-direction: column;
     gap: 8px;
     flex-shrink: 0;
-    background: rgba(10, 10, 26, 0.98);
+    background: var(--subpage-panel-solid);
 }
 
 .btn-primary,
@@ -532,13 +514,13 @@ body {
 }
 
 .btn-primary {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--subpage-control-bg-strong);
     color: var(--text-secondary);
     border: 1px solid var(--border-subtle);
 }
 
 .btn-primary:hover {
-    background: rgba(255, 255, 255, 0.10);
+    background: var(--subpage-control-bg-hover);
     color: var(--text-primary);
     border-color: var(--border-hover);
 }
@@ -565,7 +547,7 @@ body {
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--subpage-control-bg-soft);
     color: var(--text-secondary);
 }
 
@@ -597,8 +579,8 @@ body {
     position: absolute;
     inset: 0;
     background-image:
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+        linear-gradient(var(--subpage-map-grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--subpage-map-grid) 1px, transparent 1px);
     background-size: 60px 60px;
     pointer-events: none;
     z-index: 0;
@@ -608,7 +590,7 @@ body {
     content: '';
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at center, transparent 40%, rgba(6, 6, 20, 0.6) 100%);
+    background: radial-gradient(ellipse at center, transparent 40%, var(--subpage-map-vignette) 100%);
     pointer-events: none;
     z-index: 0;
 }
@@ -624,7 +606,7 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    background: rgba(10, 10, 26, 0.85);
+    background: var(--subpage-glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border-subtle);
@@ -654,7 +636,7 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
-    background: rgba(10, 10, 26, 0.85);
+    background: var(--subpage-glass-bg);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border-subtle);
@@ -676,7 +658,7 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
-    background: rgba(10, 10, 26, 0.9);
+    background: var(--subpage-glass-bg);
     border: 1px solid var(--color-secondary);
     border-radius: var(--radius-full);
     padding: 3px 10px;
@@ -693,7 +675,7 @@ body {
     display: flex;
     gap: 12px;
     padding: 12px 16px;
-    background: rgba(10, 10, 26, 0.95);
+    background: var(--subpage-panel-bg);
     border-top: 1px solid var(--border-subtle);
     z-index: 5;
 }
@@ -703,7 +685,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--subpage-control-bg-muted);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     padding: 10px 14px;
@@ -712,7 +694,7 @@ body {
 
 .metric-card:hover {
     border-color: var(--border-hover);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--subpage-control-bg);
 }
 
 .metric-icon {
@@ -744,7 +726,7 @@ body {
 .results-panel {
     width: var(--results-width);
     min-width: var(--results-width);
-    background: rgba(10, 10, 26, 0.95);
+    background: var(--subpage-panel-bg);
     border-left: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
@@ -822,7 +804,7 @@ body {
 
 /* Results list */
 .result-item {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--subpage-control-bg-muted);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     padding: 14px;
@@ -844,7 +826,7 @@ body {
 
 .result-item:hover {
     border-color: var(--border-hover);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--subpage-control-bg);
 }
 
 .result-item.best {
@@ -873,7 +855,7 @@ body {
     font-weight: 700;
     padding: 2px 8px;
     border-radius: var(--radius-full);
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--subpage-control-bg-strong);
     color: var(--text-muted);
 }
 
@@ -912,7 +894,7 @@ body {
     margin-top: 10px;
     width: 100%;
     height: 4px;
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--subpage-control-bg-strong);
     border-radius: 2px;
     overflow: hidden;
 }
@@ -974,7 +956,7 @@ body {
 }
 
 .qstat {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--subpage-control-bg-muted);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     padding: 10px;
@@ -1008,7 +990,7 @@ body {
 
 #blochCanvas {
     border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--subpage-control-bg-soft);
     border: 1px solid var(--border-subtle);
     width: 180px !important;
     height: 180px !important;
@@ -1016,7 +998,7 @@ body {
 }
 
 .quantum-explainer {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--subpage-control-bg-muted);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     padding: 16px;
@@ -1109,7 +1091,7 @@ body.quantum-mode .metric-card {
     position: absolute;
     top: 16px;
     right: 16px;
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--subpage-control-bg-strong);
     border: 1px solid var(--border-subtle);
     color: var(--text-muted);
     width: 36px;
@@ -1124,7 +1106,7 @@ body.quantum-mode .metric-card {
 }
 
 .modal-close:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--subpage-control-bg-hover);
     color: var(--text-primary);
 }
 
@@ -1182,7 +1164,7 @@ body.quantum-mode .metric-card {
 }
 
 .learn-table th {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--subpage-control-bg-soft);
     color: var(--text-muted);
     font-weight: 600;
     text-transform: uppercase;
@@ -1215,7 +1197,7 @@ body.quantum-mode .metric-card {
 }
 
 .comparison-col {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--subpage-control-bg-muted);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     padding: 20px;
@@ -1261,7 +1243,7 @@ body.quantum-mode .metric-card {
 }
 
 .use-case {
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--subpage-control-bg-muted);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     padding: 10px 14px;
@@ -1416,8 +1398,8 @@ body.quantum-mode .metric-card {
     font-weight: 600;
     font-family: var(--font-body);
     cursor: pointer;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-default);
+    background: var(--subpage-control-bg-muted);
     color: var(--text-muted);
     transition: all var(--transition-fast);
 }
@@ -1425,11 +1407,11 @@ body.quantum-mode .metric-card {
 .route-toggle.active {
     border-color: var(--tc, var(--color-secondary));
     color: var(--tc, var(--color-secondary));
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--subpage-control-bg);
 }
 
 .route-toggle:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--subpage-range-track);
 }
 
 /* ======================== CONTROL HINTS ======================== */
@@ -1457,7 +1439,7 @@ body.quantum-mode .metric-card {
     gap: 6px;
     padding: 8px 12px;
     border-bottom: 1px solid var(--border-subtle);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--subpage-control-bg-soft);
 }
 
 .btn-xs {
@@ -1477,7 +1459,7 @@ body.quantum-mode .metric-card {
 }
 
 .btn-xs:hover {
-    background: rgba(255, 255, 255, 0.06);
+    background: var(--subpage-control-bg-strong);
     color: var(--text-primary);
     border-color: var(--border-default);
 }
@@ -1537,7 +1519,7 @@ body.quantum-mode .metric-card {
     gap: 16px;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--subpage-control-bg-soft);
     overflow: hidden;
 }
 
@@ -1571,7 +1553,7 @@ body.quantum-mode .metric-card {
 }
 
 .algo-explore-btn:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--subpage-control-bg);
     color: var(--text-primary);
 }
 
@@ -1600,7 +1582,7 @@ body.quantum-mode .metric-card {
     border-radius: var(--radius-md);
     overflow: hidden;
     border: 1px solid var(--border-subtle);
-    background: #0a0a1a;
+    background: var(--subpage-canvas-bg);
 }
 
 .algo-explore-canvas-wrap canvas {
@@ -1629,7 +1611,7 @@ body.quantum-mode .metric-card {
     font-family: var(--font-mono);
     padding: 3px 10px;
     border-radius: var(--radius-full);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--subpage-control-bg);
     color: var(--text-muted);
     border: 1px solid var(--border-subtle);
 }

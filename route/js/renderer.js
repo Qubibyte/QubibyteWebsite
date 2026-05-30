@@ -46,10 +46,11 @@ class MapRenderer {
 
     render() {
         const ctx = this.ctx, w = this.width, h = this.height;
+        const colors = window.QubibyteSubpageColors?.get?.() || {};
         ctx.clearRect(0, 0, w, h);
 
         // Background
-        ctx.fillStyle = '#0a0a1a';
+        ctx.fillStyle = colors.bg || '#0a0a1a';
         ctx.fillRect(0, 0, w, h);
 
         if (!this.cityData) return;
@@ -57,14 +58,14 @@ class MapRenderer {
         if (!nodes || nodes.length === 0) return;
 
         // Draw grid
-        ctx.strokeStyle = 'rgba(255,255,255,0.02)';
+        ctx.strokeStyle = colors.grid || 'rgba(255,255,255,0.02)';
         ctx.lineWidth = 0.5;
         for (let x = 0; x < w; x += 60) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
         for (let y = 0; y < h; y += 60) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
 
         // Draw roads
         if (roads && intersections) {
-            ctx.strokeStyle = this.quantumMode ? 'rgba(171,111,175,0.12)' : 'rgba(255,255,255,0.06)';
+            ctx.strokeStyle = this.quantumMode ? 'rgba(171,111,175,0.12)' : (colors.road || 'rgba(255,255,255,0.06)');
             ctx.lineWidth = 1;
             for (const road of roads) {
                 const from = intersections[road.from], to = intersections[road.to];

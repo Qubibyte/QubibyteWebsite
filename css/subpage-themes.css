@@ -1,0 +1,205 @@
+/**
+ * Shared theme tokens + overrides for Route Simulator, Stock Tracker,
+ * and Department pages. Load after page styles.css and themes.css.
+ */
+
+/* ── Shared surface tokens ─────────────────────────────────────────── */
+:root,
+html[data-theme="dark"] {
+    --subpage-topbar-bg: rgba(10, 10, 26, 0.92);
+    --subpage-panel-bg: rgba(10, 10, 26, 0.95);
+    --subpage-panel-solid: rgba(10, 10, 26, 0.98);
+    --subpage-glass-bg: rgba(10, 10, 26, 0.85);
+    --subpage-control-bg-muted: rgba(255, 255, 255, 0.03);
+    --subpage-control-bg-soft: rgba(255, 255, 255, 0.04);
+    --subpage-control-bg: rgba(255, 255, 255, 0.05);
+    --subpage-control-bg-strong: rgba(255, 255, 255, 0.06);
+    --subpage-control-bg-hover: rgba(255, 255, 255, 0.10);
+    --subpage-range-track: rgba(255, 255, 255, 0.08);
+    --subpage-map-grid: rgba(255, 255, 255, 0.02);
+    --subpage-map-vignette: rgba(6, 6, 20, 0.6);
+    --subpage-canvas-bg: var(--bg-primary, #0a0a1a);
+    --subpage-canvas-grid: rgba(255, 255, 255, 0.02);
+    --subpage-canvas-road: rgba(255, 255, 255, 0.06);
+    --subpage-canvas-label: rgba(255, 255, 255, 0.35);
+    --subpage-chart-grid: rgba(255, 255, 255, 0.04);
+    --subpage-chart-label: rgba(255, 255, 255, 0.25);
+    --subpage-modal-overlay: rgba(6, 6, 20, 0.82);
+    --subpage-scrollbar: rgba(255, 255, 255, 0.12);
+    --subpage-scrollbar-hover: rgba(255, 255, 255, 0.20);
+    --subpage-selection-bg: rgba(6, 135, 201, 0.3);
+    --subpage-selection-fg: #fff;
+    --subpage-hover-row: rgba(255, 255, 255, 0.03);
+    --subpage-hover-row-strong: rgba(255, 255, 255, 0.05);
+    --subpage-modal-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+html[data-theme="light"] {
+    --subpage-topbar-bg: rgba(255, 255, 255, 0.94);
+    --subpage-panel-bg: rgba(255, 255, 255, 0.98);
+    --subpage-panel-solid: #ffffff;
+    --subpage-glass-bg: rgba(255, 255, 255, 0.92);
+    --subpage-control-bg-muted: rgba(0, 0, 0, 0.025);
+    --subpage-control-bg-soft: rgba(0, 0, 0, 0.04);
+    --subpage-control-bg: rgba(0, 0, 0, 0.05);
+    --subpage-control-bg-strong: rgba(0, 0, 0, 0.06);
+    --subpage-control-bg-hover: rgba(0, 0, 0, 0.08);
+    --subpage-range-track: rgba(0, 0, 0, 0.08);
+    --subpage-map-grid: rgba(0, 0, 0, 0.06);
+    --subpage-map-vignette: rgba(240, 244, 248, 0.45);
+    --subpage-canvas-bg: var(--bg-primary, #f0f0f5);
+    --subpage-canvas-grid: rgba(0, 0, 0, 0.06);
+    --subpage-canvas-road: rgba(0, 0, 0, 0.10);
+    --subpage-canvas-label: rgba(71, 85, 105, 0.75);
+    --subpage-chart-grid: rgba(100, 116, 139, 0.22);
+    --subpage-chart-label: rgba(100, 116, 139, 0.85);
+    --subpage-modal-overlay: rgba(15, 23, 42, 0.45);
+    --subpage-scrollbar: rgba(0, 0, 0, 0.14);
+    --subpage-scrollbar-hover: rgba(0, 0, 0, 0.24);
+    --subpage-selection-bg: rgba(2, 132, 199, 0.22);
+    --subpage-selection-fg: var(--text-primary, #1e293b);
+    --subpage-hover-row: rgba(0, 0, 0, 0.03);
+    --subpage-hover-row-strong: rgba(0, 0, 0, 0.05);
+    --subpage-modal-shadow: 0 20px 50px rgba(0, 0, 0, 0.14);
+}
+
+html[data-theme="midnight"] {
+    --subpage-topbar-bg: rgba(15, 23, 42, 0.94);
+    --subpage-panel-bg: rgba(15, 23, 42, 0.96);
+    --subpage-panel-solid: rgba(15, 23, 42, 0.99);
+    --subpage-glass-bg: rgba(15, 23, 42, 0.88);
+    --subpage-control-bg-muted: rgba(148, 163, 184, 0.06);
+    --subpage-control-bg-soft: rgba(148, 163, 184, 0.08);
+    --subpage-control-bg: rgba(148, 163, 184, 0.10);
+    --subpage-control-bg-strong: rgba(148, 163, 184, 0.12);
+    --subpage-control-bg-hover: rgba(148, 163, 184, 0.16);
+    --subpage-range-track: rgba(148, 163, 184, 0.14);
+    --subpage-map-grid: rgba(148, 163, 184, 0.08);
+    --subpage-map-vignette: rgba(15, 23, 42, 0.55);
+    --subpage-canvas-bg: var(--bg-primary, #0f172a);
+    --subpage-canvas-grid: rgba(148, 163, 184, 0.08);
+    --subpage-canvas-road: rgba(148, 163, 184, 0.14);
+    --subpage-canvas-label: rgba(148, 163, 184, 0.65);
+    --subpage-chart-grid: rgba(100, 116, 139, 0.22);
+    --subpage-chart-label: rgba(148, 163, 184, 0.75);
+    --subpage-modal-overlay: rgba(2, 6, 23, 0.72);
+    --subpage-scrollbar: rgba(148, 163, 184, 0.18);
+    --subpage-scrollbar-hover: rgba(148, 163, 184, 0.28);
+    --subpage-hover-row: rgba(148, 163, 184, 0.06);
+    --subpage-hover-row-strong: rgba(148, 163, 184, 0.10);
+}
+
+html[data-theme="quantum"] {
+    --subpage-topbar-bg: rgba(26, 10, 37, 0.94);
+    --subpage-panel-bg: rgba(26, 10, 37, 0.96);
+    --subpage-panel-solid: rgba(26, 10, 37, 0.99);
+    --subpage-glass-bg: rgba(26, 10, 37, 0.88);
+    --subpage-control-bg-muted: rgba(245, 240, 255, 0.04);
+    --subpage-control-bg-soft: rgba(245, 240, 255, 0.06);
+    --subpage-control-bg: rgba(245, 240, 255, 0.07);
+    --subpage-control-bg-strong: rgba(245, 240, 255, 0.09);
+    --subpage-control-bg-hover: rgba(245, 240, 255, 0.12);
+    --subpage-range-track: rgba(245, 240, 255, 0.10);
+    --subpage-map-grid: rgba(217, 70, 239, 0.08);
+    --subpage-map-vignette: rgba(18, 8, 26, 0.62);
+    --subpage-canvas-bg: var(--bg-primary, #1a0a25);
+    --subpage-canvas-grid: rgba(217, 70, 239, 0.08);
+    --subpage-canvas-road: rgba(217, 70, 239, 0.14);
+    --subpage-canvas-label: rgba(245, 240, 255, 0.55);
+    --subpage-chart-grid: rgba(217, 70, 239, 0.12);
+    --subpage-chart-label: rgba(245, 240, 255, 0.45);
+    --subpage-modal-overlay: rgba(18, 8, 26, 0.78);
+    --subpage-scrollbar: rgba(245, 240, 255, 0.14);
+    --subpage-scrollbar-hover: rgba(245, 240, 255, 0.22);
+    --subpage-hover-row: rgba(245, 240, 255, 0.04);
+    --subpage-hover-row-strong: rgba(245, 240, 255, 0.07);
+}
+
+/* ── Theme picker in tool topbars ─────────────────────────────────── */
+.theme-picker-topbar-slot {
+    display: flex;
+    align-items: center;
+    margin-left: 4px;
+    position: relative;
+    z-index: 1001;
+}
+
+.theme-picker-topbar-slot .theme-picker-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+}
+
+.theme-picker-topbar-slot .theme-picker-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.theme-picker-topbar-slot .theme-picker-menu {
+    min-width: 160px;
+}
+
+html[data-theme="light"] .theme-picker-topbar-slot .theme-picker-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: var(--border-default);
+}
+
+/* ── Stock tracker: alias hardcoded rgba hovers ───────────────────── */
+html[data-theme="light"] .stock-btn:hover {
+    background: var(--subpage-hover-row);
+}
+
+html[data-theme="light"] .stock-btn-change.neu,
+html[data-theme="light"] .tick-chg.neu {
+    background: var(--subpage-control-bg-soft);
+}
+
+html[data-theme="light"] .chart-bar-src.closed {
+    color: var(--text-muted);
+    background: var(--subpage-control-bg);
+}
+
+html[data-theme="light"] .modal-x {
+    background: var(--subpage-control-bg-strong);
+}
+
+html[data-theme="light"] .modal-x:hover {
+    background: var(--subpage-control-bg-hover);
+}
+
+html[data-theme="light"] .modal-card {
+    box-shadow: var(--subpage-modal-shadow);
+}
+
+html[data-theme="light"] .ev-pill:hover {
+    background: var(--subpage-control-bg);
+}
+
+html[data-theme="light"] .tf-btn:hover {
+    background: var(--subpage-control-bg);
+}
+
+/* ── Route: light-mode polish ─────────────────────────────────────── */
+html[data-theme="light"] .topbar,
+html[data-theme="light"] .sidebar,
+html[data-theme="light"] .sidebar-actions,
+html[data-theme="light"] .results-panel,
+html[data-theme="light"] .metrics-bar {
+    box-shadow: 0 1px 0 var(--border-default);
+}
+
+html[data-theme="light"] .algo-card,
+html[data-theme="light"] .learn-card,
+html[data-theme="light"] .modal-content {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+html[data-theme="light"] .map-info-badge,
+html[data-theme="light"] .legend-item,
+html[data-theme="light"] .depot-label {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.top-bar .theme-picker-topbar-slot {
+    margin-left: auto;
+}

@@ -17,21 +17,21 @@
 }
 
 :root {
-    --pri: #554A9E;
-    --pri-lt: #6B5FC7;
-    --sec: #0687C9;
-    --acc: #AB6FAF;
-    --bg0: #060614;
-    --bg1: #0a0a1a;
-    --bg2: #0f0f23;
-    --bg3: #141428;
-    --bg4: #1a1a35;
-    --bg5: #1e1e3a;
-    --t1: #f1f5f9;
-    --t2: #94a3b8;
-    --t3: #64748b;
-    --brd: rgba(255,255,255,0.08);
-    --brd2: rgba(255,255,255,0.14);
+    --pri: var(--color-primary, #554A9E);
+    --pri-lt: var(--color-primary-light, #6B5FC7);
+    --sec: var(--color-secondary, #0687C9);
+    --acc: var(--color-accent, #AB6FAF);
+    --bg0: var(--bg-deepest, #060614);
+    --bg1: var(--bg-primary, #0a0a1a);
+    --bg2: var(--bg-secondary, #0f0f23);
+    --bg3: var(--bg-card, #141428);
+    --bg4: var(--bg-card-hover, #1a1a35);
+    --bg5: var(--bg-surface, #1e1e3a);
+    --t1: var(--text-primary, #f1f5f9);
+    --t2: var(--text-secondary, #94a3b8);
+    --t3: var(--text-muted, #64748b);
+    --brd: var(--border-subtle, rgba(255, 255, 255, 0.08));
+    --brd2: var(--border-default, rgba(255, 255, 255, 0.14));
     --grn: #10b981;
     --grn-bg: rgba(16,185,129,0.12);
     --red: #ef4444;
@@ -152,7 +152,7 @@ html, body {
 }
 
 .stock-btn:hover {
-    background: rgba(255,255,255,0.03);
+    background: var(--subpage-hover-row, rgba(255,255,255,0.03));
     color: var(--t1);
 }
 
@@ -202,7 +202,7 @@ html, body {
 
 .stock-btn-change.up { color: var(--grn); background: var(--grn-bg); }
 .stock-btn-change.down { color: var(--red); background: var(--red-bg); }
-.stock-btn-change.neu { color: var(--t3); background: rgba(255,255,255,0.04); }
+.stock-btn-change.neu { color: var(--t3); background: var(--subpage-control-bg-soft, rgba(255,255,255,0.04)); }
 
 /* ======================== CENTER PANEL ======================== */
 .center-panel {
@@ -623,13 +623,13 @@ html, body {
 }
 .tick-chg.up { color:var(--grn); background:var(--grn-bg); }
 .tick-chg.down { color:var(--red); background:var(--red-bg); }
-.tick-chg.neu { color:var(--t3); background:rgba(255,255,255,0.04); }
+.tick-chg.neu { color:var(--t3); background:var(--subpage-control-bg-soft, rgba(255,255,255,0.04)); }
 
 /* ======================== MODAL ======================== */
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(6,6,20,0.82);
+    background: var(--subpage-modal-overlay, rgba(6,6,20,0.82));
     backdrop-filter: blur(8px);
     z-index: 2000;
     display: none;
@@ -647,7 +647,7 @@ html, body {
     width: 100%;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    box-shadow: var(--subpage-modal-shadow, 0 20px 60px rgba(0,0,0,0.5));
     animation: mIn 0.3s cubic-bezier(0.16,1,0.3,1);
 }
 
@@ -659,14 +659,14 @@ html, body {
 .modal-x {
     position:absolute; top:12px; right:12px;
     width:30px; height:30px;
-    background:rgba(255,255,255,0.08);
+    background:var(--subpage-control-bg-strong, rgba(255,255,255,0.08));
     border:none; border-radius:50%;
     color:var(--t2); font-size:1.15em;
     cursor:pointer; transition:all 0.15s;
     display:flex; align-items:center; justify-content:center;
     z-index:5;
 }
-.modal-x:hover { background:rgba(255,255,255,0.15); color:var(--t1); }
+.modal-x:hover { background:var(--subpage-control-bg-hover, rgba(255,255,255,0.15)); color:var(--t1); }
 
 .modal-bar { height:3px; width:100%; }
 .modal-bar.pos { background:linear-gradient(90deg,var(--grn),#34d399); }
