@@ -187,29 +187,52 @@ html[data-theme="dark"] {
     --shadow-card-hover: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 1px rgba(255, 255, 255, 0.1);
     --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.35);
 
-    --viz-3d-bg: #0f172a;
-    --viz-canvas-inner: #111827;
-    --viz-canvas-outer: #0a0f1a;
+    --viz-3d-bg: var(--bg-primary);
+    --viz-canvas-inner: var(--bg-secondary);
+    --viz-canvas-outer: var(--bg-deepest);
     --viz-canvas-bg: linear-gradient(180deg, var(--viz-canvas-inner) 0%, var(--viz-canvas-outer) 100%);
-    --panel-glass: rgba(30, 41, 59, 0.9);
-    --chart-bg: linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
+    --panel-glass: rgba(10, 10, 26, 0.94);
+    --chart-bg: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
     --chart-title-color: #f1f5f9;
     --chart-legend-color: #94a3b8;
     --chart-tick-color: #64748b;
-    --chart-grid-color: rgba(71, 85, 105, 0.3);
-    --chart-tooltip-bg: rgba(15, 23, 42, 0.95);
+    --chart-grid-color: rgba(255, 255, 255, 0.06);
+    --chart-tooltip-bg: rgba(10, 10, 26, 0.96);
     --chart-tooltip-title: #f1f5f9;
     --chart-tooltip-body: #94a3b8;
-    --chart-tooltip-border: #475569;
-    --gate-item-bg-start: rgba(30, 41, 59, 0.9);
-    --gate-item-bg-end: rgba(51, 65, 85, 0.6);
-    --gate-item-border: rgba(148, 163, 184, 0.1);
-    --gate-item-hover-start: rgba(40, 52, 72, 0.95);
-    --gate-item-hover-end: rgba(60, 78, 100, 0.7);
+    --chart-tooltip-border: var(--border-default);
+    --chart-legend-bg: rgba(10, 10, 26, 0.95);
+
+    --nmr-accent-text: #a5b4fc;
+    --nmr-highlight: #fbbf24;
+    --nmr-negative: #ef4444;
+    --nmr-hover-bg: color-mix(in srgb, var(--primary-color) 15%, transparent);
+    --nmr-focus-bg: color-mix(in srgb, var(--primary-color) 28%, transparent);
+    --nmr-focus-bg-strong: color-mix(in srgb, var(--primary-color) 45%, transparent);
+    --nmr-slider-track: var(--surface-lighter);
+    --nmr-fullscreen-overlay: rgba(0, 0, 0, 0.82);
+    --nmr-popup-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+
+    /* Quantum simulator shell — match site dark palette (not default slate) */
+    --background: var(--bg-primary);
+    --surface: var(--bg-card);
+    --surface-light: var(--bg-surface);
+    --surface-lighter: var(--bg-elevated);
+    --border-color: var(--border-default);
+    --primary-color: var(--color-primary-light);
+    --primary-dark: var(--color-primary);
+    --secondary-color: var(--color-accent);
+    --shadow: rgba(0, 0, 0, 0.45);
+    --shadow-lg: rgba(0, 0, 0, 0.65);
+    --sidebar-gradient-end: var(--bg-deepest);
+    --gate-item-bg-start: rgba(20, 20, 40, 0.95);
+    --gate-item-bg-end: rgba(30, 30, 58, 0.85);
+    --gate-item-border: var(--border-subtle);
+    --gate-item-hover-start: rgba(26, 26, 53, 0.98);
+    --gate-item-hover-end: rgba(37, 37, 69, 0.9);
     --gate-name-color: rgba(203, 213, 225, 0.8);
     --gate-name-hover-color: #e2e8f0;
     --logo-filter: none;
-    --sidebar-gradient-end: rgba(15, 23, 42, 0.95);
 
     --media-carousel-btn-bg: rgba(10, 10, 26, 0.8);
     --media-carousel-btn-border: rgba(255, 255, 255, 0.1);
@@ -273,6 +296,17 @@ html[data-theme="light"] {
     --chart-tooltip-title: #1e293b;
     --chart-tooltip-body: #475569;
     --chart-tooltip-border: #cbd5e1;
+    --chart-legend-bg: rgba(255, 255, 255, 0.96);
+
+    --nmr-accent-text: var(--primary-dark);
+    --nmr-highlight: #b45309;
+    --nmr-negative: #dc2626;
+    --nmr-hover-bg: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    --nmr-focus-bg: color-mix(in srgb, var(--primary-color) 18%, transparent);
+    --nmr-focus-bg-strong: color-mix(in srgb, var(--primary-color) 28%, transparent);
+    --nmr-slider-track: var(--surface-lighter-alt);
+    --nmr-fullscreen-overlay: rgba(15, 23, 42, 0.55);
+    --nmr-popup-shadow: 0 10px 25px rgba(15, 23, 42, 0.12);
 
     --gate-item-bg-start: rgba(255, 255, 255, 0.98);
     --gate-item-bg-end: rgba(241, 245, 249, 0.95);
@@ -292,6 +326,36 @@ html[data-theme="light"] {
     --media-carousel-btn-hover-fg: #1e293b;
     --blog-dot-border: rgba(0, 0, 0, 0.22);
     --blog-dot-hover-border: rgba(0, 0, 0, 0.4);
+
+    --primary-color: var(--color-primary-light);
+    --primary-dark: var(--color-primary);
+
+    /* Qubi editor — white / soft lavender (not gray) */
+    --code-editor-bg: #ffffff;
+    --code-editor-gutter-bg: #f8f6ff;
+    --scrollbar-track: color-mix(in srgb, var(--primary-color) 7%, #ffffff);
+
+    /* Qubi editor popups — light surfaces */
+    --qubi-popup-bg: #ffffff;
+    --qubi-popup-border: color-mix(in srgb, var(--primary-color) 22%, #e2e8f0);
+    --qubi-popup-shadow: 0 10px 28px rgba(15, 23, 42, 0.12), 0 0 0 1px color-mix(in srgb, var(--primary-color) 8%, #e2e8f0);
+    --qubi-popup-text: #1e293b;
+    --qubi-popup-text-muted: #64748b;
+    --qubi-popup-text-secondary: #475569;
+    --qubi-popup-accent: var(--primary-color);
+    --qubi-popup-heading: var(--primary-dark);
+    --qubi-popup-code-bg: #f1f5f9;
+    --qubi-popup-code-text: #0f766e;
+    --qubi-popup-panel-bg: var(--code-editor-gutter-bg);
+    --qubi-popup-code-surface: var(--code-editor-gutter-bg);
+    --qubi-popup-strong: #b45309;
+    --qubi-popup-emphasis: #c2410c;
+    --qubi-popup-cyan: #0284c7;
+    --qubi-error-tooltip-bg: #ffffff;
+    --qubi-error-tooltip-text: #dc2626;
+    --qubi-error-tooltip-border: #fca5a5;
+    --qubi-error-tooltip-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+    --qubi-matrix-cell: #334155;
 }
 
 /* ── Midnight ────────────────────────────────────────────────────── */
@@ -338,6 +402,19 @@ html[data-theme="midnight"] {
     --media-carousel-btn-hover-fg: #f1f5f9;
     --blog-dot-border: rgba(148, 163, 184, 0.35);
     --blog-dot-hover-border: rgba(148, 163, 184, 0.6);
+
+    --chart-bg: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+    --chart-grid-color: rgba(148, 163, 184, 0.2);
+    --chart-legend-bg: rgba(15, 23, 42, 0.95);
+    --nmr-accent-text: #a5b4fc;
+    --nmr-highlight: #fbbf24;
+    --nmr-negative: #ef4444;
+    --nmr-hover-bg: color-mix(in srgb, var(--primary-color) 15%, transparent);
+    --nmr-focus-bg: color-mix(in srgb, var(--primary-color) 28%, transparent);
+    --nmr-focus-bg-strong: color-mix(in srgb, var(--primary-color) 45%, transparent);
+    --nmr-slider-track: var(--surface-lighter);
+    --nmr-fullscreen-overlay: rgba(0, 0, 0, 0.82);
+    --nmr-popup-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
 }
 
 /* ── Quantum ───────────────────────────────────────────────────────── */
@@ -381,6 +458,19 @@ html[data-theme="quantum"] {
     --media-carousel-btn-hover-fg: #f5f0ff;
     --blog-dot-border: rgba(245, 240, 255, 0.28);
     --blog-dot-hover-border: rgba(245, 240, 255, 0.5);
+
+    --chart-bg: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+    --chart-grid-color: rgba(245, 240, 255, 0.12);
+    --chart-legend-bg: rgba(26, 10, 37, 0.95);
+    --nmr-accent-text: #e879f9;
+    --nmr-highlight: #fbbf24;
+    --nmr-negative: #f87171;
+    --nmr-hover-bg: color-mix(in srgb, var(--primary-color) 15%, transparent);
+    --nmr-focus-bg: color-mix(in srgb, var(--primary-color) 28%, transparent);
+    --nmr-focus-bg-strong: color-mix(in srgb, var(--primary-color) 45%, transparent);
+    --nmr-slider-track: var(--surface-lighter);
+    --nmr-fullscreen-overlay: rgba(0, 0, 0, 0.82);
+    --nmr-popup-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
 }
 
 /* Theme picker icon only (not swapped via theme.js) */
@@ -421,32 +511,20 @@ html[data-theme="light"] .navbar-dark .navbar-toggler {
     filter: invert(1);
 }
 
-/* ── Simulator gates ───────────────────────────────────────────────── */
-.gate-item {
-    background: linear-gradient(135deg, var(--gate-item-bg-start), var(--gate-item-bg-end));
-    border-color: var(--gate-item-border);
+/* ── Simulator gates (palette shows colored squares only — no wrapper panel) ── */
+.gate-palette .gate-item,
+.gate-palette .gate-item:hover,
+.gate-palette .gate-item.gate-selected {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
-.gate-item:hover {
-    background: linear-gradient(135deg, var(--gate-item-hover-start), var(--gate-item-hover-end));
-}
-
-.gate-name {
-    color: var(--gate-name-color);
-}
-
-.gate-item:hover .gate-name,
-.gate-item.gate-selected .gate-name {
-    color: var(--gate-name-hover-color);
-}
-
-html[data-theme="light"] .gate-item:hover {
-    border-color: rgba(0, 0, 0, 0.12);
-    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
-}
-
-html[data-theme="light"] .gate-item.gate-selected {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.14), rgba(139, 92, 246, 0.1));
+html[data-theme="light"] .gate-palette .gate-item:hover,
+html[data-theme="light"] .gate-palette .gate-item.gate-selected {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 /* ── Tech / Media category explorer breadcrumb ──────────────────── */
@@ -482,7 +560,9 @@ html[data-theme="light"] .tech-breadcrumb-back:hover {
 .molecule-canvas,
 #fidCanvas,
 #spectrumCanvas,
-.viz-canvas-panel {
+.viz-canvas-panel,
+#nmr-molecule-canvas,
+#nmr-spectrum-canvas {
     background: var(--chart-bg) !important;
 }
 
@@ -499,9 +579,195 @@ html[data-theme="light"] .tech-breadcrumb-back:hover {
     color: var(--text-secondary);
 }
 
-html[data-theme="light"] .nmr-container {
+/* Embedded NMR tab + Other Resources — follow active site theme */
+.nmr-container,
+.nmr-simulator-wrapper,
+.resources-wrapper {
     background: var(--background) !important;
     color: var(--text-primary) !important;
+}
+
+.nmr-panel,
+.nmr-res-section,
+.nmr-peak-popup,
+.nmr-popup-content {
+    background: var(--surface-light) !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.nmr-panel-header,
+.nmr-popup-header,
+.nmr-density-table th,
+.nmr-badge {
+    background: var(--surface-lighter) !important;
+    color: var(--text-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.nmr-select,
+.nmr-select-sm,
+.nmr-select-inline,
+.nmr-input,
+.nmr-sample-card,
+.nmr-field-row input,
+.nmr-field-row select,
+.nmr-btn-sm {
+    background: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.nmr-pulse-empty,
+.nmr-note,
+.nmr-desc,
+.nmr-formula,
+.nmr-unit,
+.nmr-gamma-table td,
+.nmr-nuclei-header {
+    color: var(--text-secondary) !important;
+}
+
+.nmr-resources {
+    background: var(--background) !important;
+}
+
+.nmr-density-table td {
+    border-color: var(--border-color) !important;
+    color: var(--text-primary) !important;
+}
+
+.nmr-density-view-toggle button.active {
+    color: var(--primary-color) !important;
+    background: color-mix(in srgb, var(--primary-color) 18%, transparent) !important;
+}
+
+.nmr-density-hint {
+    color: var(--text-muted) !important;
+}
+
+.nmr-density-3d-tooltip {
+    background: var(--surface) !important;
+    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--border-color)) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 8px 24px var(--shadow-lg, var(--shadow)) !important;
+}
+
+.nmr-density-3d-tooltip .nmr-density-tip-title {
+    color: var(--primary-color) !important;
+}
+
+.nmr-pulse-label,
+.nmr-nuclei-header,
+.nmr-jc-header,
+.nmr-nuclei-table td:first-child,
+.nmr-gamma-table td:last-child,
+.nmr-qubits,
+.nmr-badge {
+    color: var(--nmr-accent-text, var(--primary-color)) !important;
+}
+
+.nmr-formula,
+.nmr-sample-card strong {
+    color: var(--text-primary) !important;
+}
+
+.nmr-nuclei-table th {
+    color: var(--text-muted) !important;
+}
+
+.nmr-nuclei-table th,
+.nmr-nuclei-table td,
+.nmr-jc-section,
+.nmr-popup-row,
+.nmr-popup-env {
+    border-color: var(--border-color) !important;
+}
+
+.nmr-nuclei-row:hover {
+    background-color: var(--nmr-hover-bg) !important;
+}
+
+.nmr-nuclei-row:hover td:first-child {
+    color: var(--nmr-accent-text, var(--primary-color)) !important;
+}
+
+.nmr-nuclei-row.nmr-focused {
+    background-color: var(--nmr-focus-bg) !important;
+}
+
+.nmr-popup-nucleus {
+    color: var(--nmr-highlight) !important;
+}
+
+.nmr-popup-label {
+    color: var(--text-secondary) !important;
+}
+
+.nmr-popup-value,
+.nmr-popup-desc {
+    color: var(--text-primary) !important;
+}
+
+.nmr-popup-close {
+    color: var(--text-secondary) !important;
+}
+
+.nmr-popup-close:hover {
+    background: var(--surface-lighter) !important;
+    color: var(--text-primary) !important;
+}
+
+.nmr-pulse-timeline::before,
+.nmr-pulse-delay,
+.nmr-pulse-line {
+    background: var(--border-color) !important;
+}
+
+.nmr-field-row input[type="range"] {
+    background: var(--nmr-slider-track) !important;
+}
+
+.nmr-field-row input[type="range"]::-webkit-slider-thumb {
+    background: var(--primary-color) !important;
+}
+
+.nmr-fullscreen-overlay {
+    background: var(--nmr-fullscreen-overlay) !important;
+}
+
+.nmr-peak-popup {
+    box-shadow: var(--nmr-popup-shadow) !important;
+}
+
+.nmr-btn-sm:hover {
+    background: var(--surface-lighter) !important;
+}
+
+/* Gate Creator tab */
+#gateCreatorContainer,
+#gateCreatorContainer .gc-root {
+    background: var(--background) !important;
+    color: var(--text-primary) !important;
+}
+
+#gateCreatorContainer .gc-input,
+#gateCreatorContainer .gc-select {
+    background: var(--surface) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+#gateCreatorContainer .gc-hint code {
+    background: var(--surface-lighter) !important;
+    color: var(--text-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+#gateCreatorContainer .gc-color-popup {
+    background: var(--surface-light, var(--surface)) !important;
+    border-color: var(--border-color) !important;
+    box-shadow: var(--shadow-lg) !important;
 }
 
 html[data-theme="light"] .nmr-select,
@@ -514,6 +780,10 @@ html[data-theme="light"] .nmr-input {
 
 html[data-theme="light"] .header {
     background: linear-gradient(135deg, var(--surface) 0%, #e8eef5 100%) !important;
+}
+
+html[data-theme="light"] .code-editor-container {
+    border-color: color-mix(in srgb, var(--primary-color) 16%, var(--border-color));
 }
 
 /* Bloch rotation / degree controls */

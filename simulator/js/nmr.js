@@ -2184,7 +2184,7 @@ class NMRPhysicsEngine {
             }
             
             const x = 2 * rho01_re;
-            const y = 2 * rho01_im;
+            const y = -2 * rho01_im;
             const z = rho00 - rho11;
             
             this.blochVectors.push({ x, y, z, rho00, rho11 });
@@ -2509,7 +2509,11 @@ class NMRPhysicsEngine {
     
     updateFromQuantumState(quantumState) {
         if (!quantumState || !quantumState.amplitudes) return;
-        
+
+        if (typeof quantumState.normalize === 'function') {
+            quantumState.normalize();
+        }
+
         if (this.numQubits !== quantumState.numQubits) {
             this.createCustomSample(quantumState.numQubits);
         }

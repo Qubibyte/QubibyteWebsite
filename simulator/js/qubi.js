@@ -211,6 +211,117 @@ function qubiParseIntList(inner) {
     return out.length ? out : null;
 }
 
+/** @returns {string | null} user-facing error if any index appears twice in one list */
+function qubiDuplicateQubitMessage(indices) {
+    const seen = new Set();
+    for (const q of indices) {
+        if (seen.has(q)) {
+            return `Duplicate qubit ${q} in the same operation`;
+        }
+        seen.add(q);
+    }
+    return null;
+}
+
+/**
+ * @param {number[][]} segments bracket registers in one timestep, e.g. ([0,1], [0,2])
+ * @returns {string | null}
+ */
+function qubiParallelQubitConflictMessage(segments) {
+    if (!segments || !segments.length) return null;
+    for (const seg of segments) {
+        const within = qubiDuplicateQubitMessage(seg);
+        if (within) return within;
+    }
+    if (segments.length < 2) return null;
+    const seen = new Set();
+    for (const seg of segments) {
+        for (const q of seg) {
+            if (seen.has(q)) {
+                return `Qubit ${q} is used in more than one parallel gate in the same operation`;
+            }
+            seen.add(q);
+        }
+    }
+    return null;
+}
+
+function qubiDefaultMaxQubits() {
+    return 12;
+}
+
+function qubiReadMaxQubits() {
+    try {
+        const stored = localStorage.getItem('quantumSimulatorSettings');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            const n = parseInt(parsed.maxQubits, 10);
+            if (Number.isInteger(n) && n >= 1) return n;
+        }
+    } catch (_) { /* ignore */ }
+    return qubiDefaultMaxQubits();
+}
+
+/** Valid indices are 0 … maxQubitCount - 1 (maxQubitCount = setting "Max Qubits"). */
+function qubiQubitIndexOutOfRangeMessage(q, maxQubitCount) {
+    if (!Number.isInteger(q) || q < 0) return null;
+    if (q >= maxQubitCount) {
+        const last = Math.max(0, maxQubitCount - 1);
+        return `Qubit ${q} is out of range (valid indices: 0–${last} with ${maxQubitCount} max qubits). Increase in Settings if needed.`;
+    }
+    return null;
+}
+
+function qubiFirstQubitRangeErrorInList(indices, maxQubits) {
+    for (const q of indices) {
+        const msg = qubiQubitIndexOutOfRangeMessage(q, maxQubits);
+        if (msg) return msg;
+    }
+    return null;
+}
+
+/** @returns {{ line: number, msg: string } | null} */
+function qubiFindQubitRangeError(instructions, maxQubits) {
+    function walk(instrs) {
+        for (const instruction of instrs) {
+            if (instruction.type === 'REPEAT') {
+                const nested = walk(instruction.instructions);
+                if (nested) return nested;
+            } else if (instruction.type === 'GATE') {
+                const lists = instruction.parallelBracketSegments
+                    ? instruction.parallelBracketSegments
+                    : (instruction.qubits ? [instruction.qubits] : []);
+                for (const seg of lists) {
+                    for (const q of seg) {
+                        const msg = qubiQubitIndexOutOfRangeMessage(q, maxQubits);
+                        if (msg) {
+                            return { line: instruction.line ?? 0, msg };
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    return walk(instructions);
+}
+
+class QubiRangeError extends Error {
+    constructor(message, line) {
+        super(message);
+        this.name = 'QubiRangeError';
+        this.qubiLine = line;
+    }
+}
+
+if (typeof globalThis !== 'undefined') {
+    globalThis.qubiDuplicateQubitMessage = qubiDuplicateQubitMessage;
+    globalThis.qubiParallelQubitConflictMessage = qubiParallelQubitConflictMessage;
+    globalThis.qubiReadMaxQubits = qubiReadMaxQubits;
+    globalThis.qubiQubitIndexOutOfRangeMessage = qubiQubitIndexOutOfRangeMessage;
+    globalThis.qubiFirstQubitRangeErrorInList = qubiFirstQubitRangeErrorInList;
+}
+
 /**
  * Parse inner of (...) as comma-separated [..] [..] lists only (no bare integers).
  * @returns {number[][] | null}
@@ -233,7 +344,7 @@ function qubiParseParenBracketSegments(inner) {
     return lists.length ? lists : null;
 }
 
-const QUBI_MULTI_PAREN_FORBIDDEN = new Set(['CX', 'CY', 'CZ', 'SWAP']);
+const QUBI_MULTI_PAREN_FORBIDDEN = new Set(['CX', 'CY', 'CZ', 'SWAP', 'CSWAP']);
 
 class QubiParser {
     constructor() {
@@ -291,6 +402,30 @@ class QubiParser {
             };
         }
 
+        return null;
+    }
+
+    /** @returns {string | null} */
+    static duplicateQubitErrorForGateToken(tok) {
+        if (!tok) return null;
+        if (tok.parallelBracketSegments) {
+            return qubiParallelQubitConflictMessage(tok.parallelBracketSegments);
+        }
+        if (tok.qubits) {
+            return qubiDuplicateQubitMessage(tok.qubits);
+        }
+        return null;
+    }
+
+    /** @returns {string | null} */
+    static qubitRangeErrorForGateToken(tok, maxQubits) {
+        if (!tok) return null;
+        if (tok.parallelBracketSegments) {
+            return qubiFirstQubitRangeErrorInList(tok.parallelBracketSegments.flat(), maxQubits);
+        }
+        if (tok.qubits) {
+            return qubiFirstQubitRangeErrorInList(tok.qubits, maxQubits);
+        }
         return null;
     }
 
@@ -536,11 +671,23 @@ class QubiExecutor {
     execute(code, opts = {}) {
         const { code: preprocessed } = this.preprocess(code, opts);
         const instructions = this.parser.parse(preprocessed);
+        const maxQubits = opts.maxQubits ?? qubiReadMaxQubits();
+        const rangeErr = qubiFindQubitRangeError(instructions, maxQubits);
+        if (rangeErr) {
+            throw new QubiRangeError(rangeErr.msg, rangeErr.line);
+        }
+
         this.circuit.clear();
         
-        // Find max qubit index needed
         const maxQubit = this.findMaxQubit(instructions);
-        while (this.circuit.numQubits <= maxQubit) {
+        const neededCount = maxQubit + 1;
+        if (neededCount > maxQubits) {
+            throw new QubiRangeError(
+                `Circuit needs qubit index ${maxQubit}, but max qubit limit is ${maxQubits} (indices 0–${maxQubits - 1}). Increase in Settings.`,
+                qubiFindQubitRangeError(instructions, maxQubits)?.line ?? 0
+            );
+        }
+        while (this.circuit.numQubits < neededCount) {
             this.circuit.addQubit();
         }
         
@@ -796,12 +943,7 @@ class QubiExecutor {
                 // Recursively build inner instructions
                 column = this.buildVisualCircuit(instruction.instructions, column);
                 
-                // Add END control flow block
-                this.circuit.addControlFlow('END', column, { 
-                    endingType: 'REPEAT',
-                    endingLabel: `REPEAT ${instruction.count}`,
-                    matchedRepeatColumn: column - instruction.instructions.length - 1
-                });
+                this.circuit.addControlFlow('END', column, {});
                 column++;
             } else if (instruction.type === 'GATE') {
                 this.executeGate(instruction, column);
@@ -855,6 +997,10 @@ class QubiExecutor {
         const { gate, qubits, params, parallelBracketSegments } = instruction;
 
         if (parallelBracketSegments && parallelBracketSegments.length) {
+            const conflict = qubiParallelQubitConflictMessage(parallelBracketSegments);
+            if (conflict) {
+                throw new Error(`${gate}: ${conflict}`);
+            }
             for (const seg of parallelBracketSegments) {
                 this._executeBracketGateSegment(gate, seg, column, params || {});
             }
@@ -862,6 +1008,10 @@ class QubiExecutor {
         }
 
         const qList = qubits || [];
+        const dupList = qubiDuplicateQubitMessage(qList);
+        if (dupList) {
+            throw new Error(`${gate}: ${dupList}`);
+        }
         for (const qubit of qList) {
             if (['RX', 'RY', 'RZ'].includes(gate)) {
                 const angle = params && params.angle !== undefined ? params.angle : Math.PI / 2;
@@ -876,6 +1026,10 @@ class QubiExecutor {
      * One bracket register: CX/CY/CZ [c,…,t], SWAP [a,b], joint custom unitary, or broadcast single-qubit gates.
      */
     _executeBracketGateSegment(gate, qubits, column, params) {
+        const dup = qubiDuplicateQubitMessage(qubits);
+        if (dup) {
+            throw new Error(`${gate} […]: ${dup}`);
+        }
         const n = qubits.length;
         if (gate === 'MEASURE') {
             throw new Error('MEASURE does not use […] register syntax; use MEASURE q');
@@ -896,6 +1050,15 @@ class QubiExecutor {
                 throw new Error('SWAP [a,b] requires exactly two qubit indices.');
             }
             this.circuit.addGate('SWAP', qubits[0], column, qubits[1]);
+            return;
+        }
+
+        if (gate === 'CSWAP') {
+            if (n !== 3) {
+                throw new Error('CSWAP [c,a,b] requires exactly three qubit indices (control, swap wire A, swap wire B).');
+            }
+            const [control, swapA, swapB] = qubits;
+            this.circuit.addGate('CSWAP', swapB, column, null, { jointQubits: [control, swapA, swapB] });
             return;
         }
 
@@ -1129,8 +1292,12 @@ class QubiExecutor {
                     const controls = g0.multiQubits;
                     const target = g0.qubit;
                         lines.push(indent + `${g0.type} [${[...controls, target].join(',')}]`);
+                } else if (g0.type === 'CSWAP' && g0.params && Array.isArray(g0.params.jointQubits) && g0.params.jointQubits.length === 3) {
+                    lines.push(indent + `CSWAP [${g0.params.jointQubits.join(',')}]`);
+                } else if (g0.type === 'SWAP' && g0.target !== null && g0.target !== undefined) {
+                    lines.push(indent + `SWAP [${g0.target},${g0.qubit}]`);
                 } else if (g0.target !== null && g0.target !== undefined) {
-                    // Two-qubit gate
+                    // Two-qubit gate (CX, CY, CZ)
                     const control = g0.target;
                     const target = g0.qubit;
                         lines.push(indent + `${g0.type} [${control},${target}]`);
@@ -1204,6 +1371,16 @@ if (typeof globalThis !== 'undefined') {
 
 // Export
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { QubiParser, QubiExecutor, QubiLex: globalThis.QubiLex, parseQubiRotationAngle };
+    module.exports = {
+        QubiParser,
+        QubiExecutor,
+        QubiLex: globalThis.QubiLex,
+        parseQubiRotationAngle,
+        qubiDuplicateQubitMessage,
+        qubiParallelQubitConflictMessage,
+        qubiReadMaxQubits,
+        qubiFindQubitRangeError,
+        QubiRangeError
+    };
 }
 

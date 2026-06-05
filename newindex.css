@@ -1179,6 +1179,193 @@ section {
     border-radius: inherit;
 }
 
+/* PNG icons — subtle single-hue fills (dark themes) via mask; flat ink on light */
+.site-icon-colored {
+    --site-icon-fill: linear-gradient(165deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    display: block;
+    flex-shrink: 0;
+    background: var(--site-icon-fill);
+    -webkit-mask-image: var(--site-icon-url);
+    mask-image: var(--site-icon-url);
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-mode: alpha;
+    mask-mode: alpha;
+    pointer-events: none;
+    user-select: none;
+    transition: filter 0.25s ease;
+}
+
+.site-icon-colored.site-icon--purple {
+    --site-icon-fill: linear-gradient(165deg, #554a9e 0%, #7a6fc9 100%);
+}
+
+.site-icon-colored.site-icon--blue {
+    --site-icon-fill: linear-gradient(165deg, #0570a8 0%, #1a9fe0 100%);
+}
+
+.site-icon-colored.site-icon--cyan {
+    --site-icon-fill: linear-gradient(165deg, #0a7ea4 0%, #3eb8e8 100%);
+}
+
+.site-icon-colored.site-icon--violet {
+    --site-icon-fill: linear-gradient(165deg, #9a5faa 0%, #c487c7 100%);
+}
+
+.site-icon-colored.site-icon--red {
+    --site-icon-fill: linear-gradient(165deg, #dc2626 0%, #f87171 100%);
+}
+
+.site-icon-colored.site-icon--gold {
+    --site-icon-fill: linear-gradient(165deg, #d97706 0%, #fbbf24 100%);
+}
+
+.site-icon-colored.site-icon--yellow {
+    --site-icon-fill: linear-gradient(165deg, #ca8a04 0%, #fde047 100%);
+}
+
+html[data-theme="light"] .site-icon-colored.site-icon--purple {
+    --site-icon-fill: #4f458f;
+}
+
+html[data-theme="light"] .site-icon-colored.site-icon--blue {
+    --site-icon-fill: #056a9e;
+}
+
+html[data-theme="light"] .site-icon-colored.site-icon--cyan {
+    --site-icon-fill: #087a9e;
+}
+
+html[data-theme="light"] .site-icon-colored.site-icon--violet {
+    --site-icon-fill: #8a5296;
+}
+
+html[data-theme="light"] .site-icon-colored.site-icon--red {
+    --site-icon-fill: #c62828;
+}
+
+html[data-theme="light"] .site-icon-colored.site-icon--gold {
+    --site-icon-fill: #b45309;
+}
+
+html[data-theme="light"] .site-icon-colored.site-icon--yellow {
+    --site-icon-fill: #a16207;
+}
+
+html:not([data-theme="light"]) .site-icon-colored.site-icon--purple {
+    filter: drop-shadow(0 2px 6px rgba(85, 74, 158, 0.35));
+}
+
+html:not([data-theme="light"]) .site-icon-colored.site-icon--blue {
+    filter: drop-shadow(0 2px 6px rgba(6, 135, 201, 0.35));
+}
+
+html:not([data-theme="light"]) .site-icon-colored.site-icon--cyan {
+    filter: drop-shadow(0 2px 6px rgba(14, 140, 190, 0.32));
+}
+
+html:not([data-theme="light"]) .site-icon-colored.site-icon--violet {
+    filter: drop-shadow(0 2px 6px rgba(171, 111, 175, 0.32));
+}
+
+html:not([data-theme="light"]) .site-icon-colored.site-icon--red {
+    filter: drop-shadow(0 2px 6px rgba(220, 38, 38, 0.38));
+}
+
+html:not([data-theme="light"]) .site-icon-colored.site-icon--gold {
+    filter: drop-shadow(0 2px 6px rgba(217, 119, 6, 0.34));
+}
+
+html:not([data-theme="light"]) .site-icon-colored.site-icon--yellow {
+    filter: drop-shadow(0 2px 6px rgba(202, 138, 4, 0.34));
+}
+
+html:not([data-theme="light"]) .tech-row:hover .site-icon-colored.site-icon--purple,
+html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.site-icon--purple {
+    filter: drop-shadow(0 3px 8px rgba(85, 74, 158, 0.42)) brightness(1.05);
+}
+
+html:not([data-theme="light"]) .tech-row:hover .site-icon-colored.site-icon--blue,
+html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.site-icon--blue {
+    filter: drop-shadow(0 3px 8px rgba(6, 135, 201, 0.42)) brightness(1.05);
+}
+
+html:not([data-theme="light"]) .tech-row:hover .site-icon-colored.site-icon--cyan,
+html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.site-icon--cyan {
+    filter: drop-shadow(0 3px 8px rgba(14, 140, 190, 0.38)) brightness(1.05);
+}
+
+html:not([data-theme="light"]) .tech-row:hover .site-icon-colored.site-icon--violet,
+html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.site-icon--violet {
+    filter: drop-shadow(0 3px 8px rgba(171, 111, 175, 0.38)) brightness(1.05);
+}
+
+html:not([data-theme="light"]) .tech-row:hover .site-icon-colored.site-icon--red,
+html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.site-icon--red {
+    filter: drop-shadow(0 3px 8px rgba(220, 38, 38, 0.45)) brightness(1.05);
+}
+
+html:not([data-theme="light"]) .tech-row:hover .site-icon-colored.site-icon--gold,
+html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.site-icon--gold {
+    filter: drop-shadow(0 3px 8px rgba(217, 119, 6, 0.4)) brightness(1.05);
+}
+
+html:not([data-theme="light"]) .tech-row:hover .site-icon-colored.site-icon--yellow,
+html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.site-icon--yellow {
+    filter: drop-shadow(0 3px 8px rgba(202, 138, 4, 0.4)) brightness(1.05);
+}
+
+.tech-row-icon-asset {
+    padding: 6px;
+    font-size: 0;
+    line-height: 0;
+}
+
+.tech-row-icon-asset .site-icon-colored {
+    width: 40px;
+    height: 40px;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.tech-detail-icon-asset {
+    padding: 8px;
+    font-size: 0;
+    line-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tech-detail-icon-asset .site-icon-colored {
+    width: 52px;
+    height: 52px;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+.highlight-icon-asset {
+    font-size: 0;
+    line-height: 0;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.highlight-icon-asset .site-icon-colored {
+    width: 56px;
+    height: 56px;
+}
+
 .tech-row:hover .tech-row-icon {
     transform: scale(1.05) rotate(-3deg);
     background: linear-gradient(135deg, rgba(6, 135, 201, 0.22), rgba(171, 111, 175, 0.22));
@@ -2785,11 +2972,17 @@ section {
     opacity: 0.3;
 }
 
+.blog-type-icon.site-icon-colored {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
 .blog-card-type {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
+    gap: 5px;
     font-size: 0.68rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -3648,6 +3841,15 @@ section {
         font-size: 1.5em;
     }
 
+    .tech-row-icon-asset {
+        padding: 5px;
+    }
+
+    .tech-row-icon-asset .site-icon-colored {
+        width: 34px;
+        height: 34px;
+    }
+
     .tech-row-label {
         font-size: 1.05em;
     }
@@ -3672,6 +3874,15 @@ section {
         width: 58px;
         height: 58px;
         font-size: 2em;
+    }
+
+    .tech-explorer[data-stage="1"] .tech-row-cat .tech-row-icon-asset .site-icon-colored {
+        width: 44px;
+        height: 44px;
+    }
+
+    .tech-explorer[data-stage="1"] .tech-row-cat .tech-row-icon-asset {
+        padding: 7px;
     }
 
     .tech-explorer[data-stage="1"] .tech-row-cat .tech-row-label {
@@ -3706,6 +3917,12 @@ section {
         font-size: 1.35em;
     }
 
+    .tech-explorer:not([data-stage="1"]) .tech-col-cat .tech-row-icon-asset .site-icon-colored,
+    .tech-explorer[data-stage="3"] .tech-col-items .tech-row-icon-asset .site-icon-colored {
+        width: 32px;
+        height: 32px;
+    }
+
     /* Keep back button aligned with the final cascaded slim-icon size on mobile. */
     .tech-explorer:not([data-stage="1"]) .tech-col-cat>.tech-back-row,
     .tech-explorer[data-stage="3"] .tech-col-items>.tech-back-row {
@@ -3729,6 +3946,25 @@ section {
         width: 56px;
         height: 56px;
         font-size: 2em;
+    }
+
+    .tech-detail-icon-asset {
+        padding: 10px;
+    }
+
+    .tech-detail-icon-asset .site-icon-colored {
+        width: 44px;
+        height: 44px;
+    }
+
+    .highlight-icon-asset {
+        width: 56px;
+        height: 56px;
+    }
+
+    .highlight-icon-asset .site-icon-colored {
+        width: 48px;
+        height: 48px;
     }
 
     .tech-detail-title {

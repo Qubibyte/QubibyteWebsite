@@ -144,6 +144,21 @@ const GateInfo = {
         description: 'Swaps the states of two qubits: |01⟩ ↔ |10⟩',
         category: 'Multi Qubit'
     },
+    'CSWAP': {
+        name: 'Fredkin (CSWAP)',
+        matrix: [
+            [1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1]
+        ],
+        description: 'Controlled-SWAP (Fredkin gate) in the computational basis |control, swap A, swap B⟩: swaps the last two qubits when the control is |1⟩. In Qubi use <code>CSWAP [c, a, b]</code> (control first, then the two wires to swap).',
+        category: 'Multi Qubit'
+    },
     'iSWAP': {
         name: 'iSWAP',
         matrix: [
@@ -171,6 +186,18 @@ const GateInfo = {
         matrix: 'N/A (Projection operators: |0⟩⟨0| and |1⟩⟨1|)',
         description: 'Collapses qubit to |0⟩ or |1⟩ based on probability amplitudes',
         category: 'Measurement'
+    },
+    'REPEAT': {
+        name: 'Repeat',
+        matrix: null,
+        description: 'Starts a control-flow block. All gates placed after REPEAT N and before the matching END are executed N times when the circuit runs. In Qubi code, use <code>REPEAT N</code> on its own line before the repeated lines, then close with <code>END</code>.',
+        category: 'Control Flow'
+    },
+    'END': {
+        name: 'End',
+        matrix: null,
+        description: 'Closes the innermost open REPEAT block. Place END after the last gate you want included in the repeat. Each END pairs with the nearest unmatched REPEAT before it in the circuit.',
+        category: 'Control Flow'
     }
 };
 
@@ -276,6 +303,9 @@ function getMatrixForQubits(gateType, nQubits = 2) {
     if (gateType === 'SWAP') {
         const displayQubits = 2;
         return embedTwoQubit(base, displayQubits);
+    }
+    if (gateType === 'CSWAP') {
+        return base;
     }
     // Multi-controlled X (CX as MCX when n>2)
     if (gateType === 'CX' && nQubits > 2) {

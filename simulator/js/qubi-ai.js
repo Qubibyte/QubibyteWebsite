@@ -74,7 +74,7 @@
             return { code: null, err: trimmed.length < 160 ? trimmed : 'Response was not Qubi circuit code' };
         }
         const gateLine =
-            /^(H|X|Y|Z|S|T|CX|CY|CZ|SWAP|RX|RY|RZ|REPEAT|END|MEASURE)\b/i;
+            /^(H|X|Y|Z|S|T|CX|CY|CZ|SWAP|CSWAP|RX|RY|RZ|REPEAT|END|MEASURE)\b/i;
         if (!lines.some(l => gateLine.test(l))) {
             return { code: null, err: trimmed.length < 200 ? trimmed : 'Response was not Qubi circuit code' };
         }

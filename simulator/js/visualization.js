@@ -1,8 +1,10 @@
 // Qubit State Visualization with 3D Bloch Spheres
 
 class QubitVisualizer {
-    constructor(containerId) {
+    constructor(containerId, options = {}) {
         this.container = document.getElementById(containerId);
+        this.stateVectorElId = options.stateVectorElId || 'stateVector';
+        this.measurementResultsElId = options.measurementResultsElId || 'measurementResults';
         this.settings = { precision: 2, hideNegligibles: true, sortBy: 'probability', sortOrder: 'desc' };
         this.selectedQubit = 0;
         this.blochScene = null;
@@ -13,6 +15,9 @@ class QubitVisualizer {
         this.isDragging = false;
         this.previousMousePosition = { x: 0, y: 0 };
         this.sphereGroup = null;
+        this.blochContainerEl = null;
+        this._blochResizeObserver = null;
+        this._blochWindowResize = null;
         
         if (!this.container) {
             console.warn(`QubitVisualizer: Container ${containerId} not found`);
@@ -152,7 +157,8 @@ class QubitVisualizer {
         const blochContainer = document.createElement('div');
         blochContainer.className = 'bloch-sphere-3d-container';
         blochContainer.id = 'blochSphere3D';
-        blochContainer.style.cssText = 'flex: 2; min-height: 250px; width: 100%; position: relative;';
+        blochContainer.style.cssText = 'flex: 0 0 auto; width: 100%; position: relative;';
+        this.blochContainerEl = blochContainer;
         
         // Maximize button - positioned relative to bloch container
         const maximizeBtn = document.createElement('button');
@@ -165,9 +171,13 @@ class QubitVisualizer {
         
         contentArea.appendChild(blochContainer);
         
+        const { compact: compactViewport } = this._blochLayoutProfile(contentArea);
+
         // Probabilities and state summary (below sphere)
         const bottomSection = document.createElement('div');
-        bottomSection.style.cssText = 'margin-top: 0.5rem; padding: 0 1rem 1rem 1rem;';
+        bottomSection.style.cssText = compactViewport
+            ? 'margin-top: 0.35rem; padding: 0 0.5rem 0.5rem;'
+            : 'margin-top: 0.5rem; padding: 0 1rem 1rem 1rem;';
         
         // Probabilities
         const prob0 = quantumState.getProbability(qubitIndex, 0) || 0;
@@ -188,10 +198,15 @@ class QubitVisualizer {
         const stateSummary = document.createElement('div');
         stateSummary.className = 'state-summary';
         stateSummary.style.cssText = 'font-size: 0.75rem; margin: 0; padding: 0.5rem;';
+        const coords = quantumState.getBlochCoordinates(qubitIndex);
+        const blochR = Math.sqrt(coords.x * coords.x + coords.y * coords.y + coords.z * coords.z);
+
         if (prob0 > 0.99) {
             stateSummary.textContent = 'State: |0⟩ (Classical)';
         } else if (prob1 > 0.99) {
             stateSummary.textContent = 'State: |1⟩ (Classical)';
+        } else if (blochR < 0.08 && Math.abs(prob0 - prob1) < 0.08) {
+            stateSummary.textContent = 'State: Mixed (50/50 — check this wire’s |0⟩/|1⟩ bars)';
         } else if (Math.abs(prob0 - prob1) < 0.01) {
             stateSummary.textContent = 'State: Superposition (Equal)';
         } else {
@@ -211,8 +226,139 @@ class QubitVisualizer {
         contentArea.appendChild(bottomSection);
         
         // Initialize 3D Bloch sphere
-        const coords = quantumState.getBlochCoordinates(qubitIndex);
         this.init3DBlochSphere(blochContainer, coords);
+        this.attachBlochResizeHandlers(blochContainer);
+    }
+
+    /**
+     * Short *window* height (e.g. 1280×648) — not panel height (sidebar is always short).
+     * Only then do we budget against panel space and use lower framing.
+     */
+    _blochLayoutProfile(container) {
+        const windowH = window.innerHeight || 800;
+        const compact = windowH <= 700;
+        return { compact };
+    }
+
+    /**
+     * Compact: vertical space is scarce — size from panel budget after stats.
+     * Normal: sidebar width is the limit — ignore extra panel height so the sphere
+     * doesn't grow just because the viz column is tall.
+     */
+    _blochSquareSize(container) {
+        if (!container) return 260;
+        const { compact } = this._blochLayoutProfile(container);
+        const width = container.clientWidth || 300;
+
+        if (compact) {
+            const maxCap = 268;
+            let height = Math.max(220, Math.min(width, maxCap));
+            const panel = container.closest('#qubitTabContent');
+            if (panel && panel.clientHeight > 0) {
+                let otherH = 0;
+                for (const child of panel.children) {
+                    if (child !== container) otherH += child.offsetHeight || 0;
+                }
+                const blochBudget = panel.clientHeight - otherH - 4;
+                if (blochBudget > 100) height = blochBudget;
+            }
+            let size = Math.min(width, height, maxCap);
+            return Math.max(120, Math.round(size * 0.80));
+        }
+
+        const maxCap = 274;
+        let size = Math.min(width, maxCap);
+        return Math.max(130, Math.round(size * 0.89));
+    }
+
+    _applyBlochCameraFraming(container) {
+        if (!this.blochCamera) return;
+        const { compact } = this._blochLayoutProfile(container);
+        const dist = this.blochCamera.position.length();
+        if (compact) {
+            this.blochCamera.position.set(2.55, 2.28, 2.55).normalize().multiplyScalar(dist || 4.7);
+            this.blochCamera.lookAt(0, -0.10, 0);
+        } else {
+            this.blochCamera.position.set(2.7, 2.0, 2.7);
+            this.blochCamera.lookAt(0, 0.02, 0);
+        }
+    }
+
+    _applyBlochLayout(container, size) {
+        if (!container || size <= 0) return;
+        const { compact } = this._blochLayoutProfile(container);
+        container.style.flex = '0 0 auto';
+        container.style.width = '100%';
+        container.style.height = `${size}px`;
+        container.style.minHeight = '0';
+        container.style.maxHeight = `${size}px`;
+        container.style.marginTop = compact ? '0.25rem' : '0.3rem';
+        container.classList.toggle('bloch-sphere-3d-container--compact', compact);
+    }
+
+    /** Opaque fill matched to the surrounding viz panel (not Gate Creator inset). */
+    applyBlochBackground(container) {
+        const mount = container
+            || this.blochContainerEl
+            || document.getElementById('blochSphere3D');
+        const panel = mount?.closest?.('.viz-region') || null;
+        const bg = window.QubibyteTheme?.createThreeBackgroundFromElement
+            ? window.QubibyteTheme.createThreeBackgroundFromElement(panel)
+            : (window.QubibyteTheme?.createThreeBackground() ?? new THREE.Color(0x0f172a));
+        if (this.blochScene) this.blochScene.background = bg;
+        if (this.blochRenderer) this.blochRenderer.setClearColor(bg, 1);
+    }
+
+    _styleBlochCanvas(canvas, size) {
+        if (!canvas) return;
+        canvas.style.width = `${size}px`;
+        canvas.style.height = `${size}px`;
+        canvas.style.flex = '0 0 auto';
+    }
+
+    _setBlochCanvasVisible(canvas, visible) {
+        if (!canvas) return;
+        canvas.style.visibility = visible ? 'visible' : 'hidden';
+        canvas.style.opacity = visible ? '1' : '0';
+    }
+
+    _primeBlochCanvasDisplay() {
+        if (!this.blochRenderer || !this.blochScene || !this.blochCamera) return;
+        this.applyBlochBackground();
+        this.blochRenderer.render(this.blochScene, this.blochCamera);
+        this._setBlochCanvasVisible(this.blochRenderer.domElement, true);
+    }
+
+    attachBlochResizeHandlers(container) {
+        this.detachBlochResizeHandlers();
+        if (!container) return;
+
+        this._blochResizeObserver = new ResizeObserver(() => {
+            requestAnimationFrame(() => this.resizeBlochSphere());
+        });
+        this._blochResizeObserver.observe(container);
+        const panel = container.closest('#qubitTabContent');
+        if (panel) this._blochResizeObserver.observe(panel);
+        const vizRegion = container.closest('.viz-region');
+        if (vizRegion) this._blochResizeObserver.observe(vizRegion);
+
+        this._blochWindowResize = () => this.resizeBlochSphere();
+        window.addEventListener('resize', this._blochWindowResize);
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => this.resizeBlochSphere());
+        });
+    }
+
+    detachBlochResizeHandlers() {
+        if (this._blochResizeObserver) {
+            this._blochResizeObserver.disconnect();
+            this._blochResizeObserver = null;
+        }
+        if (this._blochWindowResize) {
+            window.removeEventListener('resize', this._blochWindowResize);
+            this._blochWindowResize = null;
+        }
     }
     
     showMaximizedBloch(qubitIndex, quantumState) {
@@ -398,27 +544,29 @@ class QubitVisualizer {
     }
 
     init3DBlochSphere(container, coords) {
-        // Make bloch sphere bigger - use more of the available space
-        const width = container.clientWidth || 300;
-        const height = container.clientHeight || Math.max(250, Math.min(width, 300));
+        const size = this._blochSquareSize(container);
+        this._applyBlochLayout(container, size);
         
-        // Scene
         this.blochScene = new THREE.Scene();
-        this.blochScene.background = window.QubibyteTheme
-            ? window.QubibyteTheme.createThreeBackground()
-            : new THREE.Color(0x0f172a);
         
-        // Camera - positioned to look into the |+⟩ and |i⟩ corner
-        // With |+⟩ on the left and |i⟩ on the right when |0⟩ is at top
-        this.blochCamera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+        // Square aspect keeps the sphere circular (original used width/height separately)
+        this.blochCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
         this.blochCamera.position.set(2.7, 2.0, 2.7);
-        this.blochCamera.lookAt(0, 0, 0);
+        this._applyBlochCameraFraming(container);
         
-        // Renderer
-        this.blochRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        this.blochRenderer.setSize(width, height);
+        // Renderer — keep hidden until first paint to avoid default white canvas flash
+        this.blochRenderer = new THREE.WebGLRenderer({
+            antialias: true,
+            alpha: true,
+            powerPreference: 'high-performance',
+            failIfMajorPerformanceCaveat: false
+        });
+        this.blochRenderer.setSize(size, size);
         this.blochRenderer.setPixelRatio(window.devicePixelRatio);
-        container.appendChild(this.blochRenderer.domElement);
+        this.applyBlochBackground();
+        const blochCanvas = this.blochRenderer.domElement;
+        this._styleBlochCanvas(blochCanvas, size);
+        this._setBlochCanvasVisible(blochCanvas, false);
         
         // Create a group to hold the sphere and decorations for rotation
         this.sphereGroup = new THREE.Group();
@@ -471,6 +619,9 @@ class QubitVisualizer {
         // Mouse interaction
         this.setupMouseControls(container);
         
+        container.appendChild(blochCanvas);
+        this._primeBlochCanvasDisplay();
+        
         // Animation loop
         this.animate();
     }
@@ -519,7 +670,7 @@ class QubitVisualizer {
             points.push(new THREE.Vector3(Math.cos(angle), 0, Math.sin(angle)));
         }
         const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const material = new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.5 });
+        const material = new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.4 });
         const equator = new THREE.Line(geometry, material);
         this.sphereGroup.add(equator);
     }
@@ -532,7 +683,7 @@ class QubitVisualizer {
             points1.push(new THREE.Vector3(Math.cos(angle), Math.sin(angle), 0));
         }
         const geometry1 = new THREE.BufferGeometry().setFromPoints(points1);
-        const material = new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.3 });
+        const material = new THREE.LineBasicMaterial({ color: 0x64748b, transparent: true, opacity: 0.4 });
         const meridian1 = new THREE.Line(geometry1, material);
         this.sphereGroup.add(meridian1);
         
@@ -754,8 +905,12 @@ class QubitVisualizer {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
         }
+
+        this.detachBlochResizeHandlers();
         
         if (this.blochRenderer) {
+            const el = this.blochRenderer.domElement;
+            if (el && el.parentNode) el.parentNode.removeChild(el);
             this.blochRenderer.dispose();
             this.blochRenderer = null;
         }
@@ -764,26 +919,28 @@ class QubitVisualizer {
         this.blochCamera = null;
         this.sphereGroup = null;
         this.stateArrow = null;
+        this.blochContainerEl = null;
     }
     
-    // Resize the Bloch sphere to fit the container properly
+    // Resize the Bloch sphere to fit the container properly (always square)
     resizeBlochSphere() {
-        const container = document.getElementById('blochSphere3D');
+        const container = this.blochContainerEl || document.getElementById('blochSphere3D');
         if (!container || !this.blochRenderer || !this.blochCamera) return;
         
-        const width = container.clientWidth;
-        const height = container.clientHeight;
+        const size = this._blochSquareSize(container);
+        if (size <= 0) return;
+
+        this._applyBlochLayout(container, size);
         
-        if (width <= 0 || height <= 0) return;
-        
-        // Update camera aspect ratio
-        this.blochCamera.aspect = width / height;
+        this.blochCamera.aspect = 1;
+        this._applyBlochCameraFraming(container);
         this.blochCamera.updateProjectionMatrix();
         
-        // Update renderer size
-        this.blochRenderer.setSize(width, height);
+        this.blochRenderer.setPixelRatio(window.devicePixelRatio);
+        this.blochRenderer.setSize(size, size);
+        this.applyBlochBackground();
+        this._styleBlochCanvas(this.blochRenderer.domElement, size);
         
-        // Force a render
         if (this.blochScene) {
             this.blochRenderer.render(this.blochScene, this.blochCamera);
         }
@@ -829,7 +986,7 @@ class QubitVisualizer {
 
     updateStateVector(quantumState, settings = null) {
         if (settings) this.setSettings(settings);
-        const stateVectorEl = document.getElementById('stateVector');
+        const stateVectorEl = document.getElementById(this.stateVectorElId);
         if (!stateVectorEl || !quantumState) return;
         
         const precision = this.settings.precision;
@@ -837,7 +994,11 @@ class QubitVisualizer {
         const threshold = hideNegligibles ? Math.pow(10, -(precision + 2)) : 1e-10;
         
         const stateStr = this.formatStateVector(quantumState, precision, threshold);
-        stateVectorEl.innerHTML = stateStr;
+        const measureQubits = settings?.measurePreviewQubits;
+        const measureNote = Array.isArray(measureQubits) && measureQubits.length > 0
+            ? `<p class="sv-measure-note">Pre-measurement amplitudes (MEASURE not applied here)</p>`
+            : '';
+        stateVectorEl.innerHTML = measureNote + stateStr;
         stateVectorEl.classList.add('updating');
         setTimeout(() => {
             stateVectorEl.classList.remove('updating');
@@ -893,7 +1054,7 @@ class QubitVisualizer {
             }
             
             const ketStr = `<span class="sv-ket">|${binary}⟩</span>`;
-            return `${coeffStr}${ketStr}`;
+            return `${coeffStr} ${ketStr}`;
         });
         
         if (terms.length === 0) return '<span class="sv-ket">|0⟩</span>';
@@ -903,7 +1064,7 @@ class QubitVisualizer {
 
     updateMeasurementResults(quantumState, settings = null) {
         if (settings) this.setSettings(settings);
-        const resultsEl = document.getElementById('measurementResults');
+        const resultsEl = document.getElementById(this.measurementResultsElId);
         if (!resultsEl || !quantumState) return;
         
         const precision = this.settings.precision;
@@ -911,6 +1072,31 @@ class QubitVisualizer {
         const threshold = hideNegligibles ? Math.pow(10, -(precision + 2)) : 1e-10;
         
         resultsEl.innerHTML = '';
+
+        const measureQubits = settings?.measurePreviewQubits;
+        if (Array.isArray(measureQubits) && measureQubits.length > 0) {
+            const banner = document.createElement('p');
+            banner.className = 'measure-preview-banner';
+            banner.textContent = 'Single-qubit outcomes if measured now (not a random shot):';
+            resultsEl.appendChild(banner);
+
+            measureQubits.forEach((q) => {
+                const p0 = quantumState.getProbability(q, 0);
+                const p1 = quantumState.getProbability(q, 1);
+                const row = document.createElement('div');
+                row.className = 'measure-preview-row';
+                row.innerHTML =
+                    `<span class="measure-preview-label">q${q}</span>` +
+                    `<span class="measure-preview-value">|0⟩ ${(p0 * 100).toFixed(precision)}%</span>` +
+                    `<span class="measure-preview-value">|1⟩ ${(p1 * 100).toFixed(precision)}%</span>`;
+                resultsEl.appendChild(row);
+            });
+
+            const sep = document.createElement('p');
+            sep.className = 'measure-preview-sep';
+            sep.textContent = 'Full computational basis:';
+            resultsEl.appendChild(sep);
+        }
         
         const probabilities = quantumState.getAllProbabilities();
         let sortedProbs = Object.entries(probabilities)

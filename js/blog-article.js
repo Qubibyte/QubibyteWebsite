@@ -168,9 +168,14 @@
         }
 
         contentHTML += `
-            <h2 class="mt-4">${escapeHtml(blog.title)}</h2>
-            <p><strong>Author:</strong> ${escapeHtml(blog.author)}</p>
-            <p><strong>Date:</strong> ${escapeHtml(blog.date)}</p>
+            <header class="blog-article-header">
+                <h2 class="blog-article-title mt-4">${escapeHtml(blog.title)}</h2>
+                <p class="blog-article-meta">
+                    <span class="blog-article-meta-item"><strong>Author:</strong> ${escapeHtml(blog.author)}</span>
+                    <span class="blog-article-meta-sep" aria-hidden="true">•</span>
+                    <span class="blog-article-meta-item"><strong>Date:</strong> ${escapeHtml(blog.date)}</span>
+                </p>
+            </header>
         `;
 
         (blog.content || []).forEach((item) => {

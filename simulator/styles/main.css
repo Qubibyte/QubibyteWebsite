@@ -2,23 +2,26 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+    scrollbar-width: thin;
 }
 
 :root {
-    --primary-color: #6366f1;
-    --primary-dark: #4f46e5;
-    --secondary-color: #8b5cf6;
-    --background: #0f172a;
-    --surface: #1e293b;
-    --surface-light: #334155;
+    --primary-color: #6B5FC7;
+    --primary-dark: #554A9E;
+    --secondary-color: #AB6FAF;
+    --background: #0a0a1a;
+    --surface: #141428;
+    --surface-light: #1e1e3a;
+    --surface-lighter: #252545;
     --text-primary: #f1f5f9;
-    --text-secondary: #cbd5e1;
-    --border-color: #475569;
+    --text-secondary: #94a3b8;
+    --border-color: rgba(255, 255, 255, 0.10);
     --success: #10b981;
     --danger: #ef4444;
     --warning: #f59e0b;
-    --shadow: rgba(0, 0, 0, 0.3);
-    --shadow-lg: rgba(0, 0, 0, 0.5);
+    --shadow: rgba(0, 0, 0, 0.45);
+    --shadow-lg: rgba(0, 0, 0, 0.65);
 
     /* Gate color families */
     --gate-x-color: #ef4444;
@@ -43,7 +46,39 @@
     /* Green - Measurement */
     --gate-measure-dark: #059669;
 
-    --sidebar-gradient-end: rgba(15, 23, 42, 0.95);
+    --sidebar-gradient-end: #060614;
+
+    /* Scrollbars — match Circuit Builder tab purple (--primary-color) */
+    --scrollbar-size: 8px;
+    --scrollbar-track: color-mix(in srgb, var(--primary-color) 10%, var(--surface));
+    --scrollbar-thumb: var(--primary-color);
+    --scrollbar-thumb-hover: var(--primary-dark);
+
+    /* Qubi code editor surface */
+    --code-editor-bg: var(--background);
+    --code-editor-gutter-bg: var(--surface);
+
+    /* Qubi editor popups (autocomplete, errors, matrix preview) */
+    --qubi-popup-bg: #181825;
+    --qubi-popup-border: rgba(148, 163, 184, 0.35);
+    --qubi-popup-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    --qubi-popup-text: var(--text-primary);
+    --qubi-popup-text-muted: #94a3b8;
+    --qubi-popup-text-secondary: #cbd5e1;
+    --qubi-popup-accent: #c084fc;
+    --qubi-popup-heading: #a5b4fc;
+    --qubi-popup-code-bg: rgba(0, 0, 0, 0.25);
+    --qubi-popup-code-text: #7dd3c0;
+    --qubi-popup-panel-bg: color-mix(in srgb, var(--background) 80%, transparent);
+    --qubi-popup-code-surface: rgba(0, 0, 0, 0.35);
+    --qubi-popup-strong: #fde68a;
+    --qubi-popup-emphasis: #fbbf24;
+    --qubi-popup-cyan: #7dd3fc;
+    --qubi-error-tooltip-bg: #1e1e2e;
+    --qubi-error-tooltip-text: #ef4444;
+    --qubi-error-tooltip-border: #ef4444;
+    --qubi-error-tooltip-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --qubi-matrix-cell: #c9d1d9;
 }
 
 body {
@@ -57,12 +92,11 @@ body {
 /* ======================== TABLET (max-width: 1024px) ======================== */
 @media (max-width: 1024px) {
     .sidebar {
-        width: 220px;
         padding: 1rem;
     }
 
     .code-sidebar {
-        width: 300px;
+        width: min(320px, 32vw);
     }
 
     .visualization-section {
@@ -133,64 +167,79 @@ body {
         font-size: 0.8rem;
     }
 
-    /* ---- LEFT SIDEBAR (Gate Palette) ---- */
+    /* ---- LEFT SIDEBAR → mobile gate toolbar (below header, above circuit) ---- */
     .sidebar {
         width: 100% !important;
-        max-height: 200px !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch;
+        min-width: 0 !important;
+        max-width: none !important;
+        max-height: none !important;
+        overflow: visible !important;
         border-right: none !important;
         border-left: none !important;
         border-bottom: 1px solid var(--border-color);
-        padding: 0.5rem 0.75rem;
+        padding: 0.5rem 0 0.65rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        flex: none !important;
+        min-height: auto !important;
     }
 
-    .sidebar-header {
-        margin-bottom: 0.4rem;
+    .sidebar-gates-panel {
+        flex: none !important;
+        flex-shrink: 0;
+        min-height: auto;
+        overflow: visible;
+        padding: 0 0.75rem;
+    }
+
+    .sidebar-gates-panel .sidebar-panel-title {
+        margin-bottom: 0.75rem;
+        padding: 0 0 0.3rem;
     }
 
     .gate-palette {
-        gap: 0.4rem;
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: nowrap;
+        align-items: flex-start;
+        gap: 0.65rem;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x proximity;
+        scroll-padding-inline: 4px;
+        padding: 3px 4px 0.25rem;
+        min-height: 72px;
     }
 
     .gate-category {
-        margin-bottom: 0.25rem;
+        flex: 0 0 auto;
+        margin-bottom: 0;
     }
 
-    .category-title {
-        font-size: 0.7rem;
-        margin-bottom: 0.3rem;
+    .gate-category .category-title {
+        font-size: 0.58rem;
+        margin-bottom: 0.25rem;
+        white-space: nowrap;
     }
 
     .gate-list {
-        display: grid;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 0.3rem;
+        display: flex !important;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 4px !important;
+        width: max-content;
     }
 
-    .gate-item {
-        padding: 0.3rem;
-        gap: 0.25rem;
-        border-radius: 0.375rem;
+    .sidebar-examples-panel {
+        display: none !important;
     }
 
-    .gate-name {
+    .sidebar-see-examples-btn {
         display: block !important;
-        font-size: 0.6rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-    }
-
-    .gate-info-icon {
-        display: none;
-    }
-
-    .gate-symbol {
-        width: 38px;
-        height: 38px;
-        font-size: 0.85rem;
+        width: calc(100% - 1.5rem);
+        margin: 0 0.75rem;
     }
 
     /* Mobile hint */
@@ -199,10 +248,30 @@ body {
         font-size: 0.7rem;
         color: var(--text-secondary);
         text-align: center;
-        padding: 0.25rem 0;
-        margin: 0 0 0.25rem 0;
+        padding: 0 0.75rem 0.15rem;
+        margin: 0;
         font-style: italic;
         opacity: 0.7;
+    }
+
+    .gate-item {
+        width: 50px;
+        height: 50px;
+        padding: 0;
+        flex-shrink: 0;
+    }
+
+    .gate-name {
+        display: none !important;
+    }
+
+    .gate-palette .gate-symbol {
+        width: 50px;
+        height: 50px;
+        min-width: 50px;
+        max-width: 50px;
+        min-height: 50px;
+        max-height: 50px;
     }
 
     /* ---- CENTER AREA (Circuit Builder) ---- */
@@ -220,6 +289,7 @@ body {
     }
 
     .circuit-controls {
+        display: flex;
         flex-direction: column;
         gap: 0.5rem;
         align-items: stretch;
@@ -295,8 +365,9 @@ body {
         flex: none !important;
     }
 
-    /* Resources wrapper — needs explicit height */
-    .resources-wrapper {
+    /* Resources / analysis wrappers — needs explicit height */
+    .resources-wrapper,
+    .analysis-wrapper {
         min-height: 300px;
         height: 50vh;
         overflow: auto !important;
@@ -385,17 +456,15 @@ body {
     }
 
     .code-editor-container {
-        min-height: 200px;
-        height: 250px;
+        min-height: 160px;
+        height: auto;
+        flex: 1 1 auto;
         margin: 0 0.75rem 0.75rem 0.75rem;
     }
 
-    .code-editor-wrapper {
-        min-height: 200px;
-    }
-
+    .code-editor-wrapper,
     .code-editor {
-        min-height: 200px;
+        min-height: 0;
     }
 
     .qubi-ai-panel {
@@ -433,10 +502,6 @@ body {
     .export-options {
         grid-template-columns: 1fr;
     }
-
-    .bloch-sphere-3d-container {
-        min-height: 200px;
-    }
 }
 
 /* ======================== SMALL PHONE (max-width: 480px) ======================== */
@@ -460,14 +525,13 @@ body {
         font-size: 0.75rem;
     }
 
-    .sidebar {
-        max-height: 170px !important;
-    }
-
-    .gate-symbol {
-        width: 34px;
-        height: 34px;
-        font-size: 0.8rem;
+    .gate-palette .gate-symbol {
+        width: 50px;
+        height: 50px;
+        min-width: 50px;
+        max-width: 50px;
+        min-height: 50px;
+        max-height: 50px;
     }
 
     .circuit-canvas-wrapper {
@@ -484,8 +548,9 @@ body {
     }
 
     .code-editor-container {
-        min-height: 160px;
-        height: 200px;
+        min-height: 140px;
+        height: auto;
+        flex: 1 1 auto;
     }
 
     .qubit-count-input {
@@ -525,19 +590,30 @@ body {
 .title-section {
     display: flex;
     align-items: center;
+    gap: 0;
+}
+
+.title-section > a {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    line-height: 0;
 }
 
 .title {
     font-size: 1.5rem;
     font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+    line-height: 1.15;
+    margin: 0;
+    padding: 0;
+    align-self: center;
 }
 
 .logo {
     height: 40px;
+    width: auto;
     margin-right: 1rem;
+    display: block;
 }
 
 .quantum-icon {
@@ -561,6 +637,7 @@ body {
 
 .header-controls {
     display: flex;
+    align-items: center;
     gap: 0.75rem;
 }
 
@@ -620,6 +697,7 @@ body {
     display: flex;
     flex: 1;
     overflow: hidden;
+    min-height: 0;
 }
 
 /* Desktop-only drag handles between gate palette / circuit / code editor */
@@ -655,15 +733,117 @@ body {
     .code-sidebar {
         flex-shrink: 0;
     }
+
+    /* Desktop sidebar — fixed width column with scrollable 60/40 split */
+    .sidebar {
+        width: clamp(184px, 15vw, 260px);
+        min-width: 184px;
+        max-width: 260px;
+        border-right: 1px solid var(--border-color, rgba(99, 102, 241, 0.1));
+        padding: 0.75rem;
+        overflow: hidden;
+        min-height: 0;
+    }
+
+    .sidebar-gates-panel {
+        flex: 3 1 0;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .sidebar-examples-panel {
+        flex: 2 1 0;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        -webkit-overflow-scrolling: touch;
+        border-top: 1px solid var(--border-color);
+        margin-top: 0.35rem;
+        padding-top: 0.45rem;
+    }
+
+    .gate-palette {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
 }
 
-/* Sidebar */
+/* Sidebar — shared; width/flex split is desktop-only (see min-width: 769px) */
 .sidebar {
-    width: 260px;
     background: linear-gradient(180deg, var(--surface) 0%, var(--sidebar-gradient-end) 100%);
-    border-right: 1px solid var(--border-color, rgba(99, 102, 241, 0.1));
-    overflow-y: auto;
-    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-panel-title {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-primary);
+    opacity: 0.95;
+    margin: 0 0 0.95rem;
+    padding: 0 0.25rem 0.35rem;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.sidebar-see-examples-btn {
+    display: none;
+    width: 100%;
+    margin-top: 0.15rem;
+}
+
+.sidebar-gates-panel {
+    flex-shrink: 0;
+}
+
+.sidebar-examples-panel {
+    flex-shrink: 0;
+}
+
+.sidebar-examples-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.sidebar-example-category {
+    margin-bottom: 0;
+}
+
+.sidebar-examples-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.sidebar-example-item {
+    display: block;
+    width: 100%;
+    padding: 0.42rem 0.45rem;
+    border: none;
+    border-radius: 0.375rem;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.25;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-example-item:hover {
+    background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+    color: #fff;
+}
+
+.sidebar-example-item:active {
+    background: color-mix(in srgb, var(--primary-color) 22%, transparent);
 }
 
 .sidebar-header {
@@ -688,8 +868,7 @@ body {
 
 .gate-palette {
     display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
+    padding: 0 4px;
 }
 
 .gate-category {
@@ -703,14 +882,18 @@ body {
     letter-spacing: 0.12em;
     margin-bottom: 0.4rem;
     padding: 0 0.25rem;
-    color: var(--text-secondary);
-    opacity: 0.7;
+    color: var(--text-primary);
+    opacity: 0.95;
 }
 
 .gate-list {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: 5px;
+    grid-template-columns: repeat(auto-fill, 50px);
+    grid-auto-rows: 50px;
+    column-gap: 4px;
+    row-gap: 4px;
+    justify-content: start;
+    padding: 3px;
 }
 
 /* Circuit Area */
@@ -924,6 +1107,15 @@ body {
     flex-direction: column;
 }
 
+#qubitTabContent {
+    justify-content: flex-start;
+    align-items: stretch;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding-top: 0;
+}
+
 .viz-panel .results-display,
 .viz-panel .state-vector {
     flex: 1;
@@ -971,9 +1163,10 @@ body {
     display: flex;
 }
 
-/* NMR and Resources wrappers */
+/* NMR, Resources, and Analysis wrappers */
 .nmr-simulator-wrapper,
-.resources-wrapper {
+.resources-wrapper,
+.analysis-wrapper {
     flex: 1;
     overflow: hidden;
     display: flex;
@@ -991,15 +1184,17 @@ body {
     background: var(--surface);
     border-bottom: 1px solid var(--border-color);
     padding: 1rem 1.5rem;
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
+    gap: 0.75rem;
 }
 
 .qubit-controls {
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    justify-self: start;
 }
 
 .input-number {
@@ -1027,15 +1222,18 @@ body {
     gap: 1.5rem;
     font-size: 0.875rem;
     color: var(--text-secondary);
+    justify-self: end;
 }
 
 .zoom-controls {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
-    padding: 0 1rem;
+    padding: 0 0.75rem;
     border-left: 1px solid var(--border-color);
     border-right: 1px solid var(--border-color);
+    justify-self: center;
 }
 
 .zoom-controls span {
@@ -1099,9 +1297,48 @@ body {
 .editor-toolbar {
     background: var(--surface);
     border-bottom: 1px solid var(--border-color);
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.65rem;
     display: flex;
-    gap: 0.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.editor-toolbar .toolbar-separator {
+    display: none;
+}
+
+.editor-toolbar #clearQubiBtn {
+    flex: 0 0 auto;
+    min-width: 3.25rem;
+}
+
+.editor-toolbar .qubi-splitbtn {
+    flex: 1 1 5.5rem;
+    min-width: 5.5rem;
+    max-width: 7.75rem;
+}
+
+.editor-toolbar.qubi-fix-hidden .qubi-splitbtn {
+    flex: 1 1 0;
+    min-width: 5rem;
+    max-width: none;
+}
+
+.editor-toolbar .qubi-toolbar-btn {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.editor-toolbar .qubi-splitbtn-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.editor-toolbar .qubi-splitbtn-caret {
+    flex: 0 0 30px;
 }
 
 /* Qubi file tabs */
@@ -1129,9 +1366,9 @@ body {
     gap: 0.35rem;
     padding: 0.35rem 0.55rem;
     border-radius: 0.5rem;
-    border: 1px solid rgba(148, 163, 184, 0.16);
-    background: rgba(30, 41, 59, 0.55);
-    color: rgba(226, 232, 240, 0.9);
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-light) 65%, var(--background));
+    color: var(--text-primary);
     font-size: 0.78rem;
     cursor: pointer;
     user-select: none;
@@ -1144,26 +1381,70 @@ body {
     text-overflow: ellipsis;
 }
 
-.qubi-tab-rename {
-    width: 160px;
-    max-width: 240px;
-    padding: 0.2rem 0.35rem;
+.qubi-tab.is-renaming {
+    flex: 0 0 auto;
+    width: auto;
+    max-width: none;
+}
+
+.qubi-tab-rename-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    max-width: min(240px, 100%);
+    padding: 0.1rem 0.35rem 0.1rem 0.25rem;
     border-radius: 0.4rem;
-    border: 1px solid rgba(99, 102, 241, 0.5);
-    background: rgba(15, 23, 42, 0.55);
-    color: rgba(226, 232, 240, 0.95);
+    border: 1px solid color-mix(in srgb, var(--primary-color) 50%, transparent);
+    background: color-mix(in srgb, var(--background) 75%, transparent);
+}
+
+.qubi-tab-rename-wrap:focus-within {
+    border-color: color-mix(in srgb, var(--primary-color) 75%, transparent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 18%, transparent);
+}
+
+.qubi-tab-rename-measure {
+    position: absolute;
+    visibility: hidden;
+    white-space: pre;
     font-size: 0.78rem;
+    font-family: inherit;
+    pointer-events: none;
+    height: 0;
+    overflow: hidden;
+}
+
+.qubi-tab-rename {
+    width: 28px;
+    min-width: 28px;
+    max-width: 180px;
+    padding: 0.1rem 0;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    font-family: inherit;
     outline: none;
+    field-sizing: content;
+}
+
+.qubi-tab-rename-suffix {
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+    flex-shrink: 0;
 }
 
 .qubi-tab-rename:focus {
-    border-color: rgba(99, 102, 241, 0.75);
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.18);
+    border-color: transparent;
+    box-shadow: none;
 }
 
 .qubi-tab.active {
-    border-color: rgba(99, 102, 241, 0.65);
-    background: rgba(99, 102, 241, 0.16);
+    border-color: color-mix(in srgb, var(--primary-color) 65%, transparent);
+    background: color-mix(in srgb, var(--primary-color) 16%, transparent);
 }
 
 .qubi-tab .qubi-tab-close {
@@ -1173,9 +1454,9 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 999px;
-    border: 1px solid rgba(148, 163, 184, 0.12);
-    background: rgba(15, 23, 42, 0.35);
-    color: rgba(203, 213, 225, 0.85);
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--background) 65%, transparent);
+    color: var(--text-secondary);
     font-size: 0.9rem;
     line-height: 1;
 }
@@ -1185,13 +1466,9 @@ body {
     border-color: rgba(239, 68, 68, 0.3);
 }
 
-/* Qubi editor toolbar: widen 3 buttons when fix button hidden */
-.editor-toolbar.qubi-fix-hidden .qubi-toolbar-btn {
-    flex: 1;
-    min-width: 0;
-}
-
-.editor-toolbar .qubi-fix-btn {
+/* Qubi editor toolbar: keep Clear fixed width; Save/Load share remaining space */
+.editor-toolbar.qubi-fix-hidden .qubi-toolbar-btn.qubi-splitbtn-main,
+.editor-toolbar.qubi-fix-hidden .qubi-toolbar-btn.qubi-splitbtn-caret {
     flex: 0 0 auto;
 }
 
@@ -1231,10 +1508,10 @@ body {
     top: calc(100% + 6px);
     left: 0;
     min-width: 200px;
-    background: #181825;
-    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: var(--surface);
+    border: 1px solid var(--border-color);
     border-radius: 10px;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    box-shadow: 0 10px 28px var(--shadow-lg), 0 0 0 1px var(--border-subtle, rgba(255, 255, 255, 0.04));
     padding: 6px;
     z-index: 20;
 }
@@ -1256,28 +1533,30 @@ body {
 .qubi-splitbtn-item:hover,
 .qubi-splitbtn-item:focus-visible {
     outline: none;
-    background: rgba(59, 130, 246, 0.14);
+    background: color-mix(in srgb, var(--color-secondary, #0687C9) 14%, transparent);
 }
 
 /* Code Editor with Syntax Highlighting */
 .code-editor-container {
-    flex: 1;
+    flex: 1 1 auto;
     display: flex;
-    background: var(--background);
+    flex-direction: row;
+    align-items: stretch;
+    background: var(--code-editor-bg);
     border: 1px solid var(--border-color);
     border-radius: 0.375rem;
     overflow: hidden;
-    min-height: 200px;
+    min-height: 0;
     position: relative;
     margin: 0 1rem 1rem 1rem;
 }
 
 .line-numbers {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    background: var(--surface);
+    flex: 0 0 50px;
+    width: 50px;
+    min-width: 50px;
+    align-self: stretch;
+    background: var(--code-editor-gutter-bg);
     color: var(--text-secondary);
     padding: 1rem 0.5rem;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
@@ -1286,11 +1565,16 @@ body {
     text-align: right;
     user-select: none;
     border-right: 1px solid var(--border-color);
-    min-width: 40px;
-    width: 50px;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     z-index: 2;
     box-sizing: border-box;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.line-numbers::-webkit-scrollbar {
+    display: none;
 }
 
 .line-numbers .line-num {
@@ -1319,17 +1603,15 @@ body {
 }
 
 .code-editor-wrapper {
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
     position: relative;
     overflow-x: auto;
     overflow-y: auto;
-    min-height: 300px;
-    margin-left: 50px;
-    /* Space for line numbers */
+    background: var(--code-editor-bg);
     scrollbar-width: none;
-    /* Firefox */
     -ms-overflow-style: none;
-    /* IE and Edge */
 }
 
 .code-editor-wrapper::-webkit-scrollbar {
@@ -1374,7 +1656,7 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    min-height: 300px;
+    min-height: 0;
     background: transparent;
     color: transparent;
     caret-color: var(--text-primary);
@@ -1447,16 +1729,16 @@ body {
 /* Syntax error tooltip */
 .syntax-error-tooltip {
     position: fixed;
-    background: #1e1e2e;
-    color: #ef4444;
-    border: 1px solid #ef4444;
+    background: var(--qubi-error-tooltip-bg);
+    color: var(--qubi-error-tooltip-text);
+    border: 1px solid var(--qubi-error-tooltip-border);
     border-radius: 6px;
     padding: 8px 12px;
     font-size: 0.8rem;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     max-width: 400px;
     z-index: 10000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--qubi-error-tooltip-shadow);
     pointer-events: none;
     white-space: pre-wrap;
     word-wrap: break-word;
@@ -1469,11 +1751,12 @@ body {
 .matrix-preview-popup {
     position: fixed;
     z-index: 10001;
-    background: #181825;
-    border: 1px solid rgba(148, 163, 184, 0.25);
+    background: var(--qubi-popup-bg);
+    color: var(--qubi-popup-text);
+    border: 1px solid var(--qubi-popup-border);
     border-radius: 8px;
     padding: 14px 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    box-shadow: var(--qubi-popup-shadow);
     pointer-events: none;
 }
 
@@ -1488,19 +1771,20 @@ body {
     border-radius: 2px;
 }
 
-/* Qubi code editor autocomplete */
+/* Qubi code editor autocomplete (portaled to body — position: fixed in JS) */
 .qubi-autocomplete {
-    position: absolute;
-    z-index: 12;
+    position: fixed;
+    z-index: 10050;
     min-width: 240px;
     max-width: min(460px, calc(100% - 8px));
     max-height: 320px;
     overflow-y: auto;
     overflow-x: hidden;
-    background: #181825;
-    border: 1px solid rgba(148, 163, 184, 0.35);
+    background: var(--qubi-popup-bg);
+    color: var(--qubi-popup-text);
+    border: 1px solid var(--qubi-popup-border);
     border-radius: 8px;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04);
+    box-shadow: var(--qubi-popup-shadow);
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 0.8rem;
     line-height: 1.35;
@@ -1513,9 +1797,9 @@ body {
     margin: 0;
     padding: 7px 10px;
     border: none;
-    border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+    border-bottom: 1px solid color-mix(in srgb, var(--qubi-popup-border) 40%, transparent);
     background: transparent;
-    color: var(--text-primary, #e2e8f0);
+    color: var(--qubi-popup-text);
     text-align: left;
     cursor: pointer;
     box-sizing: border-box;
@@ -1527,18 +1811,18 @@ body {
 
 .qubi-autocomplete-item:hover,
 .qubi-autocomplete-item:focus-visible {
-    background: rgba(192, 132, 252, 0.12);
+    background: color-mix(in srgb, var(--primary-color) 12%, transparent);
     outline: none;
 }
 
 .qubi-autocomplete-item.is-active {
-    background: rgba(192, 132, 252, 0.22);
+    background: color-mix(in srgb, var(--primary-color) 22%, transparent);
 }
 
 .qubi-autocomplete-item .qubi-ac-label {
     display: block;
     font-weight: 600;
-    color: #c084fc;
+    color: var(--qubi-popup-accent);
     letter-spacing: 0.02em;
 }
 
@@ -1546,7 +1830,7 @@ body {
     display: block;
     margin-top: 2px;
     font-size: 0.72rem;
-    color: #94a3b8;
+    color: var(--qubi-popup-text-muted);
     font-weight: 400;
     white-space: normal;
     word-break: break-word;
@@ -1557,8 +1841,8 @@ body {
     margin-top: 6px;
     padding: 7px 8px;
     border-radius: 6px;
-    background: rgba(15, 23, 42, 0.65);
-    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: var(--qubi-popup-panel-bg);
+    border: 1px solid var(--border-color);
 }
 
 .qubi-autocomplete-item .qubi-ac-panel-h {
@@ -1566,7 +1850,7 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    color: #a5b4fc;
+    color: var(--qubi-popup-heading);
     margin-bottom: 6px;
 }
 
@@ -1587,8 +1871,8 @@ body {
     min-width: 0;
     padding: 5px 7px;
     border-radius: 6px;
-    border: 1px solid rgba(148, 163, 184, 0.28);
-    background: rgba(30, 41, 59, 0.5);
+    border: 1px solid var(--border-color);
+    background: var(--qubi-popup-panel-bg);
 }
 
 .qubi-autocomplete-item .qubi-ac-node-ctl {
@@ -1609,7 +1893,7 @@ body {
     display: block;
     font-size: 0.62rem;
     font-weight: 700;
-    color: #e2e8f0;
+    color: var(--qubi-popup-text);
     letter-spacing: 0.03em;
 }
 
@@ -1618,26 +1902,26 @@ body {
     margin-top: 3px;
     font-size: 0.65rem;
     line-height: 1.35;
-    color: #cbd5e1;
+    color: var(--qubi-popup-text-secondary);
 }
 
 .qubi-autocomplete-item .qubi-ac-node-v em {
     font-style: normal;
     font-weight: 700;
-    color: #fbbf24;
+    color: var(--qubi-popup-emphasis);
 }
 
 .qubi-autocomplete-item .qubi-ac-flow-arrow {
     flex: 0 0 auto;
     align-self: center;
     font-size: 1rem;
-    color: #94a3b8;
+    color: var(--qubi-popup-text-muted);
     padding: 0 1px;
 }
 
 .qubi-autocomplete-item .qubi-ac-swap-glyph {
     font-size: 1.1rem;
-    color: #7dd3fc;
+    color: var(--qubi-popup-cyan);
     line-height: 1;
 }
 
@@ -1645,24 +1929,24 @@ body {
     margin: 6px 0 0;
     font-size: 0.65rem;
     line-height: 1.45;
-    color: #cbd5e1;
+    color: var(--qubi-popup-text-secondary);
 }
 
 .qubi-autocomplete-item .qubi-ac-panel-note code {
     font-size: 0.95em;
-    color: #7dd3c0;
-    background: rgba(0, 0, 0, 0.25);
+    color: var(--qubi-popup-code-text);
+    background: var(--qubi-popup-code-bg);
     padding: 0 4px;
     border-radius: 3px;
 }
 
 .qubi-autocomplete-item .qubi-ac-panel-note strong {
-    color: #fde68a;
+    color: var(--qubi-popup-strong);
     font-weight: 600;
 }
 
 .qubi-autocomplete-item .qubi-ac-panel-note-dim {
-    color: #94a3b8;
+    color: var(--qubi-popup-text-muted);
     font-size: 0.62rem;
 }
 
@@ -1682,8 +1966,8 @@ body {
     min-width: 0;
     padding: 5px 6px;
     border-radius: 5px;
-    background: rgba(15, 23, 42, 0.45);
-    border: 1px solid rgba(148, 163, 184, 0.12);
+    background: var(--qubi-popup-panel-bg);
+    border: 1px solid var(--border-color);
 }
 
 .qubi-autocomplete-item .qubi-ac-split-tag {
@@ -1692,7 +1976,7 @@ body {
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: #c4b5fd;
+    color: var(--qubi-popup-accent);
     margin-bottom: 4px;
 }
 
@@ -1700,21 +1984,23 @@ body {
     margin: 0;
     font-size: 0.62rem;
     line-height: 1.4;
-    color: #cbd5e1;
+    color: var(--qubi-popup-text-secondary);
 }
 
 .qubi-autocomplete-item .qubi-ac-examples {
     display: block;
-    margin-top: 5px;
-    padding-top: 5px;
-    border-top: 1px solid rgba(148, 163, 184, 0.15);
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-radius: 5px;
+    background: var(--qubi-popup-code-surface);
+    border: 1px solid color-mix(in srgb, var(--qubi-popup-border) 55%, transparent);
 }
 
 .qubi-autocomplete-item .qubi-ac-ex-line {
     display: block;
     font-size: 0.68rem;
     line-height: 1.45;
-    color: #7dd3c0;
+    color: var(--qubi-popup-code-text);
     font-weight: 500;
     white-space: pre-wrap;
     word-break: break-all;
@@ -1724,7 +2010,7 @@ body {
 .matrix-preview-popup .mp-cell {
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     font-size: 0.82rem;
-    color: #c9d1d9;
+    color: var(--qubi-matrix-cell);
     white-space: nowrap;
     padding: 3px 2px;
 }
@@ -1830,15 +2116,35 @@ body {
 .step-item-gates {
     font-size: 0.75rem;
     color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.step-item-gate-ops {
+    line-height: 1.3;
+}
+
+.step-item-repeat {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    opacity: 0.85;
+    line-height: 1.2;
 }
 
 .step-item.active .step-item-gates {
     color: rgba(255, 255, 255, 0.8);
 }
 
+.step-item.active .step-item-repeat {
+    color: rgba(255, 255, 255, 0.65);
+}
+
 /* Code Sidebar (Right) */
 .code-sidebar {
-    width: 400px;
+    width: 340px;
+    min-width: 240px;
+    max-width: min(560px, 42vw);
     background: var(--surface);
     border-left: 1px solid var(--border-color);
     display: flex;
@@ -1868,7 +2174,7 @@ body {
 }
 
 .code-sidebar .editor-toolbar {
-    margin: 0 1rem;
+    margin: 0 0.75rem;
     border-radius: 0.375rem 0.375rem 0 0;
 }
 
@@ -1884,7 +2190,25 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 0.5rem;
     margin-bottom: 0.5rem;
+}
+
+.qubi-ai-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+    flex-shrink: 0;
+    min-width: 0;
+}
+
+.qubi-ai-header .qubi-fix-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.55rem;
+    line-height: 1.3;
 }
 
 .qubi-ai-label {
@@ -2050,6 +2374,95 @@ body {
 
 .graph-container {
     padding: 0;
+}
+
+/* Short window height (e.g. 1280×648): pie sits too low in the probability panel */
+@media (max-height: 700px) {
+    .visualization-section:not(.collapsed) {
+        flex: 0 0 auto;
+        min-height: 180px;
+        max-height: min(280px, 32vh);
+        padding: 0.65rem;
+    }
+
+    .code-sidebar .editor-panel {
+        min-height: 0;
+    }
+
+    .code-editor-container {
+        min-height: 0;
+        margin-bottom: 0.5rem;
+    }
+
+    .code-editor-wrapper,
+    .code-editor,
+    .code-highlight {
+        min-height: 0 !important;
+    }
+
+    .qubi-ai-panel {
+        padding: 0.5rem 0.75rem;
+    }
+
+    .probability-graphs .viz-panel.active {
+        padding-top: 0.35rem;
+    }
+
+    .probability-graphs .graph-container {
+        flex: 0 1 auto !important;
+        margin-top: -0.4rem;
+    }
+
+    .probability-graphs .graph-container canvas {
+        margin-top: 0 !important;
+        transform: translateY(-6px);
+    }
+
+    .probability-graphs .graph-container canvas + div {
+        margin-top: 0.25rem !important;
+    }
+
+    #qubitTabContent {
+        padding-top: 0.25rem;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+
+    .bloch-sphere-3d-container--compact {
+        margin-top: 0.25rem !important;
+    }
+
+    .step-timeline {
+        padding: 0.55rem 0.75rem;
+        gap: 0.4rem;
+    }
+
+    .step-item {
+        min-width: 72px;
+        padding: 0.55rem 0.5rem;
+        border-width: 1px;
+        border-radius: 0.4rem;
+    }
+
+    .step-item-number {
+        font-size: 0.8125rem;
+        margin-bottom: 0.15rem;
+    }
+
+    .step-item-gates {
+        font-size: 0.7rem;
+        gap: 0.15rem;
+    }
+
+    .step-item-gate-ops {
+        line-height: 1.2;
+    }
+
+    .step-item-repeat {
+        font-size: 0.62rem;
+        line-height: 1.15;
+    }
 }
 
 .graph-view-toggle {
@@ -2563,17 +2976,17 @@ body {
     line-height: 1.45;
     font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
     color: var(--text-primary);
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid var(--border-color);
+    background: var(--qubi-popup-code-surface);
+    border: 1px solid color-mix(in srgb, var(--qubi-popup-border) 55%, var(--border-color));
     border-radius: 0.45rem;
     white-space: pre-wrap;
     word-break: break-word;
 }
 
 .algo-code-preview-pre.preview-error {
-    color: #fca5a5;
-    border-color: rgba(248, 113, 113, 0.45);
-    background: rgba(127, 29, 29, 0.2);
+    color: var(--qubi-error-tooltip-text);
+    border-color: color-mix(in srgb, var(--qubi-error-tooltip-border) 70%, var(--border-color));
+    background: color-mix(in srgb, var(--qubi-error-tooltip-text) 8%, var(--qubi-popup-code-surface));
 }
 
 /* Highlighted Qubi preview uses same token classes as #codeHighlight */
@@ -2916,6 +3329,47 @@ body {
     padding: 0 0.25rem;
 }
 
+.sv-measure-note {
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0 0 0.75rem;
+    line-height: 1.4;
+}
+
+.measure-preview-banner {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0 0 0.5rem;
+}
+
+.measure-preview-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: baseline;
+    margin-bottom: 0.35rem;
+    font-size: 0.8125rem;
+}
+
+.measure-preview-label {
+    font-weight: 600;
+    color: var(--primary-color);
+    min-width: 1.5rem;
+}
+
+.measure-preview-value {
+    color: var(--text-primary);
+}
+
+.measure-preview-sep {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin: 0.75rem 0 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
 .results-display {
     background: transparent;
     border: none;
@@ -2973,23 +3427,29 @@ body {
     justify-content: flex-end;
 }
 
-/* Scrollbar Styling */
+/* Scrollbar styling — subtle purple tint across the simulator */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: var(--scrollbar-size);
+    height: var(--scrollbar-size);
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--surface);
-}
-
-::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: var(--scrollbar-track);
     border-radius: 4px;
 }
 
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 4px;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 28%, transparent);
+}
+
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--surface-light);
+    background: var(--scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-corner {
+    background: var(--scrollbar-track);
 }
 
 /* ===== Inline Algorithm Alert ===== */

@@ -162,6 +162,15 @@ class QuantumState {
         this.amplitudes = complexAmps.map(amp => Complex.scale(amp, 1/norm));
     }
 
+    /** Renormalize amplitudes in place (no-op if already unit norm). */
+    normalize() {
+        const norm = Math.sqrt(this.amplitudes.reduce((sum, amp) => sum + Complex.abs2(amp), 0));
+        if (norm > 1e-15 && Math.abs(norm - 1) > 1e-12) {
+            const inv = 1 / norm;
+            this.amplitudes = this.amplitudes.map((amp) => Complex.scale(amp, inv));
+        }
+    }
+
     // ========== GENERALIZED GATE APPLICATION ==========
     // Apply any k-qubit gate using matrix multiplication
     // matrix: flattened 2^k × 2^k matrix (row-major)
@@ -440,6 +449,32 @@ class QuantumState {
                 this.applyTwoQubitGateOptimized(gate, controlQubit, targetQubit);
             }
         }
+    }
+
+    // Fredkin gate: swap qubitA and qubitB when controlQubit is |1⟩
+    applyCSWAP(controlQubit, qubitA, qubitB) {
+        if (controlQubit === qubitA || controlQubit === qubitB || qubitA === qubitB) {
+            throw new Error('CSWAP requires three distinct qubit indices');
+        }
+
+        const newAmplitudes = this.amplitudes.map((a) => ({ re: a.re, im: a.im }));
+        const maskA = 1 << qubitA;
+        const maskB = 1 << qubitB;
+
+        for (let i = 0; i < this.dimension; i++) {
+            if (((i >> controlQubit) & 1) === 0) continue;
+            const aBit = (i >> qubitA) & 1;
+            const bBit = (i >> qubitB) & 1;
+            if (aBit === bBit) continue;
+            const j = i ^ maskA ^ maskB;
+            if (i < j) {
+                const tmp = newAmplitudes[i];
+                newAmplitudes[i] = newAmplitudes[j];
+                newAmplitudes[j] = tmp;
+            }
+        }
+
+        this.amplitudes = newAmplitudes;
     }
 
     // ========== MULTI-CONTROLLED GATES ==========
@@ -747,13 +782,21 @@ class QuantumState {
         const x = 2 * rho01_re;
         const y = -2 * rho01_im;  // Negative sign is crucial!
         const z = rho00 - rho11;
-        
-        // Normalize to unit sphere (for mixed states, |r| < 1)
-        const r = Math.sqrt(x*x + y*y + z*z);
-        if (r > 1e-10) {
-            return { x: x/r, y: y/r, z: z/r };
+
+        const r = Math.sqrt(x * x + y * y + z * z);
+        if (r < 1e-10) {
+            // Maximally mixed on this wire (e.g. SWAP-test ancilla after entangling) — center, not |0⟩
+            return { x: 0, y: 0, z: 0 };
         }
-        return { x: 0, y: 0, z: 1 };
+        if (r > 1 + 1e-6) {
+            const s = 1 / r;
+            return { x: x * s, y: y * s, z: z * s };
+        }
+        if (r > 1 - 1e-6) {
+            return { x: x / r, y: y / r, z: z / r };
+        }
+        // Mixed state: |r| < 1 — arrow length shows purity (visualization uses raw coords)
+        return { x, y, z };
     }
 }
 

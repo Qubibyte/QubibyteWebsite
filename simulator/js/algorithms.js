@@ -27,6 +27,20 @@ function formatOperation(op, qubits) {
     return `${op} (${qubits.join(',')})`;
 }
 
+/** QFT controlled-R_k angle as a Qubi RZ token (multiple of π). */
+function qftRotationAnglePi(k) {
+    return parseFloat((1 / Math.pow(2, k - 1)).toPrecision(10));
+}
+
+/** Qubi lines for controlled-R_k (phase π/2^(k−1)) from control j to target i. */
+function qftControlledPhaseLines(j, i, k) {
+    if (k === 2) {
+        return `CZ [${j},${i}]\n`;
+    }
+    const angle = qftRotationAnglePi(k);
+    return `CX [${j},${i}]\nRZ ${i} ${angle}\nCX [${j},${i}]\n`;
+}
+
 function generateGroversAlgorithm(numQubits, target) {
     const qubits = Array.from({ length: numQubits }, (_, i) => i);
     const qubitsStr = qubits.join(',');
@@ -580,25 +594,14 @@ const QuantumAlgorithms = {
                 code += `// Quantum Fourier Transform (${numQubits} qubits)\n`;
                 code += `// Transforms computational basis → frequency basis\n\n`;
             }
-            // QFT: for each qubit i, apply H, then controlled-Rk from higher qubits
-            // We approximate controlled-Rk with available gates
+            // QFT: for each qubit i, apply H, then controlled-Rk from lower-index qubits
             for (let i = numQubits - 1; i >= 0; i--) {
                 if (withComments) code += `// Apply H to q${i}\n`;
                 code += `H ${i}\n`;
-                // Controlled phase rotations from qubits below
                 for (let j = i - 1; j >= 0; j--) {
                     const k = i - j + 1;
-                    const angle = Math.PI / Math.pow(2, k - 1);
                     if (withComments) code += `// Controlled R${k} phase from q${j}\n`;
-                    // Approximate with RZ on target conditioned — using RZ directly as we lack CRk
-                    // For a simplified QFT, use S (π/2) and T (π/4) gates where applicable
-                    if (k === 2) {
-                        // S gate = Rz(π/2)
-                        code += `CZ [${j},${i}]\n`;
-                    } else if (k === 3) {
-                        // T gate = Rz(π/4) — approximate with available gates
-                        code += `CZ [${j},${i}]\n`;
-                    }
+                    code += qftControlledPhaseLines(j, i, k);
                 }
             }
             // Reverse qubit order
@@ -606,12 +609,14 @@ const QuantumAlgorithms = {
             for (let i = 0; i < Math.floor(numQubits / 2); i++) {
                 code += `SWAP [${i},${numQubits - 1 - i}]\n`;
             }
-            if (withComments) code += `\n// Note: This is a simplified QFT using available gates`;
+            if (withComments) {
+                code += `\n// Controlled-R_k for k≥3 uses CX–RZ–CX decomposition`;
+            }
             return { code: code.trim(), qubits: numQubits };
         },
         qubits: 3,
-        code: `H 2\nCZ [1,2]\nH 1\nCZ [0,2]\nCZ [0,1]\nH 0\nSWAP [0,2]`,
-        codeWithComments: `// Quantum Fourier Transform (3 qubits)\n// Transforms computational basis → frequency basis\n\n// Apply H to q2\nH 2\n// Controlled phase from q1\nCZ [1,2]\n// Apply H to q1\nH 1\n// Controlled phases from q0\nCZ [0,2]\nCZ [0,1]\n// Apply H to q0\nH 0\n\n// Reverse qubit order\nSWAP [0,2]\n\n// Note: Simplified QFT using available gates`
+        code: `H 2\nCZ [1,2]\nCX [0,2]\nRZ 2 0.5\nCX [0,2]\nH 1\nCZ [0,1]\nH 0\nSWAP [0,2]`,
+        codeWithComments: `// Quantum Fourier Transform (3 qubits)\n// Transforms computational basis → frequency basis\n\n// Apply H to q2\nH 2\n// Controlled R2 phase from q1\nCZ [1,2]\n// Controlled R3 phase from q0\nCX [0,2]\nRZ 2 0.5\nCX [0,2]\n// Apply H to q1\nH 1\n// Controlled R2 phase from q0\nCZ [0,1]\n// Apply H to q0\nH 0\n\n// Reverse qubit order (QFT convention)\nSWAP [0,2]\n\n// Controlled-R_k for k≥3 uses CX–RZ–CX decomposition`
     },
 
     phaseKickbackCX: {
@@ -713,20 +718,23 @@ const QuantumAlgorithms = {
             }
             if (withComments) code += `\n// Ancilla in superposition\n`;
             code += `H 0\n`;
-            if (withComments) code += `// Controlled-SWAP (approximated)\n`;
-            // Controlled-SWAP using CX decomposition
-            code += `CX [1,2]\nCX [0,1]\nCX [1,2]\n`;
+            if (withComments) code += `// Controlled-SWAP (Fredkin gate)\n`;
+            code += `CSWAP [0,1,2]\n`;
             if (withComments) code += `// Measure ancilla\n`;
             code += `H 0\nMEASURE 0`;
             if (withComments) {
-                const expect = { same: 'always 0', orthogonal: '50/50', similar: '~75% chance of 0' };
-                code += `\n\n// Expected: ancilla ${expect[comparison]}`;
+                const expect = {
+                    same: 'q0 always |0⟩ after measure',
+                    orthogonal: 'q0 is 50/50 (marginals on q1/q2 may also look 50/50 — read ancilla q0)',
+                    similar: 'q0 is ~75% |0⟩ after measure'
+                };
+                code += `\n\n// Expected: ${expect[comparison]}`;
             }
             return { code: code.trim(), qubits: 3 };
         },
         qubits: 3,
-        code: `H 0\nCX [1,2]\nCX [0,1]\nCX [1,2]\nH 0\nMEASURE 0`,
-        codeWithComments: `// SWAP Test: comparing |0⟩ vs |0⟩\n// q0 = ancilla, q1 = state A, q2 = state B\n\n// Ancilla in superposition\nH 0\n// Controlled-SWAP (approximated)\nCX [1,2]\nCX [0,1]\nCX [1,2]\n// Measure ancilla\nH 0\nMEASURE 0\n\n// Expected: ancilla always 0 (identical states)`
+        code: `H 0\nCSWAP [0,1,2]\nH 0\nMEASURE 0`,
+        codeWithComments: `// SWAP Test: comparing |0⟩ vs |0⟩\n// q0 = ancilla, q1 = state A, q2 = state B\n\n// Ancilla in superposition\nH 0\n// Controlled-SWAP (Fredkin gate)\nCSWAP [0,1,2]\n// Measure ancilla\nH 0\nMEASURE 0\n\n// Expected: ancilla always 0 (identical states)`
     },
 
     bitFlipCode: {

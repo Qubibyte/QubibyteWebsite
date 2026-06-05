@@ -37,6 +37,35 @@ body.blog-page #articlediv {
     margin-bottom: 20px;
 }
 
+.blog-article-header {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+#articlediv .blog-article-title {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+#articlediv .blog-article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px 12px;
+    margin: 0 0 1.2em;
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    font-size: 18px;
+    line-height: 1.5;
+    color: var(--blog-body-text) !important;
+    text-align: center;
+}
+
+#articlediv .blog-article-meta-sep {
+    opacity: 0.45;
+    user-select: none;
+}
+
 #articlediv p {
     color: var(--blog-body-text) !important;
     font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;

@@ -8,7 +8,7 @@
     flex-direction: column;
     height: 100%;
     background: var(--background);
-    color: #e2e8f0;
+    color: var(--text-primary);
 }
 
 .nmr-layout {
@@ -47,8 +47,8 @@
 
 /* Panel styling */
 .nmr-panel {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--surface-light);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     overflow: hidden;
 }
@@ -58,10 +58,10 @@
     justify-content: space-between;
     align-items: center;
     padding: 6px 10px;
-    background: #334155;
+    background: var(--surface-lighter);
     font-size: 12px;
     font-weight: 600;
-    color: #94a3b8;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -93,7 +93,7 @@
 }
 
 .nmr-pulse-empty {
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 11px;
     text-align: center;
     padding: 20px;
@@ -134,7 +134,7 @@
 .nmr-pulse-label {
     width: 32px;
     font-size: 9px;
-    color: #818cf8;
+    color: var(--nmr-accent-text, var(--primary-color));
     font-weight: 600;
     text-align: right;
     flex-shrink: 0;
@@ -155,7 +155,7 @@
     right: 0;
     top: 50%;
     height: 1px;
-    background: #475569;
+    background: var(--border-color);
 }
 
 .nmr-pulse-block {
@@ -198,20 +198,20 @@
 
 .nmr-pulse-name {
     font-size: 7px;
-    color: #94a3b8;
+    color: var(--text-secondary);
     margin-top: 1px;
 }
 
 .nmr-pulse-delay {
     width: 12px;
     height: 1px;
-    background: #475569;
+    background: var(--border-color);
 }
 
 .nmr-pulse-line {
     flex: 1;
     height: 1px;
-    background: #334155;
+    background: var(--border-color);
 }
 
 .nmr-jc-evol {
@@ -219,7 +219,7 @@
     gap: 4px;
     margin-top: 4px;
     padding-top: 4px;
-    border-top: 1px dashed #334155;
+    border-top: 1px dashed var(--border-color);
 }
 
 .nmr-jc-gate {
@@ -316,10 +316,10 @@
 .nmr-peak-popup {
     position: fixed;
     z-index: 10001;
-    background: #1e293b;
-    border: 1px solid #475569;
+    background: var(--surface-light);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--nmr-popup-shadow, 0 10px 25px rgba(0, 0, 0, 0.5));
     min-width: 220px;
     max-width: 300px;
     font-size: 12px;
@@ -327,8 +327,15 @@
 }
 
 @keyframes nmr-popup-fade-in {
-    from { opacity: 0; transform: translateY(-5px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .nmr-popup-header {
@@ -336,15 +343,15 @@
     align-items: center;
     gap: 8px;
     padding: 10px 12px;
-    background: #334155;
+    background: var(--surface-lighter);
     border-radius: 8px 8px 0 0;
-    border-bottom: 1px solid #475569;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .nmr-popup-nucleus {
     font-size: 16px;
     font-weight: 700;
-    color: #fbbf24;
+    color: var(--nmr-highlight, #fbbf24);
 }
 
 .nmr-popup-element {
@@ -360,7 +367,7 @@
     margin-left: auto;
     background: none;
     border: none;
-    color: #94a3b8;
+    color: var(--text-secondary);
     font-size: 14px;
     cursor: pointer;
     padding: 2px 6px;
@@ -368,8 +375,8 @@
 }
 
 .nmr-popup-close:hover {
-    background: #475569;
-    color: #f1f5f9;
+    background: var(--surface-lighter);
+    color: var(--text-primary);
 }
 
 .nmr-popup-body {
@@ -381,7 +388,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 4px 0;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .nmr-popup-row:last-child {
@@ -389,12 +396,12 @@
 }
 
 .nmr-popup-label {
-    color: #94a3b8;
+    color: var(--text-secondary);
     font-size: 11px;
 }
 
 .nmr-popup-value {
-    color: #e2e8f0;
+    color: var(--text-primary);
     font-weight: 600;
     font-family: 'Consolas', 'Monaco', monospace;
 }
@@ -402,7 +409,7 @@
 .nmr-popup-env {
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--border-color);
 }
 
 .nmr-popup-env .nmr-popup-label {
@@ -412,7 +419,7 @@
 
 .nmr-popup-desc {
     display: block;
-    color: #cbd5e1;
+    color: var(--text-primary);
     font-size: 11px;
     line-height: 1.4;
     font-style: italic;
@@ -454,9 +461,9 @@
 .nmr-select-sm {
     padding: 2px 6px;
     font-size: 11px;
-    background: #1e293b;
-    color: #e2e8f0;
-    border: 1px solid #475569;
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
     border-radius: 3px;
     cursor: pointer;
 }
@@ -464,15 +471,15 @@
 .nmr-btn-sm {
     padding: 2px 8px;
     font-size: 11px;
-    background: #1e293b;
-    color: #e2e8f0;
-    border: 1px solid #475569;
+    background: var(--surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
     border-radius: 3px;
     cursor: pointer;
 }
 
 .nmr-btn-sm:hover {
-    background: #334155;
+    background: var(--surface-lighter);
 }
 
 /* Sidebar inputs */
@@ -481,8 +488,8 @@
     padding: 6px 8px;
     font-size: 12px;
     background: var(--background);
-    color: #e2e8f0;
-    border: 1px solid #475569;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     margin: 6px 8px;
     flex-shrink: 0;
@@ -509,13 +516,13 @@
 .nmr-formula {
     font-size: 13px;
     font-weight: 600;
-    color: #f1f5f9;
+    color: var(--text-primary);
     font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
 .nmr-desc {
     font-size: 10px;
-    color: #64748b;
+    color: var(--text-muted);
     line-height: 1.3;
     margin-top: 2px;
 }
@@ -529,7 +536,7 @@
 
 .nmr-nuclei-header {
     font-size: 10px;
-    color: #818cf8;
+    color: var(--nmr-accent-text, var(--primary-color));
     margin-bottom: 4px;
 }
 
@@ -543,16 +550,16 @@
 .nmr-nuclei-table td {
     padding: 2px 4px;
     text-align: left;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .nmr-nuclei-table th {
-    color: #64748b;
+    color: var(--text-muted);
     font-weight: 500;
 }
 
 .nmr-nuclei-table td:first-child {
-    color: #818cf8;
+    color: var(--nmr-accent-text, var(--primary-color));
 }
 
 /* Clickable qubit rows to focus on peak */
@@ -562,11 +569,11 @@
 }
 
 .nmr-nuclei-row:hover {
-    background-color: rgba(129, 140, 248, 0.15);
+    background-color: var(--nmr-hover-bg, color-mix(in srgb, var(--primary-color) 15%, transparent));
 }
 
 .nmr-nuclei-row:hover td:first-child {
-    color: #a5b4fc;
+    color: var(--nmr-accent-text, var(--primary-color));
     font-weight: 600;
 }
 
@@ -576,24 +583,29 @@
 }
 
 .nmr-nuclei-row.nmr-focused {
-    background-color: rgba(129, 140, 248, 0.3);
+    background-color: var(--nmr-focus-bg, color-mix(in srgb, var(--primary-color) 28%, transparent));
     animation: nmr-focus-pulse 0.5s ease-out;
 }
 
 @keyframes nmr-focus-pulse {
-    0% { background-color: rgba(129, 140, 248, 0.5); }
-    100% { background-color: rgba(129, 140, 248, 0.3); }
+    0% {
+        background-color: var(--nmr-focus-bg-strong, color-mix(in srgb, var(--primary-color) 45%, transparent));
+    }
+
+    100% {
+        background-color: var(--nmr-focus-bg, color-mix(in srgb, var(--primary-color) 28%, transparent));
+    }
 }
 
 .nmr-jc-section {
     margin-top: 6px;
     padding-top: 6px;
-    border-top: 1px solid #334155;
+    border-top: 1px solid var(--border-color);
 }
 
 .nmr-jc-header {
     font-size: 9px;
-    color: #818cf8;
+    color: var(--nmr-accent-text, var(--primary-color));
     margin-bottom: 3px;
 }
 
@@ -605,7 +617,7 @@
 
 .nmr-jc-item {
     font-size: 9px;
-    color: #94a3b8;
+    color: var(--text-secondary);
     background: var(--background);
     padding: 2px 5px;
     border-radius: 3px;
@@ -628,7 +640,7 @@
 
 .nmr-field-row label {
     font-size: 11px;
-    color: #94a3b8;
+    color: var(--text-secondary);
     width: 24px;
     flex-shrink: 0;
 }
@@ -638,7 +650,7 @@
     min-width: 50px;
     height: 4px;
     -webkit-appearance: none;
-    background: #334155;
+    background: var(--nmr-slider-track, var(--surface-lighter));
     border-radius: 2px;
     cursor: pointer;
 }
@@ -647,7 +659,7 @@
     -webkit-appearance: none;
     width: 12px;
     height: 12px;
-    background: #6366f1;
+    background: var(--primary-color);
     border-radius: 50%;
     cursor: pointer;
 }
@@ -657,15 +669,15 @@
     padding: 3px 4px;
     font-size: 11px;
     background: var(--background);
-    color: #e2e8f0;
-    border: 1px solid #475569;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
     border-radius: 3px;
     text-align: right;
 }
 
 .nmr-unit {
     font-size: 10px;
-    color: #64748b;
+    color: var(--text-muted);
     width: 18px;
 }
 
@@ -674,8 +686,8 @@
     padding: 3px 6px;
     font-size: 10px;
     background: var(--background);
-    color: #e2e8f0;
-    border: 1px solid #475569;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
     border-radius: 3px;
     cursor: pointer;
 }
@@ -686,8 +698,8 @@
     padding: 1px 5px;
     font-size: 10px;
     font-weight: 600;
-    background: #334155;
-    color: #a5b4fc;
+    background: var(--surface-lighter);
+    color: var(--nmr-accent-text, var(--primary-color));
     border-radius: 3px;
     font-family: monospace;
 }
@@ -695,28 +707,864 @@
 /* Resources tab */
 .nmr-resources {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 12px;
     padding: 12px;
     overflow-y: auto;
 }
 
 .nmr-res-section {
-    background: #1e293b;
-    border: 1px solid #334155;
+    background: var(--surface-light);
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     padding: 12px;
+}
+
+.nmr-res-section.nmr-res-density {
+    grid-column: span 2;
 }
 
 .nmr-res-section h4 {
     font-size: 12px;
     font-weight: 600;
-    color: #94a3b8;
+    color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     margin-bottom: 10px;
     padding-bottom: 6px;
-    border-bottom: 1px solid #334155;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.nmr-density-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.nmr-density-header h4 {
+    margin: 0;
+    padding: 0;
+    border-bottom: none;
+}
+
+.nmr-density-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-left: auto;
+}
+
+.nmr-density-table-panel {
+    position: relative;
+    min-width: 0;
+    width: 100%;
+}
+
+.nmr-density-table-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+}
+
+.nmr-density-table-host {
+    min-width: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: clamp(360px, 42vw, 620px);
+}
+
+.nmr-density-table-host > .nmr-density-canvas-wrap {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    width: 100%;
+}
+
+.nmr-density-table-wrap.active .nmr-density-scroll,
+.nmr-density-view--table.active .nmr-density-scroll {
+    max-height: min(380px, 48vh);
+}
+
+.nmr-fullscreen.nmr-density-table-panel {
+    display: flex;
+    flex-direction: column;
+    padding: 12px 14px;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+}
+
+.nmr-fullscreen.nmr-density-table-panel .nmr-density-table-toolbar {
+    flex-shrink: 0;
+}
+
+.nmr-fullscreen.nmr-density-table-panel .nmr-density-table-host {
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.nmr-fullscreen.nmr-density-table-panel .nmr-density-canvas-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow: hidden;
+}
+
+.nmr-fullscreen.nmr-density-table-panel .nmr-density-matrix-viewport {
+    flex: 1;
+    min-height: 280px;
+}
+
+.nmr-fullscreen.nmr-density-table-panel canvas.nmr-density-canvas {
+    min-height: unset !important;
+    flex-shrink: 0;
+}
+
+.nmr-fullscreen.nmr-density-table-panel .nmr-density-canvas-meta {
+    flex-shrink: 0;
+    width: 100%;
+}
+
+.nmr-density-table-options {
+    display: none;
+}
+
+.nmr-density-table-options.visible {
+    display: inline-flex;
+}
+
+.nmr-density-heatmap-toggle {
+    flex-shrink: 0;
+}
+
+.nmr-density-canvas-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    width: 100%;
+    min-height: clamp(360px, 42vw, 620px);
+    max-height: none;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--background);
+}
+
+.nmr-density-matrix-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface) 90%, transparent);
+}
+
+.nmr-density-zoom-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nmr-density-zoom-pct {
+    min-width: 42px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.nmr-density-matrix-viewport {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    min-height: clamp(300px, 38vw, 560px);
+    overflow: hidden;
+    touch-action: none;
+}
+
+.nmr-density-matrix-viewport.can-pan {
+    cursor: grab;
+}
+
+.nmr-density-matrix-viewport.is-dragging {
+    cursor: grabbing;
+}
+
+.nmr-density-matrix-stage {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
+}
+
+.nmr-density-matrix-labeled {
+    position: relative;
+}
+
+.nmr-density-matrix-cols {
+    position: absolute;
+    top: 0;
+    left: var(--dm-label-w, 0);
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.nmr-density-matrix-rows {
+    position: absolute;
+    top: var(--dm-label-h, 0);
+    left: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.nmr-density-matrix-cells {
+    position: absolute;
+    top: var(--dm-label-h, 0);
+    left: var(--dm-label-w, 0);
+}
+
+.nmr-density-matrix-frame--has-table .nmr-density-matrix-cols,
+.nmr-density-matrix-frame--has-table .nmr-density-matrix-rows {
+    display: none;
+}
+
+.nmr-density-matrix-frame--has-table .nmr-density-matrix-cells {
+    top: 0;
+    left: 0;
+}
+
+.nmr-density-axis-label {
+    position: absolute;
+    white-space: nowrap;
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    color: var(--text-secondary);
+    line-height: 1;
+    pointer-events: none;
+}
+
+.nmr-density-axis-label--col {
+    transform: translate(-50%, 0);
+    text-align: center;
+}
+
+.nmr-density-axis-label--row {
+    right: 6px;
+    transform: translateY(-50%);
+    text-align: right;
+    width: calc(var(--dm-label-w, 52px) - 8px);
+}
+
+.nmr-density-matrix-viewport .nmr-density-scroll {
+    max-height: none;
+    overflow: visible;
+}
+
+.nmr-density-canvas-loading {
+    margin: 1rem;
+}
+
+.nmr-density-canvas {
+    display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+.nmr-density-canvas-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    padding: 8px 10px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+}
+
+.nmr-density-canvas-legend-purity {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+}
+
+.nmr-density-canvas-legend-max {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.nmr-density-canvas-legend-hint {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: 10px;
+}
+
+.nmr-density-canvas-tooltip {
+    position: absolute;
+    z-index: 5;
+    min-width: 168px;
+    max-width: 240px;
+    padding: 0.55rem 0.65rem;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 45%, var(--border-color));
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    box-shadow: 0 8px 24px var(--shadow);
+    pointer-events: none;
+    font-size: 12px;
+}
+
+.nmr-density-canvas-tooltip .nmr-density-tip-title {
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+    color: var(--text-primary);
+}
+
+.nmr-density-cell--heat {
+    color: var(--text-primary);
+}
+
+.nmr-density-view-toggle {
+    display: inline-flex;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--surface);
+    flex-shrink: 0;
+}
+
+.nmr-density-view-toggle button {
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nmr-density-view-toggle button:hover {
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+}
+
+.nmr-density-view-toggle button.active {
+    background: color-mix(in srgb, var(--primary-color) 18%, transparent);
+    color: var(--primary-color);
+}
+
+.nmr-density-body {
+    min-width: 0;
+    width: 100%;
+}
+
+.nmr-density-view {
+    display: none;
+    min-width: 0;
+    width: 100%;
+}
+
+.nmr-density-view.active {
+    display: block;
+}
+
+.nmr-density-view--table.active {
+    display: flex;
+    flex-direction: column;
+}
+
+.nmr-density-view--table.active .nmr-density-table-panel {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+.nmr-density-3d-empty {
+    margin: 0 0 0.75rem;
+}
+
+.nmr-density-3d-frame {
+    position: relative;
+    width: 100%;
+}
+
+.nmr-density-3d-frame.is-hidden {
+    display: none;
+}
+
+.nmr-density-3d-mount {
+    width: 100%;
+    height: min(400px, 50vh);
+    min-height: 300px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--background);
+    border: 1px solid var(--border-color);
+    touch-action: none;
+}
+
+.nmr-density-3d-mount canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+    background: var(--background);
+}
+
+.nmr-density-3d-tooltip {
+    position: absolute;
+    z-index: 5;
+    min-width: 168px;
+    max-width: 240px;
+    padding: 0.55rem 0.65rem;
+    border-radius: 8px;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 45%, var(--border-color));
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    box-shadow: 0 8px 24px var(--shadow);
+    font-size: 11px;
+    color: var(--text-primary);
+    pointer-events: none;
+    line-height: 1.45;
+}
+
+.nmr-density-3d-tooltip .nmr-density-tip-title {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+}
+
+.nmr-density-3d-tooltip span {
+    color: var(--text-secondary);
+    margin-right: 0.25rem;
+}
+
+.nmr-density-hint {
+    margin: 8px 0 0;
+    font-size: 10px;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* Data Analysis tab */
+.analysis-wrapper {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.analysis-root {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--background);
+}
+
+.analysis-viz-tabs {
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    width: 100%;
+    margin: 0;
+    border-radius: 0;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+.analysis-viz-tabs button {
+    flex: 1 1 auto;
+    min-width: 88px;
+}
+
+.analysis-viz-body {
+    flex: 1;
+    min-height: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.analysis-panel {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.analysis-panel.active {
+    display: flex;
+}
+
+.analysis-density-wrap {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+.analysis-density-wrap .nmr-density-header {
+    flex-shrink: 0;
+    margin-bottom: 0;
+    padding: 8px 10px;
+}
+
+.analysis-panel--density .nmr-density-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.analysis-panel--density .nmr-density-view.active {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.analysis-panel--density .nmr-density-3d-frame {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.analysis-panel--density .nmr-density-3d-mount {
+    flex: 1;
+    width: 100%;
+    height: auto !important;
+    min-height: 220px;
+    max-height: none;
+}
+
+.analysis-panel--density .nmr-density-table-wrap.active {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.analysis-panel--density .nmr-density-table-panel {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.analysis-panel--density .nmr-density-table-host {
+    flex: 1;
+    min-height: 0;
+    min-height: unset;
+}
+
+.analysis-panel--density .nmr-density-table-host > .nmr-density-canvas-wrap {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+}
+
+.analysis-panel--density .nmr-density-matrix-viewport {
+    min-height: 0;
+    flex: 1;
+}
+
+.analysis-viz-mount {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* State vector terms are inline spans; column flex stacks coeff and ket on separate lines */
+.analysis-viz-mount.state-vector {
+    display: block;
+}
+
+.analysis-viz-mount.probability-graphs {
+    padding: 0;
+}
+
+.analysis-viz-mount.probability-graphs .viz-panel {
+    flex: 1;
+    min-height: 0;
+}
+
+.analysis-viz-mount.qubit-visualization {
+    overflow: hidden;
+}
+
+.analysis-stepper {
+    flex-shrink: 0;
+    margin: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+}
+
+.nmr-resources--reference {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    padding: 12px;
+    overflow-y: auto;
+    height: 100%;
+}
+
+/* Density matrix step-through playback */
+.nmr-density-stepper {
+    margin-top: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--surface) 92%, var(--background));
+    overflow: hidden;
+}
+
+.nmr-density-stepper.is-empty {
+    opacity: 0.92;
+}
+
+.nmr-density-stepper-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-light, var(--surface)) 88%, transparent);
+}
+
+.nmr-density-stepper-transport,
+.nmr-density-stepper-speed {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.nmr-density-step-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 7px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nmr-step-icon {
+    display: block;
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+}
+
+.nmr-step-icon--play {
+    width: 15px;
+    height: 15px;
+}
+
+.nmr-density-step-btn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--primary-color) 10%, var(--surface));
+    border-color: color-mix(in srgb, var(--primary-color) 35%, var(--border-color));
+}
+
+.nmr-density-step-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.nmr-density-step-btn--play {
+    min-width: 32px;
+    color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 14%, var(--surface));
+    border-color: color-mix(in srgb, var(--primary-color) 40%, var(--border-color));
+}
+
+.nmr-density-step-btn--next,
+.nmr-density-step-btn:not(.nmr-density-step-btn--play) {
+    min-width: 28px;
+}
+
+.nmr-density-step-btn--play.is-playing {
+    color: var(--surface);
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 25%, transparent);
+}
+
+.nmr-density-stepper-speed .nmr-density-step-btn.active {
+    color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 16%, var(--surface));
+    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--border-color));
+}
+
+.nmr-density-stepper-info {
+    flex: 1;
+    min-width: 120px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.nmr-density-step-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nmr-density-step-counter {
+    font-size: 10px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.nmr-density-step-speed {
+    min-width: 36px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.nmr-density-step-speed.is-reverse {
+    color: var(--primary-color);
+}
+
+.nmr-density-step-timeline {
+    display: flex;
+    gap: 8px;
+    padding: 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-behavior: smooth;
+}
+
+.nmr-density-step-timeline::-webkit-scrollbar {
+    height: 6px;
+}
+
+.nmr-density-step-timeline::-webkit-scrollbar-track {
+    background: var(--scrollbar-track, color-mix(in srgb, var(--surface) 80%, transparent));
+    border-radius: 3px;
+}
+
+.nmr-density-step-timeline::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb, color-mix(in srgb, var(--primary-color) 35%, var(--border-color)));
+    border-radius: 3px;
+}
+
+.nmr-density-step-empty {
+    width: 100%;
+    padding: 12px 8px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.nmr-density-step-item {
+    flex: 0 0 auto;
+    min-width: 88px;
+    max-width: 140px;
+    padding: 8px 10px;
+    text-align: left;
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.nmr-density-step-item:hover {
+    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--border-color));
+    background: color-mix(in srgb, var(--primary-color) 6%, var(--surface));
+    transform: translateY(-1px);
+}
+
+.nmr-density-step-item.active {
+    border-color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 18%, var(--surface));
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary-color) 30%, transparent);
+}
+
+.nmr-density-step-item-num {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.nmr-density-step-item.active .nmr-density-step-item-num {
+    color: var(--primary-color);
+}
+
+.nmr-density-step-item-gates {
+    display: block;
+    font-size: 10px;
+    line-height: 1.35;
+    color: var(--text-secondary);
+    font-family: ui-monospace, 'Cascadia Code', monospace;
+    word-break: break-word;
+}
+
+.nmr-density-step-item.active .nmr-density-step-item-gates {
+    color: var(--text-primary);
+}
+
+.nmr-density-step-item-repeat {
+    font-size: 9px;
+    color: var(--text-muted);
+}
+
+.nmr-density-step-item.active .nmr-density-step-item-repeat {
+    color: color-mix(in srgb, var(--primary-color) 70%, var(--text-secondary));
+}
+
+.nmr-density-view--table.active .nmr-density-table-host .nmr-density-canvas-wrap {
+    max-height: none;
+    min-height: clamp(360px, 42vw, 620px);
+}
+
+.nmr-density-view--table.active .nmr-density-table-host .nmr-density-matrix-viewport {
+    min-height: clamp(300px, 38vw, 560px);
 }
 
 .nmr-equations {
@@ -726,8 +1574,8 @@
 .nmr-eq-block {
     padding: 6px 0;
     font-size: 12px;
-    color: #cbd5e1;
-    border-bottom: 1px solid #334155;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
 }
 
 .nmr-eq-block:last-child {
@@ -746,17 +1594,17 @@
 }
 
 .nmr-gamma-scroll::-webkit-scrollbar-track {
-    background: #1e293b;
+    background: var(--scrollbar-track);
     border-radius: 3px;
 }
 
 .nmr-gamma-scroll::-webkit-scrollbar-thumb {
-    background: #475569;
+    background: var(--scrollbar-thumb);
     border-radius: 3px;
 }
 
 .nmr-gamma-scroll::-webkit-scrollbar-thumb:hover {
-    background: #64748b;
+    background: var(--scrollbar-thumb-hover);
 }
 
 .nmr-gamma-table {
@@ -770,7 +1618,7 @@
 
 .nmr-gamma-table td:last-child {
     text-align: right;
-    color: #818cf8;
+    color: var(--nmr-accent-text, var(--primary-color));
     font-family: monospace;
 }
 
@@ -788,14 +1636,25 @@
 .nmr-density-table th,
 .nmr-density-table td {
     padding: 3px 6px;
-    border: 1px solid #334155;
+    border: 1px solid var(--border-color);
     text-align: center;
     min-width: 40px;
 }
 
+.nmr-density-wrap--compact .nmr-density-table th,
+.nmr-density-wrap--compact .nmr-density-table td {
+    min-width: 22px;
+    padding: 2px 4px;
+    font-size: 9px;
+}
+
+.nmr-density-wrap--compact .nmr-density-table th {
+    font-size: 8px;
+}
+
 .nmr-density-table th {
-    background: #334155;
-    color: #94a3b8;
+    background: var(--surface-lighter);
+    color: var(--text-secondary);
     font-weight: 500;
     font-family: monospace;
 }
@@ -815,46 +1674,49 @@
 }
 
 .nmr-samples-grid::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--scrollbar-track);
 }
 
 .nmr-samples-grid::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: var(--scrollbar-thumb);
     border-radius: 3px;
+}
+
+.nmr-samples-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
 }
 
 .nmr-sample-card {
     background: var(--background);
-    border: 1px solid #334155;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
     padding: 8px;
     font-size: 11px;
 }
 
 .nmr-sample-card strong {
-    color: #f1f5f9;
+    color: var(--text-primary);
 }
 
 .nmr-qubits {
     float: right;
-    background: #334155;
-    color: #7c3aed;
+    background: var(--surface-lighter);
     padding: 1px 4px;
     border-radius: 3px;
     font-size: 9px;
     font-weight: 600;
-    color: #818cf8;
+    color: var(--nmr-accent-text, var(--primary-color));
 }
 
 .nmr-sample-nuclei {
     margin-top: 4px;
     font-family: monospace;
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 10px;
 }
 
 .nmr-note {
-    color: #64748b;
+    color: var(--text-muted);
     font-size: 11px;
     font-style: italic;
 }
@@ -873,7 +1735,7 @@
 .nmr-density-scroll::-webkit-scrollbar-track,
 .nmr-resources::-webkit-scrollbar-track,
 .nmr-nuclei-list::-webkit-scrollbar-track {
-    background: transparent;
+    background: var(--scrollbar-track);
 }
 
 .nmr-sidebar::-webkit-scrollbar-thumb,
@@ -881,8 +1743,16 @@
 .nmr-density-scroll::-webkit-scrollbar-thumb,
 .nmr-resources::-webkit-scrollbar-thumb,
 .nmr-nuclei-list::-webkit-scrollbar-thumb {
-    background: #334155;
+    background: var(--scrollbar-thumb);
     border-radius: 3px;
+}
+
+.nmr-sidebar::-webkit-scrollbar-thumb:hover,
+.nmr-pulse-container::-webkit-scrollbar-thumb:hover,
+.nmr-density-scroll::-webkit-scrollbar-thumb:hover,
+.nmr-resources::-webkit-scrollbar-thumb:hover,
+.nmr-nuclei-list::-webkit-scrollbar-thumb:hover {
+    background: var(--scrollbar-thumb-hover);
 }
 
 /* Hide number input spinners */
@@ -912,7 +1782,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.85);
+    background: var(--nmr-fullscreen-overlay, rgba(0, 0, 0, 0.85));
     z-index: 9998;
     backdrop-filter: blur(4px);
 }
@@ -1019,17 +1889,63 @@
         height: auto !important;
     }
 
+    .nmr-res-section.nmr-res-density {
+        grid-column: span 1;
+    }
+
+    .nmr-density-3d-mount {
+        min-height: 220px;
+        height: min(280px, 36vh);
+    }
+
+    .nmr-density-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .nmr-density-view-toggle {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .nmr-density-view-toggle button {
+        flex: 1;
+    }
+
+    .analysis-viz-tabs button {
+        min-width: 72px;
+        font-size: 10px;
+        padding: 4px 8px;
+    }
+
+    .analysis-stepper .nmr-density-stepper-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .nmr-density-stepper-info {
+        order: -1;
+    }
+
+    .nmr-density-stepper-transport,
+    .nmr-density-stepper-speed {
+        justify-content: center;
+    }
+
     .nmr-fullscreen {
         width: 95vw !important;
         height: 90vh !important;
     }
 
-    .resources-wrapper {
+    .resources-wrapper,
+    .analysis-wrapper {
         height: auto !important;
         min-height: 300px;
     }
 
-    .resources-wrapper .nmr-resources {
+    .resources-wrapper .nmr-resources,
+    .analysis-wrapper .analysis-root {
         height: auto !important;
+        min-height: 300px;
     }
 }

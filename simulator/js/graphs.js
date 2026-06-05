@@ -1,9 +1,11 @@
 // Probability Graph Visualizations
 
 class ProbabilityGraphs {
-    constructor(containerId) {
+    constructor(containerId, options = {}) {
         this.container = document.getElementById(containerId);
-        this.currentView = 'pie'; // Default to pie chart
+        this.forcedView = options.forcedView || null;
+        this.hideViewTabs = options.hideViewTabs === true;
+        this.currentView = this.forcedView || 'pie';
         this.settings = { precision: 2, hideNegligibles: true, sortBy: 'probability', sortOrder: 'desc' };
         this.lastProbabilities = null;
         
@@ -36,25 +38,28 @@ class ProbabilityGraphs {
         if (!this.container) return;
         
         this.container.innerHTML = '';
-        
-        // View tabs at top (exactly like measurement results/state vector)
-        const tabs = document.createElement('div');
-        tabs.className = 'viz-tabs';
-        tabs.innerHTML = `
-            <button class="viz-tab-btn ${this.currentView === 'bar' ? 'active' : ''}" data-view="bar">Bar Chart</button>
-            <button class="viz-tab-btn ${this.currentView === 'pie' ? 'active' : ''}" data-view="pie">Pie Chart</button>
+
+        const activeView = this.forcedView || this.currentView;
+
+        if (!this.hideViewTabs && !this.forcedView) {
+            const tabs = document.createElement('div');
+            tabs.className = 'viz-tabs';
+            tabs.innerHTML = `
+            <button class="viz-tab-btn ${activeView === 'bar' ? 'active' : ''}" data-view="bar">Bar Chart</button>
+            <button class="viz-tab-btn ${activeView === 'pie' ? 'active' : ''}" data-view="pie">Pie Chart</button>
         `;
-        
-        tabs.querySelectorAll('button').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.currentView = e.target.dataset.view;
-                tabs.querySelectorAll('button').forEach(b => b.classList.remove('active'));
-                e.target.classList.add('active');
-                this.render(probabilities);
+
+            tabs.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    this.currentView = e.target.dataset.view;
+                    tabs.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+                    e.target.classList.add('active');
+                    this.render(probabilities);
+                });
             });
-        });
-        
-        this.container.appendChild(tabs);
+
+            this.container.appendChild(tabs);
+        }
         
         // Panel container (exactly like viz-panel structure - NO inline styles, use CSS class)
         const panel = document.createElement('div');
@@ -74,9 +79,9 @@ class ProbabilityGraphs {
         graphContainer.className = 'graph-container';
         graphContainer.style.cssText = 'flex: 1; min-height: 0;';
         
-        if (this.currentView === 'bar') {
+        if (activeView === 'bar') {
             this.renderBarChart(graphContainer, probabilities, true); // true = scaled down
-        } else if (this.currentView === 'pie') {
+        } else if (activeView === 'pie') {
             this.renderPieChart(graphContainer, probabilities, true); // true = scaled down
         }
         

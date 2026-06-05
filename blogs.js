@@ -119,7 +119,7 @@ function initBlogCarousel() {
         const { linkUrl, linkTarget } = resolveBlogLink(blog);
         const typeLabel = blog.type === 'youtube'
             ? '<span class="blog-card-type blog-type-video">▶ Video</span>'
-            : '<span class="blog-card-type blog-type-article">📄 Article</span>';
+            : '<span class="blog-card-type blog-type-article"><span class="blog-type-icon site-icon-colored site-icon--violet" style="--site-icon-url: url(\'/images/emojis/paper_and_pencil.png\')"></span>Article</span>';
         return `
             <a href="${linkUrl}"${linkTarget} class="blog-card-link">
                 <img src="${blog.thumbnail}" class="blog-card-img" alt="${blog.caption}" loading="eager" decoding="async">

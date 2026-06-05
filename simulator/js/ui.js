@@ -1,5 +1,63 @@
 // UI Interaction Handlers
 
+/** Scale gate letter(s) to fill the box without overflowing */
+function fitGateLabel(el, text) {
+    const t = String(text).trim();
+    const len = t.length;
+    const isSingleGlyph = len <= 1 || t === '⇄' || t === '↻' || t === '⊣';
+    el.classList.remove('gate-label--single', 'gate-label--double', 'gate-label--multi');
+    el.classList.add(isSingleGlyph ? 'gate-label--single' : len === 2 ? 'gate-label--double' : 'gate-label--multi');
+}
+
+/** Label shown on palette drag ghost */
+function getPaletteDragLabel(item) {
+    const sym = item.querySelector('.gate-symbol');
+    if (!sym) return item.dataset.gate;
+    const labelEl = sym.querySelector('.gate-symbol-label');
+    if (labelEl) return labelEl.textContent.trim();
+    const text = Array.from(sym.childNodes)
+        .filter(n => n.nodeType === Node.TEXT_NODE)
+        .map(n => n.textContent)
+        .join('')
+        .trim();
+    if (text) return text;
+    const fallback = { SWAP: '⇄', MEASURE: 'M', REPEAT: '↻', END: '⊣' };
+    return fallback[item.dataset.gate] || item.dataset.gate;
+}
+
+const PALETTE_DRAG_GHOST_SIZE = 50;
+
+/** Drag image matching sidebar .gate-symbol (50×50). */
+function buildPaletteDragGhost(item) {
+    const sym = item.querySelector('.gate-symbol');
+    if (!sym) return null;
+
+    const wrap = document.createElement('div');
+    wrap.className = `gate-palette palette-drag-ghost-wrap ${item.className}`;
+    if (item.dataset.gate) wrap.dataset.gate = item.dataset.gate;
+    wrap.style.cssText =
+        'position:absolute;left:-9999px;top:0;width:50px;height:50px;padding:0;margin:0;border:none;background:none;box-shadow:none;pointer-events:none;';
+
+    const ghost = sym.cloneNode(true);
+    ghost.classList.add('palette-drag-ghost');
+    ghost.style.transform = 'none';
+    ghost.style.filter = 'none';
+    ghost.style.animation = 'none';
+    ghost.style.outline = 'none';
+    ghost.style.opacity = '0.95';
+    ghost.style.boxShadow = '0 4px 14px rgba(0, 0, 0, 0.28)';
+
+    wrap.appendChild(ghost);
+    document.body.appendChild(wrap);
+    return wrap;
+}
+
+/** Display label for qubit count input (e.g. "1 Qubit", "3 Qubits"). */
+function formatQubitCountLabel(n) {
+    const num = Math.max(0, Math.floor(Number(n)) || 0);
+    return num === 1 ? '1 Qubit' : `${num} Qubits`;
+}
+
 class CircuitUI {
     constructor() {
         // Load settings first to get optimization preference
@@ -17,12 +75,33 @@ class CircuitUI {
         this.nmrSimulator = null;
         this.nmrInitialized = false;
         this.resourcesInitialized = false;
+        this.analysisInitialized = false;
         this.gateCreatorInitialized = false;
 
         this.qubiExecutor = new QubiExecutor(this.circuit);
         this.selectedGate = null;
         this.draggedGate = null;
+        this._phantomQubitEl = null;
+        this._phantomQubitActive = false;
+        this._phantomDropColumn = null;
+        this._qubitRowHeight = 68;
+        this._pointerTouchMoved = false;
+        this._pointerStart = null;
         this.customGateMeta = {}; // gateType -> { label, colorBg, colorGlow, displayName }
+        /** @returns {number} 0 if not a custom gate matrix; else log2(dim) */
+        this.getCustomGateWireCount = (gateType) => {
+            if (typeof GateMatrices === 'undefined' || !GateMatrices[gateType]) return 0;
+            const mat = GateMatrices[gateType];
+            const nCells = mat.length;
+            const dim = Math.round(Math.sqrt(nCells));
+            if (dim < 2 || dim * dim !== nCells || (dim & (dim - 1)) !== 0) return 0;
+            return Math.round(Math.log2(dim));
+        };
+        this.getCustomGateRequiredControlCount = (gateType) => {
+            const k = this.getCustomGateWireCount(gateType);
+            return k > 1 ? k - 1 : null;
+        };
+        this.isMultiWireCustomGate = (gateType) => this.getCustomGateRequiredControlCount(gateType) !== null;
         this.defineColorMap = {
             purple:  { bg: 'linear-gradient(135deg, #a855f7, #9333ea)', glow: 'rgba(168, 85, 247, 0.45)' },
             red:     { bg: 'linear-gradient(135deg, #ef4444, #dc2626)', glow: 'rgba(239, 68, 68, 0.45)' },
@@ -46,6 +125,8 @@ class CircuitUI {
         this.executionHistory = []; // For step back
         this.historyIndex = -1;
         this.stepStates = []; // Store state at each step for timeline
+        this.executionTimeline = [];
+        this.currentStepIndex = -1;
         this.zoomLevel = 1; // Zoom level for circuit view
 
         // Initialize syntax highlighter for Qubi editor
@@ -60,6 +141,9 @@ class CircuitUI {
         this.codeChangeDebounceDelay = 500; // ms to wait before syncing code changes to circuit
 
         this.initializeEventListeners();
+        this._initPaletteDismissListeners();
+        this._initPaletteGateItems();
+        this._initSidebarExamplesList();
         this.initDesktopPanelResize();
         this.updateQubitInputMax();
         this.renderCircuit();
@@ -131,24 +215,51 @@ class CircuitUI {
             if (!file) return;
 
             // Avoid duplicate editors
-            if (tab.querySelector('input.qubi-tab-rename')) return;
+            if (tab.querySelector('.qubi-tab-rename-wrap')) return;
 
             const currentStem = String(file.name || '').replace(/\.qubi$/i, '');
             const nameSpan = tab.querySelector('.qubi-tab-name');
             if (!nameSpan) return;
 
+            tab.classList.add('is-renaming');
+
+            const wrap = document.createElement('span');
+            wrap.className = 'qubi-tab-rename-wrap';
+
+            const measure = document.createElement('span');
+            measure.className = 'qubi-tab-rename-measure';
+            measure.setAttribute('aria-hidden', 'true');
+
             const input = document.createElement('input');
             input.className = 'qubi-tab-rename';
             input.type = 'text';
             input.value = currentStem;
-            input.setAttribute('aria-label', 'Rename Qubi file');
+            input.setAttribute('aria-label', 'Qubi file name');
             input.autocomplete = 'off';
             input.spellcheck = false;
 
-            // Replace span with input
-            nameSpan.replaceWith(input);
+            const suffix = document.createElement('span');
+            suffix.className = 'qubi-tab-rename-suffix';
+            suffix.textContent = '.qubi';
+            suffix.setAttribute('aria-hidden', 'true');
+
+            wrap.appendChild(measure);
+            wrap.appendChild(input);
+            wrap.appendChild(suffix);
+
+            const syncRenameWidth = () => {
+                measure.textContent = input.value || ' ';
+                const w = Math.ceil(measure.offsetWidth);
+                input.style.width = `${Math.max(w + 2, 28)}px`;
+            };
+
+            // Replace span with inline rename field
+            nameSpan.replaceWith(wrap);
+            syncRenameWidth();
             input.focus({ preventScroll: true });
             try { input.setSelectionRange(0, input.value.length); } catch { /* ignore */ }
+
+            input.addEventListener('input', syncRenameWidth);
 
             let renameCommitted = false;
             const commit = () => {
@@ -374,21 +485,8 @@ class CircuitUI {
                 this.isUpdatingFromCode = prev;
             }
         }
-        if (needed > maxQubits && this.syntaxHighlighter) {
-            const msg = `References qubit ${needed - 1}, but max qubit limit is ${maxQubits}. Increase in Settings.`;
-            const codeLines = (document.getElementById('qubiCode')?.value || '').split('\n');
-            let tagged = false;
-            for (let i = 0; i < codeLines.length; i++) {
-                const nums = codeLines[i].match(/\d+/g);
-                if (nums && nums.some(n => parseInt(n, 10) >= maxQubits)) {
-                    this.syntaxHighlighter.lineErrors.set(i, msg);
-                    tagged = true;
-                    break;
-                }
-            }
-            if (!tagged && codeLines.length > 0) {
-                this.syntaxHighlighter.lineErrors.set(0, msg);
-            }
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.validateLines();
             this.syntaxHighlighter.updateLineNumbers();
         }
     }
@@ -479,8 +577,9 @@ class CircuitUI {
 
         const HANDLE_TOTAL = 12;
         const minCenter = 280;
-        const minSidebar = 180;
+        const minSidebar = 184;
         const minCode = 240;
+        const defaultCodeWidth = 340;
 
         const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
@@ -505,10 +604,10 @@ class CircuitUI {
             if (!desktopMq.matches) return;
             if (!sidebar.style.width && !codeSidebar.style.width) return;
             const sw = readW(sidebar) || 260;
-            const cw = readW(codeSidebar) || 400;
+            const cw = readW(codeSidebar) || defaultCodeWidth;
             const { s, c } = jointClamp(sw, cw);
-            sidebar.style.width = `${Math.round(s)}px`;
-            codeSidebar.style.width = `${Math.round(c)}px`;
+            if (sidebar.style.width) sidebar.style.width = `${Math.round(s)}px`;
+            if (codeSidebar.style.width) codeSidebar.style.width = `${Math.round(c)}px`;
         });
 
         const attach = (handle, which) => {
@@ -517,8 +616,17 @@ class CircuitUI {
                 e.preventDefault();
                 const startX = e.clientX;
                 const startSidebar = readW(sidebar) || 260;
-                const startCode = readW(codeSidebar) || 400;
+                const startCode = readW(codeSidebar) || defaultCodeWidth;
                 handle.classList.add('is-dragging');
+
+                let resizeRaf = 0;
+                const scheduleLayoutRefresh = () => {
+                    if (resizeRaf) return;
+                    resizeRaf = requestAnimationFrame(() => {
+                        resizeRaf = 0;
+                        window.dispatchEvent(new Event('resize'));
+                    });
+                };
 
                 const onMove = (ev) => {
                     if (!desktopMq.matches) return;
@@ -532,6 +640,7 @@ class CircuitUI {
                             Math.max(minCode, window.innerWidth - startSidebar - HANDLE_TOTAL - minCenter));
                         codeSidebar.style.width = `${Math.round(nw)}px`;
                     }
+                    scheduleLayoutRefresh();
                 };
 
                 const onUp = () => {
@@ -575,38 +684,65 @@ class CircuitUI {
                 const item = e.target.closest('.gate-item');
                 if (!item) return;
                 this.draggedGate = item.dataset.gate;
+                this._setCircuitDragActive(true);
                 e.dataTransfer.effectAllowed = 'copy';
-                const ghost = document.createElement('div');
-                ghost.style.cssText = 'width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:6px;font-weight:700;font-size:0.8rem;color:#fff;opacity:0.85;position:absolute;left:-9999px;';
-                const sym = item.querySelector('.gate-symbol');
-                ghost.style.background = sym ? getComputedStyle(sym).background : 'var(--primary-color)';
-                ghost.textContent = item.dataset.gate === 'SWAP' ? '⇄' : (item.dataset.gate === 'MEASURE' ? 'M' : item.dataset.gate);
-                document.body.appendChild(ghost);
-                e.dataTransfer.setDragImage(ghost, 18, 18);
-                setTimeout(() => ghost.remove(), 0);
+                item.classList.add('dragging');
+
+                const ghost = buildPaletteDragGhost(item);
+                const half = PALETTE_DRAG_GHOST_SIZE / 2;
+                if (ghost) {
+                    e.dataTransfer.setDragImage(ghost, half, half);
+                }
+                setTimeout(() => ghost?.remove(), 0);
+            });
+
+            gatePalette.addEventListener('dragend', (e) => {
+                e.target.closest('.gate-item')?.classList.remove('dragging');
+                document.querySelectorAll('.gate-item.dragging').forEach((el) => el.classList.remove('dragging'));
+                this.draggedGate = null;
+                this._setCircuitDragActive(false);
+                this._hidePhantomQubitLine();
+                this._clearDragOverHighlights();
+                this._clearShiftPreview();
             });
 
             gatePalette.addEventListener('click', (e) => {
+                const infoBtn = e.target.closest('.gate-info-icon');
+                if (infoBtn) {
+                    e.stopPropagation();
+                    const item = infoBtn.closest('.gate-item');
+                    this._pinGateInfoIcon(item);
+                    this.showGateInfo(infoBtn.dataset.gate);
+                    return;
+                }
+
                 const item = e.target.closest('.gate-item');
                 if (!item) return;
-                if (e.target.closest('.gate-info-icon')) return;
+
                 const gate = item.dataset.gate;
                 if (this.selectedGate === gate) {
                     this.selectedGate = null;
                     document.querySelectorAll('.gate-item').forEach(el => el.classList.remove('gate-selected'));
+                    item.classList.remove('info-pinned');
                 } else {
                     this.selectedGate = gate;
                     document.querySelectorAll('.gate-item').forEach(el => el.classList.remove('gate-selected'));
                     item.classList.add('gate-selected');
+                    this._pinGateInfoIcon(item);
                 }
                 this._updateSlotReadyState();
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.gate-palette .gate-item')) {
+                    document.querySelectorAll('.gate-item.info-pinned').forEach(el => el.classList.remove('info-pinned'));
+                }
             });
         }
 
         // Circuit controls
         document.getElementById('runBtn').addEventListener('click', () => this.runCircuit());
         document.getElementById('clearBtn').addEventListener('click', () => this.clearCircuit());
-        document.getElementById('resetBtn').addEventListener('click', () => this.resetExecution());
         document.getElementById('addQubitBtn').addEventListener('click', () => this.addQubit());
         document.getElementById('removeQubitBtn').addEventListener('click', () => this.removeQubit());
         document.getElementById('qubitCount').addEventListener('change', (e) => {
@@ -628,13 +764,13 @@ class CircuitUI {
                 const settings = this.getSettings();
                 const maxQubits = settings.maxQubits || 12;
                 const validNum = Math.max(1, Math.min(num, maxQubits));
-                e.target.value = `${validNum} Qubits`;
+                e.target.value = formatQubitCountLabel(validNum);
                 if (validNum !== num) {
                     this.setQubitCount(validNum);
                 }
             } else {
                 // If no valid number, restore current qubit count
-                e.target.value = `${this.circuit.numQubits} Qubits`;
+                e.target.value = formatQubitCountLabel(this.circuit.numQubits);
             }
         });
 
@@ -646,10 +782,8 @@ class CircuitUI {
         // Zoom controls
         const zoomInBtn = document.getElementById('zoomInBtn');
         const zoomOutBtn = document.getElementById('zoomOutBtn');
-        const resetZoomBtn = document.getElementById('resetZoomBtn');
         if (zoomInBtn) zoomInBtn.addEventListener('click', () => this.zoomIn());
         if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => this.zoomOut());
-        if (resetZoomBtn) resetZoomBtn.addEventListener('click', () => this.resetZoom());
 
         // Tab switching
         // Tab switching for Circuit Builder / NMR Simulator
@@ -660,7 +794,7 @@ class CircuitUI {
             });
         });
 
-        // Tab switching for Measurement Results / State Vector (only in region 1)
+        // Tab switching for Probabilities / State Vector (only in region 1)
         const vizRegion1 = document.querySelector('.viz-region-1');
         if (vizRegion1) {
             vizRegion1.querySelectorAll('.viz-tab-btn').forEach(btn => {
@@ -796,8 +930,8 @@ class CircuitUI {
             fixBtn.addEventListener('click', () => this.prefillQubiAiForFix());
         }
 
-        // Algorithms
-        document.getElementById('algorithmsBtn').addEventListener('click', () => this.showAlgorithmsModal());
+        // Algorithms (opened from sidebar examples list)
+        document.getElementById('mobileSeeExamplesBtn')?.addEventListener('click', () => this.showAlgorithmsModal());
         document.getElementById('closeAlgorithmsBtn').addEventListener('click', () => {
             document.getElementById('algorithmsModal').classList.remove('active');
             document.getElementById('algorithmParams').style.display = 'none';
@@ -830,15 +964,6 @@ class CircuitUI {
         document.getElementById('exportIncludeBackground').addEventListener('change', () => this.updateExportPreview());
         document.getElementById('exportHighRes').addEventListener('change', () => this.updateExportPreview());
 
-        // Gate info from palette
-        document.querySelectorAll('.gate-info-icon').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const gateType = e.target.dataset.gate;
-                this.showGateInfo(gateType);
-            });
-        });
-
         // Gate info modal
         document.getElementById('closeGateInfoBtn').addEventListener('click', () => {
             document.getElementById('gateInfoModal').classList.remove('active');
@@ -860,7 +985,8 @@ class CircuitUI {
                 const gateEl = e.target.classList.contains('gate-on-wire') ? e.target : e.target.closest('.gate-on-wire');
                 this.editGate(gateEl);
             } else if (this.selectedGate) {
-                const slot = e.target.classList.contains('gate-slot') ? e.target : e.target.closest('.gate-slot');
+                const slot = this._resolveGateSlotFromPointer(e.clientX, e.clientY)
+                    || (e.target.classList.contains('gate-slot') ? e.target : e.target.closest('.gate-slot'));
                 if (slot) {
                     this.placeGateOnSlot(slot);
                 }
@@ -876,41 +1002,218 @@ class CircuitUI {
             }
         });
 
+        const circuitCanvas = document.getElementById('circuitCanvas');
+
         // Drag over circuit
-        document.getElementById('circuitCanvas').addEventListener('dragover', (e) => {
+        circuitCanvas.addEventListener('dragover', (e) => {
             e.preventDefault();
-            const slot = e.target.closest('.gate-slot');
-            if (slot) {
+            if (!this.draggedGate) return;
+
+            const slot = this._resolveGateSlotFromPointer(e.clientX, e.clientY);
+            const onPhantom = slot && slot.closest('.qubit-line-phantom');
+
+            if (slot && !onPhantom) {
+                this._hidePhantomQubitLine();
+                this._clearDragOverHighlights();
                 slot.classList.add('drag-over');
+                this._updateShiftPreviewFromSlot(slot);
+                return;
+            }
+
+            if (this._canAddQubit() && this._isInAddQubitZone(e.clientX, e.clientY)) {
+                const col = this._getColumnFromClientX(e.clientX);
+                this._showPhantomQubitLine(col);
+                this._clearShiftPreview();
+            } else {
+                this._hidePhantomQubitLine();
+                this._clearDragOverHighlights();
+                this._clearShiftPreview();
             }
         });
 
-        document.getElementById('circuitCanvas').addEventListener('dragleave', (e) => {
+        circuitCanvas.addEventListener('mousemove', (e) => {
+            if (!this.draggedGate && !this.selectedGate) return;
+            const slot = this._resolveGateSlotFromPointer(e.clientX, e.clientY);
+            if (slot && !slot.closest('.qubit-line-phantom')) {
+                this._updateShiftPreviewFromSlot(slot);
+            }
+        });
+
+        circuitCanvas.addEventListener('mouseleave', () => {
+            this._clearShiftPreview();
+        });
+
+        circuitCanvas.addEventListener('dragleave', (e) => {
+            if (!circuitCanvas.contains(e.relatedTarget)) {
+                this._hidePhantomQubitLine();
+                this._clearDragOverHighlights();
+                this._clearShiftPreview();
+                return;
+            }
             const slot = e.target.closest('.gate-slot');
-            if (slot) {
+            if (slot && !slot.closest('.qubit-line-phantom')) {
                 slot.classList.remove('drag-over');
             }
         });
 
-        document.getElementById('circuitCanvas').addEventListener('drop', (e) => {
+        circuitCanvas.addEventListener('drop', (e) => {
             e.preventDefault();
-            const slot = e.target.closest('.gate-slot');
-            if (slot && this.draggedGate) {
-                this.placeGateOnSlot(slot, this.draggedGate);
-                this.draggedGate = null;
+            const gate = this.draggedGate;
+            this.draggedGate = null;
+
+            if (this._phantomQubitActive && this._phantomDropColumn !== null && gate) {
+                const column = this._phantomDropColumn;
+                this._hidePhantomQubitLine();
+                this._clearDragOverHighlights();
+                if (this._canAddQubit()) {
+                    this.addQubit();
+                    const qubit = this.circuit.numQubits - 1;
+                    const slot = document.querySelector(
+                        `.gate-slot[data-qubit="${qubit}"][data-column="${column}"]`
+                    );
+                    if (slot) this.placeGateOnSlot(slot, gate);
+                }
+                return;
             }
-            document.querySelectorAll('.drag-over').forEach(el => {
-                el.classList.remove('drag-over');
-            });
+
+            this._hidePhantomQubitLine();
+            this._clearDragOverHighlights();
+            this._clearShiftPreview();
+            this._setCircuitDragActive(false);
+
+            const slot = this._resolveGateSlotFromPointer(e.clientX, e.clientY);
+            if (slot && gate && !slot.closest('.qubit-line-phantom')) {
+                this.placeGateOnSlot(slot, gate);
+            }
         });
     }
 
-    /** Toggle visual cue on empty gate slots when a gate is selected */
+    _pinGateInfoIcon(item) {
+        document.querySelectorAll('.gate-item.info-pinned').forEach(el => {
+            if (el !== item) el.classList.remove('info-pinned');
+        });
+        item?.classList.add('info-pinned');
+    }
+
+    _initPaletteGateItems() {
+        document.querySelectorAll('.gate-palette .gate-item').forEach(item => {
+            const sym = item.querySelector('.gate-symbol');
+            if (!sym) return;
+
+            let info = sym.querySelector('.gate-info-icon');
+            if (!info) info = item.querySelector('.gate-info-icon');
+            if (info && !sym.contains(info)) {
+                if (!info.type) info.type = 'button';
+                sym.appendChild(info);
+            }
+
+            const nameEl = item.querySelector('.gate-name');
+            if (nameEl) {
+                item.setAttribute('aria-label', nameEl.textContent.trim());
+            }
+
+            let labelEl = sym.querySelector('.gate-symbol-label');
+            if (!labelEl) {
+                const labelText = sym.childNodes[0]?.nodeType === Node.TEXT_NODE
+                    ? sym.childNodes[0].textContent.trim()
+                    : sym.textContent.replace('ℹ', '').trim();
+                sym.childNodes.forEach(n => {
+                    if (n.nodeType === Node.TEXT_NODE) sym.removeChild(n);
+                });
+                labelEl = document.createElement('span');
+                labelEl.className = 'gate-symbol-label';
+                labelEl.textContent = labelText;
+                sym.insertBefore(labelEl, sym.firstChild);
+            }
+            fitGateLabel(labelEl, labelEl.textContent);
+        });
+    }
+
+    _initSidebarExamplesList() {
+        const container = document.getElementById('sidebarExamplesList');
+        if (!container || typeof QuantumAlgorithms === 'undefined') return;
+
+        const categoryOrder = ['Entanglement', 'Algorithm', 'Communication', 'Concept', 'Error Correction'];
+        const categories = {};
+        Object.entries(QuantumAlgorithms).forEach(([key, algo]) => {
+            const cat = algo.category || 'Other';
+            if (!categories[cat]) categories[cat] = [];
+            categories[cat].push({ key, algo });
+        });
+
+        container.innerHTML = '';
+        categoryOrder.forEach(catName => {
+            const items = categories[catName];
+            if (!items?.length) return;
+
+            const section = document.createElement('div');
+            section.className = 'sidebar-example-category';
+            const title = document.createElement('h3');
+            title.className = 'category-title';
+            title.textContent = catName;
+            section.appendChild(title);
+
+            const list = document.createElement('div');
+            list.className = 'sidebar-examples-group';
+            items.forEach(({ key, algo }) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'sidebar-example-item';
+                btn.textContent = algo.name;
+                btn.dataset.algoKey = key;
+                btn.addEventListener('click', () => this.openAlgorithmExample(key));
+                list.appendChild(btn);
+            });
+            section.appendChild(list);
+            container.appendChild(section);
+        });
+
+        const other = categories['Other'];
+        if (other?.length) {
+            const section = document.createElement('div');
+            section.className = 'sidebar-example-category';
+            const title = document.createElement('h3');
+            title.className = 'category-title';
+            title.textContent = 'Other';
+            section.appendChild(title);
+            const list = document.createElement('div');
+            list.className = 'sidebar-examples-group';
+            other.forEach(({ key, algo }) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'sidebar-example-item';
+                btn.textContent = algo.name;
+                btn.dataset.algoKey = key;
+                btn.addEventListener('click', () => this.openAlgorithmExample(key));
+                list.appendChild(btn);
+            });
+            section.appendChild(list);
+            container.appendChild(section);
+        }
+    }
+
+    openAlgorithmExample(key) {
+        const algo = QuantumAlgorithms[key];
+        if (!algo) return;
+        this.showAlgorithmsModal();
+        this.showAlgorithmDetail(key, algo);
+        requestAnimationFrame(() => {
+            const list = document.getElementById('algorithmsList');
+            if (!list) return;
+            list.querySelectorAll('.algorithm-item.selected').forEach(el => el.classList.remove('selected'));
+            const item = list.querySelector(`.algorithm-item[data-algo-key="${key}"]`);
+            if (item) {
+                item.classList.add('selected');
+                item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }
+        });
+    }
+
+    /** Highlight empty slots when a gate is selected for tap-to-place */
     _updateSlotReadyState() {
         const slots = document.querySelectorAll('.gate-slot');
         if (this.selectedGate) {
             slots.forEach(slot => {
-                // Only highlight empty slots
                 if (!slot.querySelector('.gate-on-wire')) {
                     slot.classList.add('slot-ready');
                 }
@@ -918,6 +1221,318 @@ class CircuitUI {
         } else {
             slots.forEach(slot => slot.classList.remove('slot-ready'));
         }
+    }
+
+    _canAddQubit() {
+        const settings = this.getSettings();
+        const maxQubits = settings.maxQubits || 12;
+        return this.circuit.numQubits < maxQubits;
+    }
+
+    _getColumnFromClientX(clientX) {
+        const canvas = document.getElementById('circuitCanvas');
+        const canvasPadding = 32;
+        const labelWidth = 60;
+        const rect = canvas.getBoundingClientRect();
+        const zoom = this.zoomLevel || 1;
+        const x = (clientX - rect.left) / zoom;
+        const wireX = x - canvasPadding - labelWidth;
+        if (wireX < 0) return 0;
+        const col = Math.floor(wireX / this.columnSpacing);
+        const minColumns = Math.max(this.circuit.maxColumn + 10, 20);
+        return Math.max(0, Math.min(col, minColumns - 1));
+    }
+
+    /**
+     * Gate slot under the pointer, including columns covered by REPEAT/END blocks
+     * (those sit above slots in the hit-test order).
+     */
+    _resolveGateSlotFromPointer(clientX, clientY) {
+        const canvas = document.getElementById('circuitCanvas');
+        if (!canvas) return null;
+        const stack = document.elementsFromPoint(clientX, clientY);
+        for (const el of stack) {
+            if (!canvas.contains(el)) continue;
+            const slot = el.classList?.contains('gate-slot') ? el : el.closest?.('.gate-slot');
+            if (slot && canvas.contains(slot) && !slot.closest('.qubit-line-phantom')) {
+                return slot;
+            }
+        }
+        return null;
+    }
+
+    _setCircuitDragActive(active) {
+        document.getElementById('circuitCanvas')?.classList.toggle('is-gate-drag', Boolean(active));
+    }
+
+    _isInAddQubitZone(clientX, clientY) {
+        if (!this._canAddQubit()) return false;
+        const canvas = document.getElementById('circuitCanvas');
+        const canvasRect = canvas.getBoundingClientRect();
+        if (clientX < canvasRect.left || clientX > canvasRect.right) return false;
+        if (clientY < canvasRect.top || clientY > canvasRect.bottom + this._qubitRowHeight) return false;
+
+        if (this._phantomQubitEl?.classList.contains('is-visible')) {
+            const pr = this._phantomQubitEl.getBoundingClientRect();
+            if (clientY >= pr.top - 4 && clientY <= pr.bottom + 4) return true;
+        }
+
+        const lines = canvas.querySelectorAll('.qubit-line:not(.qubit-line-phantom)');
+        if (!lines.length) return false;
+        const lastLine = lines[lines.length - 1];
+        const lastRect = lastLine.getBoundingClientRect();
+        return clientY >= lastRect.bottom - 4 && clientY <= lastRect.bottom + this._qubitRowHeight + 4;
+    }
+
+    _syncPhantomQubitLine(minColumns, totalWidth) {
+        let phantom = this._phantomQubitEl;
+        if (!phantom) {
+            phantom = document.createElement('div');
+            phantom.className = 'qubit-line qubit-line-phantom';
+            phantom.setAttribute('aria-hidden', 'true');
+            this._phantomQubitEl = phantom;
+        } else {
+            phantom.innerHTML = '';
+        }
+
+        const nextIndex = this.circuit.numQubits;
+        phantom.style.width = `${totalWidth + 80}px`;
+
+        const label = document.createElement('div');
+        label.className = 'qubit-label';
+        label.textContent = `q[${nextIndex}]`;
+
+        const wire = document.createElement('div');
+        wire.className = 'qubit-wire';
+        wire.style.width = `${totalWidth}px`;
+
+        const gateContainer = document.createElement('div');
+        gateContainer.className = 'gate-container';
+        gateContainer.style.width = `${totalWidth}px`;
+
+        for (let col = 0; col < minColumns; col++) {
+            const slot = document.createElement('div');
+            slot.className = 'gate-slot';
+            slot.dataset.column = String(col);
+            slot.style.left = `${col * this.columnSpacing}px`;
+            gateContainer.appendChild(slot);
+        }
+
+        phantom.appendChild(label);
+        phantom.appendChild(wire);
+        phantom.appendChild(gateContainer);
+
+        const canvas = document.getElementById('circuitCanvas');
+        canvas.appendChild(phantom);
+        phantom.classList.remove('is-visible');
+    }
+
+    _showPhantomQubitLine(column) {
+        if (!this._phantomQubitEl || !this._canAddQubit()) return;
+        this._phantomQubitActive = true;
+        this._phantomDropColumn = column;
+        this._phantomQubitEl.classList.add('is-visible');
+        this._phantomQubitEl.querySelectorAll('.gate-slot').forEach((s) => s.classList.remove('drag-over'));
+        const slot = this._phantomQubitEl.querySelector(`.gate-slot[data-column="${column}"]`);
+        if (slot) slot.classList.add('drag-over');
+    }
+
+    _hidePhantomQubitLine() {
+        this._phantomQubitActive = false;
+        this._phantomDropColumn = null;
+        if (!this._phantomQubitEl) return;
+        this._phantomQubitEl.classList.remove('is-visible');
+        this._phantomQubitEl.querySelectorAll('.drag-over').forEach((s) => s.classList.remove('drag-over'));
+    }
+
+    _clearDragOverHighlights() {
+        document.querySelectorAll('.gate-slot.drag-over').forEach((el) => el.classList.remove('drag-over'));
+    }
+
+    _getInsertPlan(qubit, hoverColumn) {
+        return this.circuit.getInsertPlan(qubit, hoverColumn);
+    }
+
+    _applyInsertShift(qubit, plan) {
+        if (plan.shouldShift) {
+            this.circuit.shiftForInsertOnWire(qubit, plan.insertColumn);
+        }
+    }
+
+    _clearShiftPreview() {
+        document.querySelectorAll(
+            '.gate-on-wire.shift-preview, .control-flow-block.shift-preview, .circuit-control-bus.shift-preview'
+        ).forEach((el) => {
+            el.classList.remove('shift-preview');
+            el.style.removeProperty('--shift-preview-dx');
+        });
+    }
+
+    _updateShiftPreviewFromSlot(slot) {
+        if (!this.draggedGate && !this.selectedGate) {
+            this._clearShiftPreview();
+            return;
+        }
+        if (!slot || slot.closest('.qubit-line-phantom')) {
+            this._clearShiftPreview();
+            return;
+        }
+        const qubit = parseInt(slot.dataset.qubit, 10);
+        const column = parseInt(slot.dataset.column, 10);
+        const plan = this._getInsertPlan(qubit, column);
+        if (!plan.shouldShift) {
+            this._clearShiftPreview();
+            return;
+        }
+        this._clearShiftPreview();
+        const dx = `${this.columnSpacing}px`;
+        const fromCol = plan.insertColumn;
+
+        const markPreview = (el) => {
+            if (!el) return;
+            el.classList.add('shift-preview');
+            el.style.setProperty('--shift-preview-dx', dx);
+        };
+
+        this.circuit.getGatesToShiftForInsert(qubit, fromCol).forEach((gate) => {
+            this._markShiftPreviewForGate(gate, markPreview);
+        });
+
+        document.querySelectorAll('.control-flow-block').forEach((el) => {
+            const col = parseInt(el.dataset.column, 10);
+            if (col >= fromCol) markPreview(el);
+        });
+    }
+
+    _shiftPreviewControlQubits(gate) {
+        if (['CX', 'CY', 'CZ'].includes(gate.type)) {
+            if (gate.multiQubits && gate.multiQubits.length > 0) return gate.multiQubits;
+            if (gate.target !== null && gate.target !== undefined) return [gate.target];
+            return [];
+        }
+        if (gate.type === 'CSWAP') {
+            const joint = gate.params && gate.params.jointQubits;
+            if (Array.isArray(joint) && joint.length === 3) return [joint[0]];
+        }
+        return [];
+    }
+
+    _queryGateVisual(qubit, column, extraSelector = '') {
+        return document.querySelector(
+            `.qubit-line[data-qubit="${qubit}"] .gate-on-wire${extraSelector}[data-column="${column}"]`
+        );
+    }
+
+    /** Fainter shift preview for every visual piece of a multi-qubit gate. */
+    _markShiftPreviewForGate(gate, markPreview) {
+        const col = gate.column;
+
+        const anchorSlot = document.querySelector(
+            `.gate-slot[data-qubit="${gate.qubit}"][data-column="${col}"]`
+        );
+        if (anchorSlot) {
+            // Include swap-family anchors (SWAP / CSWAP wire B use swap-block, not plain labels).
+            anchorSlot.querySelectorAll('.gate-on-wire:not(.control-block)').forEach((el) => markPreview(el));
+        }
+
+        this._shiftPreviewControlQubits(gate).forEach((cq) => {
+            markPreview(this._queryGateVisual(cq, col, '.control-block'));
+        });
+
+        if (gate.type === 'SWAP' && gate.target !== null && gate.target !== undefined) {
+            markPreview(this._queryGateVisual(gate.target, col, '[data-gate-type="SWAP_PARTNER"]'));
+        }
+
+        if (gate.type === 'CSWAP') {
+            const joint = gate.params && gate.params.jointQubits;
+            if (Array.isArray(joint) && joint.length === 3) {
+                markPreview(this._queryGateVisual(joint[1], col, '[data-gate-type="CSWAP_PARTNER"]'));
+            }
+        }
+
+        const joint = gate.params && gate.params.jointQubits;
+        if (Array.isArray(joint) && joint.length > 1 && gate.type !== 'CSWAP') {
+            joint.forEach((qq) => {
+                if (qq === gate.qubit) return;
+                markPreview(this._queryGateVisual(qq, col, '.joint-block'));
+            });
+        }
+
+        const busKey = this._controlConnectorBusKey(gate);
+        if (busKey) {
+            document.querySelectorAll('.circuit-control-bus').forEach((el) => {
+                if (el.dataset.busKey === busKey) markPreview(el);
+            });
+        }
+    }
+
+    /** Stable key for a gate's vertical control bus (matches _collectControlConnectorSpecs). */
+    _controlConnectorBusKey(gate) {
+        let controls = [];
+        const target = gate.qubit;
+
+        if (['CX', 'CY', 'CZ'].includes(gate.type)) {
+            if (gate.multiQubits && gate.multiQubits.length > 0) {
+                controls = [...gate.multiQubits];
+            } else if (gate.target !== null && gate.target !== undefined) {
+                controls = [gate.target];
+            }
+        } else if (gate.type === 'CSWAP') {
+            const joint = gate.params && gate.params.jointQubits;
+            if (!Array.isArray(joint) || joint.length !== 3) return null;
+            return `${gate.column}:${joint.slice().sort((a, b) => a - b).join(',')}:CSWAP`;
+        } else {
+            const joint = gate.params && gate.params.jointQubits;
+            if (!Array.isArray(joint) || joint.length < 2) return null;
+            if (!this.customGateMeta[gate.type]) return null;
+            controls = joint.filter((q) => q !== target);
+        }
+
+        if (!controls.length) return null;
+        const allQubits = [...controls, target];
+        return `${gate.column}:${allQubits.slice().sort((a, b) => a - b).join(',')}:${gate.type}`;
+    }
+
+    _isCircuitQubitInteractionTarget(el) {
+        return !!el.closest(
+            '.qubit-line:not(.qubit-line-phantom), .gate-slot, .gate-on-wire, .control-flow-block'
+        );
+    }
+
+    _clearPaletteGateSelection() {
+        this.selectedGate = null;
+        document.querySelectorAll('.gate-item.gate-selected').forEach((el) => el.classList.remove('gate-selected'));
+        document.querySelectorAll('.gate-item.info-pinned').forEach((el) => el.classList.remove('info-pinned'));
+        this._updateSlotReadyState();
+        this._clearShiftPreview();
+    }
+
+    _initPaletteDismissListeners() {
+        document.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'touch') {
+                this._pointerTouchMoved = false;
+                this._pointerStart = { x: e.clientX, y: e.clientY };
+            }
+        }, true);
+
+        document.addEventListener('pointermove', (e) => {
+            if (e.pointerType !== 'touch' || !this._pointerStart) return;
+            const dx = e.clientX - this._pointerStart.x;
+            const dy = e.clientY - this._pointerStart.y;
+            if (dx * dx + dy * dy > 100) this._pointerTouchMoved = true;
+        }, true);
+
+        document.addEventListener('pointerup', (e) => {
+            if (this._pointerTouchMoved) {
+                this._pointerStart = null;
+                return;
+            }
+            if (e.target.closest('.gate-palette .gate-item')) return;
+            if (this._isCircuitQubitInteractionTarget(e.target)) return;
+            if (e.target.closest('.modal.active, .modal-overlay')) return;
+            this._clearPaletteGateSelection();
+            this._pointerStart = null;
+        }, true);
     }
 
     renderCircuit() {
@@ -971,6 +1586,8 @@ class CircuitUI {
             canvas.appendChild(qubitLine);
         }
 
+        this._syncPhantomQubitLine(minColumns, totalWidth);
+
         // Place existing gates
         this.circuit.gates.forEach(gate => {
             this.renderGate(gate);
@@ -981,8 +1598,213 @@ class CircuitUI {
             this.renderControlFlow(cf);
         });
 
+        this._scheduleControlConnectorRefresh();
         this.updateCircuitInfo();
         this._updateSlotReadyState();
+    }
+
+    /** Re-sync code ↔ circuit after palette/modal edits; fixes control-bus layout for CX/CY/CZ. */
+    _refreshCircuitAfterGateEdit() {
+        this.circuit.state = null;
+        this.syncCircuitToCode();
+        if (this.hasCodeErrors()) {
+            this.renderCircuit();
+        } else {
+            this.syncCodeToCircuit();
+        }
+        this.updateVisualization();
+        this._clearShiftPreview();
+    }
+
+    _scheduleControlConnectorRefresh() {
+        if (this._controlConnectorRaf) {
+            cancelAnimationFrame(this._controlConnectorRaf);
+        }
+        this._controlConnectorRaf = requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                this._controlConnectorRaf = null;
+                this._renderControlConnectors();
+            });
+        });
+    }
+
+    /** Solid accent for custom-gate connectors (avoid gradients on thin lines). */
+    _customGateConnectorColor(meta) {
+        if (!meta?.colorBg) return null;
+        const match = String(meta.colorBg).match(/#[0-9a-f]{3,8}/i);
+        return match ? match[0] : null;
+    }
+
+    /** Slot center in canvas local coordinates (accounts for circuit zoom). */
+    _slotCenterInCanvas(slot) {
+        const canvas = document.getElementById('circuitCanvas');
+        if (!slot || !canvas) return null;
+        const zoom = this.zoomLevel || 1;
+        const sr = slot.getBoundingClientRect();
+        const cr = canvas.getBoundingClientRect();
+        return {
+            x: (sr.left + sr.width / 2 - cr.left) / zoom,
+            y: (sr.top + sr.height / 2 - cr.top) / zoom
+        };
+    }
+
+    /**
+     * Run callback while the circuit builder can be laid out for measurement.
+     * Connectors use slot geometry; a hidden panel (e.g. NMR tab active) yields zero-size rects.
+     */
+    _withCircuitEditorMeasurable(callback) {
+        const circuitEditor = document.getElementById('circuitEditor');
+        const canvas = document.getElementById('circuitCanvas');
+        if (!circuitEditor || !canvas) {
+            callback();
+            return;
+        }
+
+        const needsOffscreen = !circuitEditor.classList.contains('active');
+        if (needsOffscreen) {
+            circuitEditor.style.display = 'flex';
+            circuitEditor.style.position = 'absolute';
+            circuitEditor.style.left = '-9999px';
+            circuitEditor.style.visibility = 'visible';
+            circuitEditor.style.pointerEvents = 'none';
+            void circuitEditor.offsetHeight;
+            void canvas.offsetHeight;
+        }
+
+        try {
+            callback();
+        } finally {
+            if (needsOffscreen) {
+                circuitEditor.style.display = '';
+                circuitEditor.style.position = '';
+                circuitEditor.style.left = '';
+                circuitEditor.style.visibility = '';
+                circuitEditor.style.pointerEvents = '';
+            }
+        }
+    }
+
+    /** Single continuous vertical bus per gate; slot centers define exact span. */
+    _renderControlConnectors() {
+        this._withCircuitEditorMeasurable(() => this._renderControlConnectorsImpl());
+    }
+
+    _renderControlConnectorsImpl() {
+        const canvas = document.getElementById('circuitCanvas');
+        if (!canvas) return;
+
+        canvas.querySelectorAll('.circuit-control-links').forEach((el) => el.remove());
+        document.querySelectorAll('.gate-slot.on-control-bus').forEach((slot) => {
+            slot.classList.remove('on-control-bus');
+        });
+
+        const specs = this._collectControlConnectorSpecs();
+        if (!specs.length) return;
+
+        const layer = document.createElement('div');
+        layer.className = 'circuit-control-links';
+        layer.setAttribute('aria-hidden', 'true');
+
+        const connectorWidth = 4;
+
+        for (const spec of specs) {
+            const qubits = [...new Set(spec.qubits)].sort((a, b) => a - b);
+            if (qubits.length < 2) continue;
+
+            const qMin = qubits[0];
+            const qMax = qubits[qubits.length - 1];
+            const col = spec.column;
+
+            const topSlot = document.querySelector(
+                `.gate-slot[data-qubit="${qMin}"][data-column="${col}"]`
+            );
+            const bottomSlot = document.querySelector(
+                `.gate-slot[data-qubit="${qMax}"][data-column="${col}"]`
+            );
+            const top = this._slotCenterInCanvas(topSlot);
+            const bottom = this._slotCenterInCanvas(bottomSlot);
+            if (!top || !bottom) continue;
+
+            const yTop = Math.min(top.y, bottom.y);
+            const yBottom = Math.max(top.y, bottom.y);
+            const height = yBottom - yTop;
+            if (height <= 0) continue;
+
+            const line = document.createElement('div');
+            line.className = 'circuit-control-bus';
+            line.dataset.column = String(col);
+            if (spec.busKey) line.dataset.busKey = spec.busKey;
+
+            const familyClass = {
+                CX: 'gate-x-family',
+                CY: 'gate-y-family',
+                CZ: 'gate-z-family',
+                CSWAP: 'gate-swap-family'
+            }[spec.gateType];
+            if (familyClass) line.classList.add(familyClass);
+            if (spec.customMeta) {
+                line.classList.add('gate-custom');
+                const solid = this._customGateConnectorColor(spec.customMeta);
+                if (solid) line.style.backgroundColor = solid;
+            }
+
+            const xCenter = (top.x + bottom.x) / 2;
+            line.style.width = `${connectorWidth}px`;
+            line.style.left = `${xCenter - connectorWidth / 2}px`;
+            line.style.top = `${yTop}px`;
+            line.style.height = `${height}px`;
+
+            layer.appendChild(line);
+
+            for (let q = qMin; q <= qMax; q++) {
+                const slot = document.querySelector(
+                    `.gate-slot[data-qubit="${q}"][data-column="${col}"]`
+                );
+                if (slot) slot.classList.add('on-control-bus');
+            }
+        }
+
+        canvas.insertBefore(layer, canvas.firstChild);
+    }
+
+    _collectControlConnectorSpecs() {
+        const specs = [];
+        const seen = new Set();
+
+        for (const gate of this.circuit.gates) {
+            const busKey = this._controlConnectorBusKey(gate);
+            if (!busKey || seen.has(busKey)) continue;
+            seen.add(busKey);
+
+            let customMeta = null;
+            let allQubits = [gate.qubit];
+            if (['CX', 'CY', 'CZ'].includes(gate.type)) {
+                const controls =
+                    gate.multiQubits && gate.multiQubits.length > 0
+                        ? gate.multiQubits
+                        : gate.target !== null && gate.target !== undefined
+                          ? [gate.target]
+                          : [];
+                allQubits = [...controls, gate.qubit];
+            } else if (gate.type === 'CSWAP') {
+                const joint = gate.params && gate.params.jointQubits;
+                allQubits = Array.isArray(joint) && joint.length === 3 ? [...joint] : [gate.qubit];
+            } else {
+                customMeta = this.customGateMeta[gate.type];
+                const joint = gate.params && gate.params.jointQubits;
+                allQubits = Array.isArray(joint) ? [...joint] : [gate.qubit];
+            }
+
+            specs.push({
+                column: gate.column,
+                qubits: allQubits,
+                gateType: gate.type,
+                customMeta,
+                busKey
+            });
+        }
+
+        return specs;
     }
 
     renderControlFlow(cf) {
@@ -1015,7 +1837,7 @@ class CircuitUI {
 
         if (type === 'REPEAT') {
             symbol.textContent = '↻';
-            block.title = `REPEAT ${params.count} times - Click to edit, right-click to delete`;
+            block.title = `REPEAT ${params.count} times - Click to edit, hover × to delete`;
 
             const label = document.createElement('div');
             label.className = 'control-flow-label';
@@ -1024,7 +1846,7 @@ class CircuitUI {
             block.appendChild(label);
         } else if (type === 'END') {
             symbol.textContent = '⊣';
-            block.title = params.endingLabel ? `END ${params.endingLabel}` : 'END - Right-click to delete';
+            block.title = params.endingLabel ? `END ${params.endingLabel} - Hover × to delete` : 'END - Hover × to delete';
             block.appendChild(symbol);
 
             if (params.endingLabel) {
@@ -1089,7 +1911,7 @@ class CircuitUI {
             'H': 'H', 'X': 'X', 'Y': 'Y', 'Z': 'Z',
             'S': 'S', 'T': 'T',
             'RX': 'RX', 'RY': 'RY', 'RZ': 'RZ',
-            'CX': 'X', 'CY': 'Y', 'CZ': 'Z', 'SWAP': '⇄',
+            'CX': 'X', 'CY': 'Y', 'CZ': 'Z', 'SWAP': '⇄', 'CSWAP': 'CS',
             'MEASURE': 'M'
         };
 
@@ -1101,6 +1923,7 @@ class CircuitUI {
             'H': 'gate-h-family',
             'S': 'gate-phase-family', 'T': 'gate-phase-family',
             'SWAP': 'gate-swap-family',
+            'CSWAP': 'gate-swap-family',
             'MEASURE': 'gate-measure-family'
         };
 
@@ -1129,12 +1952,24 @@ class CircuitUI {
             e.stopPropagation();
             this.removeGateFromSlot(gateEl);
         });
-        // Make the gate text a span so it sits alongside the delete btn
-        const textSpan = document.createElement('span');
-        textSpan.textContent = symbolText;
-        gateEl.textContent = '';
-        gateEl.appendChild(textSpan);
-        gateEl.appendChild(deleteBtn);
+
+        const swapPartnerQubit = type === 'SWAP' && target !== null && target !== undefined
+            ? target
+            : (type === 'CSWAP' && params && Array.isArray(params.jointQubits) && params.jointQubits.length === 3
+                ? params.jointQubits[1]
+                : null);
+
+        if (swapPartnerQubit !== null) {
+            this._fillSwapWireGate(gateEl, '⇄', swapPartnerQubit, deleteBtn);
+        } else {
+            const textSpan = document.createElement('span');
+            textSpan.className = 'gate-on-wire-label';
+            textSpan.textContent = symbolText;
+            fitGateLabel(textSpan, symbolText);
+            gateEl.textContent = '';
+            gateEl.appendChild(textSpan);
+            gateEl.appendChild(deleteBtn);
+        }
 
         // Show parameters if present (rotation angle)
         if (params && params.angle !== undefined) {
@@ -1155,7 +1990,14 @@ class CircuitUI {
             controlQubits = [target];
         }
 
-        if (controlQubits.length > 0) {
+        const joint = params && Array.isArray(params.jointQubits) ? params.jointQubits : null;
+
+        if (joint && joint.length > 1 && meta) {
+            const controls = joint.filter((qq) => qq !== qubit);
+            if (controls.length > 0) {
+                this.renderControlBlocks(controls, qubit, column, type, { customMeta: meta });
+            }
+        } else if (controlQubits.length > 0) {
             this.renderControlBlocks(controlQubits, qubit, column, type);
         }
 
@@ -1164,12 +2006,13 @@ class CircuitUI {
             this.renderSwapPartner(target, qubit, column);
         }
 
-        const joint = params && Array.isArray(params.jointQubits) ? params.jointQubits : null;
-        if (joint && joint.length > 1) {
-            for (const qq of joint) {
-                if (qq === qubit) continue;
-                this.renderJointPartner(qq, qubit, column, type);
+        // Handle CSWAP (Fredkin) — control dot + CS on both swap wires
+        if (type === 'CSWAP' && params && Array.isArray(params.jointQubits) && params.jointQubits.length === 3) {
+            const [control, swapA, swapB] = params.jointQubits;
+            if (swapA !== swapB) {
+                this.renderCSwapPartner(swapA, swapB, column);
             }
+            this.renderControlBlocks([control], swapB, column, 'CSWAP', { swapQubits: [swapA, swapB] });
         }
     }
 
@@ -1189,6 +2032,33 @@ class CircuitUI {
         partnerSlot.appendChild(block);
     }
 
+    /** Symbol + ↔qN label inside the gate (SWAP / CSWAP swap wires). */
+    _fillSwapWireGate(gateEl, symbol, partnerQubit, deleteBtn = null) {
+        gateEl.classList.add('swap-block');
+        gateEl.textContent = '';
+        const symbolSpan = document.createElement('span');
+        symbolSpan.className = 'swap-symbol';
+        symbolSpan.textContent = symbol;
+        const partnerSpan = document.createElement('span');
+        partnerSpan.className = 'swap-arrow';
+        partnerSpan.textContent = `↔q${partnerQubit}`;
+        gateEl.appendChild(symbolSpan);
+        gateEl.appendChild(partnerSpan);
+        if (deleteBtn) gateEl.appendChild(deleteBtn);
+    }
+
+    _createSwapPartnerBlock(partnerQubit, column, gateType, symbol, anchorQubit) {
+        const swapBlock = document.createElement('div');
+        swapBlock.className = 'gate-on-wire swap-block gate-swap-family';
+        swapBlock.dataset.gateType = gateType;
+        swapBlock.dataset.qubit = partnerQubit;
+        swapBlock.dataset.column = column;
+        swapBlock.dataset.partnerQubit = anchorQubit;
+        swapBlock.title = `${gateType === 'SWAP_PARTNER' ? 'SWAP' : 'CSWAP'} with q[${anchorQubit}]`;
+        this._fillSwapWireGate(swapBlock, symbol, anchorQubit);
+        return swapBlock;
+    }
+
     renderSwapPartner(partnerQubit, originalQubit, column) {
         const partnerSlot = document.querySelector(`.gate-slot[data-qubit="${partnerQubit}"][data-column="${column}"]`);
         if (!partnerSlot) {
@@ -1199,46 +2069,35 @@ class CircuitUI {
         // Clear the slot
         partnerSlot.innerHTML = '';
 
-        // Create the swap partner block
-        const swapBlock = document.createElement('div');
-        swapBlock.className = 'gate-on-wire swap-block gate-swap-family';
-        swapBlock.dataset.gateType = 'SWAP_PARTNER';
-        swapBlock.dataset.qubit = partnerQubit;
-        swapBlock.dataset.column = column;
-        swapBlock.dataset.partnerQubit = originalQubit;
-        swapBlock.title = `SWAP with q[${originalQubit}]`;
-
-        // Create inner content
-        const symbol = document.createElement('span');
-        symbol.className = 'swap-symbol';
-        symbol.textContent = '⇄';
-
-        const arrow = document.createElement('span');
-        arrow.className = 'swap-arrow';
-        arrow.textContent = `↔q${originalQubit}`;
-
-        swapBlock.appendChild(symbol);
-        swapBlock.appendChild(arrow);
-
-        partnerSlot.appendChild(swapBlock);
-
-        // Update original gate to show partner
-        const originalSlot = document.querySelector(`.gate-slot[data-qubit="${originalQubit}"][data-column="${column}"]`);
-        if (originalSlot && originalSlot.firstChild) {
-            const originalGate = originalSlot.firstChild;
-            originalGate.classList.add('has-params');
-            originalGate.dataset.params = `↔q${partnerQubit}`;
-        }
+        partnerSlot.appendChild(
+            this._createSwapPartnerBlock(partnerQubit, column, 'SWAP_PARTNER', '⇄', originalQubit)
+        );
     }
 
-    renderControlBlocks(controlQubits, targetQubit, column, gateType = 'CX') {
+    renderCSwapPartner(partnerQubit, anchorQubit, column) {
+        const partnerSlot = document.querySelector(`.gate-slot[data-qubit="${partnerQubit}"][data-column="${column}"]`);
+        if (!partnerSlot) {
+            console.warn(`CSWAP partner slot not found for qubit ${partnerQubit}, column ${column}`);
+            return;
+        }
+
+        partnerSlot.innerHTML = '';
+
+        partnerSlot.appendChild(
+            this._createSwapPartnerBlock(partnerQubit, column, 'CSWAP_PARTNER', '⇄', anchorQubit)
+        );
+    }
+
+    renderControlBlocks(controlQubits, targetQubit, column, gateType = 'CX', options = {}) {
+        const { customMeta, swapQubits } = options;
         // Gate family mapping for control blocks
         const gateFamily = {
             'CX': 'gate-x-family',
             'CY': 'gate-y-family',
-            'CZ': 'gate-z-family'
+            'CZ': 'gate-z-family',
+            'CSWAP': 'gate-swap-family'
         };
-        const familyClass = gateFamily[gateType] || '';
+        const familyClass = customMeta ? '' : (gateFamily[gateType] || '');
 
         // Render control blocks on each control qubit's slot
         controlQubits.forEach(controlQubit => {
@@ -1253,15 +2112,27 @@ class CircuitUI {
 
             // Create the control block element
             const controlBlock = document.createElement('div');
-            controlBlock.className = 'gate-on-wire control-block';
+            controlBlock.className = 'gate-on-wire control-block control-block-circle';
             if (familyClass) {
                 controlBlock.classList.add(familyClass);
+            }
+            if (customMeta) {
+                controlBlock.classList.add('gate-custom');
+                if (customMeta.colorBg) {
+                    controlBlock.style.background = customMeta.colorBg;
+                    controlBlock.style.borderColor = customMeta.colorBg;
+                    controlBlock.style.boxShadow = `0 6px 16px ${customMeta.colorGlow || 'rgba(99,102,241,0.22)'}`;
+                }
             }
             controlBlock.dataset.gateType = 'CONTROL';
             controlBlock.dataset.qubit = controlQubit;
             controlBlock.dataset.column = column;
             controlBlock.dataset.targetQubit = targetQubit;
-            controlBlock.title = `Control for ${gateType} on q[${targetQubit}]`;
+            controlBlock.dataset.parentGateType = gateType;
+            const targetLabel = gateType === 'CSWAP' && Array.isArray(swapQubits) && swapQubits.length === 2
+                ? swapQubits.map((q) => `q${q}`).join(', ')
+                : `q${targetQubit}`;
+            controlBlock.title = `Control for ${gateType} on ${targetLabel}`;
 
             // Create inner content
             const label = document.createElement('span');
@@ -1270,7 +2141,9 @@ class CircuitUI {
 
             const arrow = document.createElement('span');
             arrow.className = 'control-arrow';
-            arrow.textContent = `→q${targetQubit}`;
+            arrow.textContent = gateType === 'CSWAP' && Array.isArray(swapQubits) && swapQubits.length === 2
+                ? `→${swapQubits.map((q) => `q${q}`).join(', ')}`
+                : `→q${targetQubit}`;
 
             controlBlock.appendChild(label);
             controlBlock.appendChild(arrow);
@@ -1293,100 +2166,79 @@ class CircuitUI {
 
         if (!type) return;
 
+        const plan = this._getInsertPlan(qubit, column);
+        const insertColumn = plan.insertColumn;
+
         // Check if control flow (REPEAT/END)
         if (type === 'REPEAT') {
-            // Don't allow placing REPEAT at a column that has gates
-            const gatesAtColumn = this.circuit.getGatesAtColumn(column);
+            const gatesAtColumn = this.circuit.getGatesAtColumn(insertColumn);
             if (gatesAtColumn.length > 0) {
-                return; // Silently fail - column is occupied
+                return;
             }
-            this.showRepeatModal(column);
+            if (!plan.shouldShift && this.circuit.getControlFlowAtColumn(insertColumn)) {
+                return;
+            }
+            this.showRepeatModal(insertColumn, 2, false, plan, qubit);
             return;
         }
 
         if (type === 'END') {
-            // Don't allow placing END at a column that has gates
-            const gatesAtColumn = this.circuit.getGatesAtColumn(column);
+            const gatesAtColumn = this.circuit.getGatesAtColumn(insertColumn);
             if (gatesAtColumn.length > 0) {
-                return; // Silently fail - column is occupied
+                return;
             }
-            this.placeEndBlock(column);
+            if (!plan.shouldShift && this.circuit.getControlFlowAtColumn(insertColumn)) {
+                return;
+            }
+            this.placeEndBlock(insertColumn, qubit, plan);
             return;
         }
 
-        // Don't allow placing gates at a column that has control flow
-        const cfAtColumn = this.circuit.getControlFlowAtColumn(column);
-        if (cfAtColumn) {
-            return; // Silently fail - column has control flow
+        // Block only if control flow occupies the slot and we are not shifting it away
+        if (!plan.shouldShift && this.circuit.getControlFlowAtColumn(insertColumn)) {
+            return;
         }
 
         // Check if gate requires parameters
         if (['RX', 'RY', 'RZ'].includes(type)) {
-            this.showParameterModal(type, qubit, column);
+            this.showParameterModal(type, qubit, insertColumn, Math.PI / 2, false, plan);
             return;
         }
 
         // Check if multi-qubit gate
         // When dragging onto a qubit, that qubit is the TARGET
         // We need to select the CONTROL qubit
-        if (['CX', 'CY', 'CZ', 'SWAP'].includes(type)) {
-            this.showTargetSelectionModal(type, qubit, column);
+        if (['CX', 'CY', 'CZ', 'SWAP', 'CSWAP'].includes(type)) {
+            this.showTargetSelectionModal(type, qubit, insertColumn, null, plan);
             return;
         }
 
-        // Multi-qubit custom unitary: place on consecutive wires starting at drop target
-        if (typeof GateMatrices !== 'undefined' && GateMatrices[type]) {
-            const mat = GateMatrices[type];
-            const dim = Math.round(Math.sqrt(mat.length));
-            if (dim > 1 && dim * dim === mat.length && (dim & (dim - 1)) === 0) {
-                const k = Math.round(Math.log2(dim));
-                if (k > 1) {
-                    const qs = [];
-                    for (let j = 0; j < k; j++) {
-                        if (qubit + j >= this.circuit.numQubits) return;
-                        qs.push(qubit + j);
-                    }
-                    const gatesAt = this.circuit.getGatesAtColumn(column);
-                    const touches = (g, w) => {
-                        const jt = g.params && g.params.jointQubits;
-                        if (Array.isArray(jt) && jt.includes(w)) return true;
-                        if (g.qubit === w) return true;
-                        if (g.target !== null && g.target !== undefined && g.target === w) return true;
-                        if (g.multiQubits && g.multiQubits.includes(w)) return true;
-                        return false;
-                    };
-                    for (const qq of qs) {
-                        if (gatesAt.some(g => touches(g, qq))) return;
-                    }
-                    this.circuit.addGate(type, qubit, column, null, { jointQubits: qs });
-                    this.circuit.state = null;
-                    this.renderCircuit();
-                    this.updateVisualization();
-                    this.syncCircuitToCode();
-                    return;
-                }
-            }
+        // Multi-qubit custom unitary: pick controls via modal (target = drop wire)
+        if (this.isMultiWireCustomGate(type)) {
+            this.showTargetSelectionModal(type, qubit, insertColumn, null, plan);
+            return;
         }
 
         // Single qubit gate
-        this.circuit.addGate(type, qubit, column);
-        // Invalidate state so it gets recomputed with the new gate
-        this.circuit.state = null;
-        this.renderCircuit();
-        this.updateVisualization();
-        this.syncCircuitToCode();
+        this._applyInsertShift(qubit, plan);
+        this.circuit.addGate(type, qubit, insertColumn);
+        this._refreshCircuitAfterGateEdit();
     }
 
-    showRepeatModal(column, currentCount = 2, isEdit = false) {
+    showRepeatModal(column, currentCount = 2, isEdit = false, insertPlan = null, shiftQubit = 0) {
         const modal = document.getElementById('repeatModal');
         const title = document.getElementById('repeatModalTitle');
         const input = document.getElementById('repeatCountInput');
+        const plan = insertPlan || { shouldShift: false, insertColumn: column };
 
         title.textContent = isEdit ? 'Edit Repeat Count' : 'Set Repeat Count';
         input.value = currentCount;
 
         modal.classList.add('active');
-        modal.dataset.column = column;
+        modal.dataset.column = String(column);
+        modal.dataset.insertColumn = String(plan.insertColumn);
+        modal.dataset.shouldShift = plan.shouldShift ? '1' : '0';
+        modal.dataset.shiftQubit = String(shiftQubit);
         modal.dataset.isEdit = isEdit;
 
         input.focus();
@@ -1396,27 +2248,24 @@ class CircuitUI {
     confirmRepeat() {
         const modal = document.getElementById('repeatModal');
         const input = document.getElementById('repeatCountInput');
-        const column = parseInt(modal.dataset.column);
+        const column = parseInt(modal.dataset.column, 10);
+        const insertColumn = parseInt(modal.dataset.insertColumn, 10);
+        const shiftQubit = parseInt(modal.dataset.shiftQubit, 10);
+        const shouldShift = modal.dataset.shouldShift === '1';
         const isEdit = modal.dataset.isEdit === 'true';
         const count = parseInt(input.value) || 2;
 
         if (isEdit) {
-            // Update existing REPEAT
             const cf = this.circuit.controlFlow.find(c => c.column === column && c.type === 'REPEAT');
             if (cf) {
                 cf.params.count = count;
-
-                // Also update the matching END block's label
-                const matchingEnd = this.circuit.controlFlow.find(c =>
-                    c.type === 'END' && c.params.matchedRepeatColumn === column
-                );
-                if (matchingEnd) {
-                    matchingEnd.params.endingLabel = `REPEAT ${count}`;
-                }
-                this.syncCircuitToCode();
+                this.circuit.refreshRepeatEndPairings();
             }
         } else {
-            this.circuit.addControlFlow('REPEAT', column, { count });
+            if (shouldShift) {
+                this._applyInsertShift(shiftQubit, { shouldShift: true, insertColumn });
+            }
+            this.circuit.addControlFlow('REPEAT', insertColumn, { count });
         }
 
         modal.classList.remove('active');
@@ -1429,52 +2278,107 @@ class CircuitUI {
         document.getElementById('repeatModal').classList.remove('active');
     }
 
-    placeEndBlock(column) {
-        // Find the most recent unmatched REPEAT before this column
-        const repeats = this.circuit.controlFlow
-            .filter(cf => cf.type === 'REPEAT' && cf.column < column)
-            .sort((a, b) => b.column - a.column); // Most recent first
-
-        const ends = this.circuit.controlFlow
-            .filter(cf => cf.type === 'END' && cf.column < column);
-
-        // Find unmatched repeat
-        let unmatchedRepeat = null;
-        for (const repeat of repeats) {
-            const matchingEnd = ends.find(e =>
-                e.column > repeat.column &&
-                e.params.matchedRepeatColumn === repeat.column
-            );
-            if (!matchingEnd) {
-                unmatchedRepeat = repeat;
-                break;
-            }
+    placeEndBlock(column, shiftQubit = 0, insertPlan = null) {
+        const plan = insertPlan || { shouldShift: false, insertColumn: column };
+        if (plan.shouldShift) {
+            this._applyInsertShift(shiftQubit, plan);
+            column = plan.insertColumn;
         }
 
-        const endingType = unmatchedRepeat ? 'REPEAT' : null;
-        const endingLabel = unmatchedRepeat ? `REPEAT ${unmatchedRepeat.params.count}` : '';
-
-        this.circuit.addControlFlow('END', column, {
-            endingType,
-            endingLabel,
-            matchedRepeatColumn: unmatchedRepeat ? unmatchedRepeat.column : null
-        });
+        this.circuit.addControlFlow('END', column, {});
 
         this.renderCircuit();
         this.updateVisualization();
         this.syncCircuitToCode();
     }
 
-    showTargetSelectionModal(gateType, targetQubit, column, currentControls = null) {
+    showTargetSelectionModal(gateType, targetQubit, column, currentControls = null, insertPlan = null) {
         const modal = document.getElementById('targetModal');
+        const plan = insertPlan || { shouldShift: false, insertColumn: column };
         const title = document.getElementById('targetModalTitle');
         const list = document.getElementById('targetQubitList');
 
+        delete modal.dataset.cswapMode;
+
+        if (gateType === 'CSWAP') {
+            title.textContent = `Fredkin (CSWAP): q[${targetQubit}] is swap wire B`;
+            list.innerHTML = '';
+
+            const hint = document.createElement('div');
+            hint.className = 'selection-hint';
+            hint.textContent = 'Select a control qubit and the other swap wire (swap wire A).';
+            list.appendChild(hint);
+
+            let presetControl = null;
+            let presetSwapA = null;
+            if (currentControls && typeof currentControls === 'object' && !Array.isArray(currentControls)) {
+                presetControl = currentControls.control;
+                presetSwapA = currentControls.swapA;
+            }
+
+            const addRoleSection = (sectionLabel, role) => {
+                const heading = document.createElement('div');
+                heading.className = 'selection-hint';
+                heading.style.marginTop = '0.75rem';
+                heading.textContent = sectionLabel;
+                list.appendChild(heading);
+
+                const section = document.createElement('div');
+                section.className = `cswap-role-list cswap-role-list--${role}`;
+                for (let i = 0; i < this.circuit.numQubits; i++) {
+                    if (i === targetQubit) continue;
+
+                    const item = document.createElement('div');
+                    item.className = 'target-qubit-item';
+                    item.textContent = `Qubit ${i}`;
+                    item.dataset.control = i;
+                    item.dataset.cswapRole = role;
+                    if ((role === 'control' && presetControl === i) || (role === 'swapA' && presetSwapA === i)) {
+                        item.classList.add('selected');
+                    }
+                    item.addEventListener('click', () => {
+                        section.querySelectorAll('.target-qubit-item').forEach((el) => el.classList.remove('selected'));
+                        item.classList.add('selected');
+                        list.querySelectorAll(`.target-qubit-item[data-control="${i}"]`).forEach((el) => {
+                            if (el.dataset.cswapRole !== role) el.classList.remove('selected');
+                        });
+                    });
+                    section.appendChild(item);
+                }
+                list.appendChild(section);
+            };
+
+            addRoleSection('Control qubit', 'control');
+            addRoleSection('Other swap wire (A)', 'swapA');
+
+            modal.classList.add('active');
+            modal.dataset.gateType = gateType;
+            modal.dataset.targetQubit = targetQubit;
+            modal.dataset.column = plan.insertColumn;
+            modal.dataset.shouldShift = plan.shouldShift ? '1' : '0';
+            modal.dataset.isEdit = currentControls !== null ? 'true' : 'false';
+            modal.dataset.cswapMode = '1';
+            delete modal.dataset.allowMultiple;
+            delete modal.dataset.requiredControls;
+            this._restoreShiftPreviewForModal(targetQubit, plan);
+            return;
+        }
+
+        const requiredControls = this.getCustomGateRequiredControlCount(gateType);
+        const isCustomMulti = requiredControls !== null;
+        const customMeta = isCustomMulti ? this.customGateMeta[gateType] : null;
+        const customName = customMeta?.displayName || gateType;
+
         // SWAP only allows single selection, controlled gates allow multiple
         const allowMultiple = gateType !== 'SWAP';
-        const labelText = gateType === 'SWAP'
-            ? `Select Qubit to Swap with q[${targetQubit}]`
-            : `Select Control Qubit(s) for ${gateType}`;
+        let labelText;
+        if (gateType === 'SWAP') {
+            labelText = `Select Qubit to Swap with q[${targetQubit}]`;
+        } else if (isCustomMulti) {
+            labelText = `Select ${requiredControls} control qubit(s) for ${customName}`;
+        } else {
+            labelText = `Select Control Qubit(s) for ${gateType}`;
+        }
 
         title.textContent = labelText;
         list.innerHTML = '';
@@ -1483,7 +2387,11 @@ class CircuitUI {
         if (allowMultiple) {
             const hint = document.createElement('div');
             hint.className = 'selection-hint';
-            hint.textContent = 'Click to select/deselect multiple control qubits';
+            if (isCustomMulti) {
+                hint.textContent = `Target wire is q[${targetQubit}]. Select exactly ${requiredControls} control wire(s).`;
+            } else {
+                hint.textContent = 'Click to select/deselect multiple control qubits';
+            }
             list.appendChild(hint);
         }
 
@@ -1522,9 +2430,29 @@ class CircuitUI {
         modal.classList.add('active');
         modal.dataset.gateType = gateType;
         modal.dataset.targetQubit = targetQubit;
-        modal.dataset.column = column;
+        modal.dataset.column = plan.insertColumn;
+        modal.dataset.shouldShift = plan.shouldShift ? '1' : '0';
         modal.dataset.isEdit = currentControls !== null;
         modal.dataset.allowMultiple = allowMultiple;
+        if (requiredControls !== null) {
+            modal.dataset.requiredControls = String(requiredControls);
+        } else {
+            delete modal.dataset.requiredControls;
+        }
+
+        this._restoreShiftPreviewForModal(targetQubit, plan);
+    }
+
+    /** Keep insert shift preview visible while the target/parameter modal is open. */
+    _restoreShiftPreviewForModal(qubit, plan) {
+        if (!plan?.shouldShift) return;
+        if (!this.draggedGate && !this.selectedGate) return;
+        requestAnimationFrame(() => {
+            const slot = document.querySelector(
+                `.gate-slot[data-qubit="${qubit}"][data-column="${plan.insertColumn}"]`
+            );
+            if (slot) this._updateShiftPreviewFromSlot(slot);
+        });
     }
 
     confirmTargetSelection() {
@@ -1534,12 +2462,65 @@ class CircuitUI {
         const gateType = modal.dataset.gateType;
         const allowMultiple = modal.dataset.allowMultiple === 'true';
 
+        if (modal.dataset.cswapMode === '1') {
+            const list = document.getElementById('targetQubitList');
+            const title = document.getElementById('targetModalTitle');
+            const controlEl = list.querySelector('.cswap-role-list--control .target-qubit-item.selected');
+            const swapAEl = list.querySelector('.cswap-role-list--swapA .target-qubit-item.selected');
+            if (!controlEl || !swapAEl) {
+                if (title) title.textContent = 'Select both a control qubit and the other swap wire';
+                return;
+            }
+
+            const targetQubit = parseInt(modal.dataset.targetQubit);
+            const column = parseInt(modal.dataset.column);
+            const shouldShift = modal.dataset.shouldShift === '1';
+            const control = parseInt(controlEl.dataset.control, 10);
+            const swapA = parseInt(swapAEl.dataset.control, 10);
+            const swapB = targetQubit;
+
+            if (control === swapA || control === swapB || swapA === swapB) {
+                if (title) title.textContent = 'Control and swap wires must all be different';
+                return;
+            }
+
+            const jointQubits = [control, swapA, swapB];
+
+            if (isEdit) {
+                const gate = this.circuit.gates.find((g) => g.qubit === swapB && g.column === column && g.type === 'CSWAP');
+                if (gate) {
+                    gate.params = { ...(gate.params || {}), jointQubits };
+                }
+            } else {
+                this._applyInsertShift(swapB, { shouldShift, insertColumn: column });
+                this.circuit.addGate('CSWAP', swapB, column, null, { jointQubits });
+            }
+
+            this.circuit.state = null;
+            modal.classList.remove('active');
+            delete modal.dataset.cswapMode;
+            this._refreshCircuitAfterGateEdit();
+            return;
+        }
+
         if (selectedItems.length > 0) {
             const targetQubit = parseInt(modal.dataset.targetQubit);
             const column = parseInt(modal.dataset.column);
+            const shouldShift = modal.dataset.shouldShift === '1';
+            const requiredControls = modal.dataset.requiredControls
+                ? parseInt(modal.dataset.requiredControls, 10)
+                : null;
 
             // Get selected control qubits
             const controlQubits = Array.from(selectedItems).map(item => parseInt(item.dataset.control));
+
+            if (requiredControls !== null && controlQubits.length !== requiredControls) {
+                const title = document.getElementById('targetModalTitle');
+                if (title) {
+                    title.textContent = `Select exactly ${requiredControls} control qubit(s) (${controlQubits.length} selected)`;
+                }
+                return;
+            }
 
             if (isEdit) {
                 // Update existing gate
@@ -1547,32 +2528,36 @@ class CircuitUI {
                     g.qubit === targetQubit && g.column === column
                 );
                 if (gate) {
-                    if (allowMultiple && controlQubits.length > 1) {
-                        // Store multiple controls in multiQubits
+                    if (requiredControls !== null) {
+                        const jointQubits = [...controlQubits].sort((a, b) => a - b).concat(targetQubit);
+                        gate.target = null;
+                        gate.multiQubits = null;
+                        gate.params = { ...(gate.params || {}), jointQubits };
+                    } else if (allowMultiple && controlQubits.length > 1) {
                         gate.target = null;
                         gate.multiQubits = controlQubits;
                     } else {
-                        // Single control
                         gate.target = controlQubits[0];
                         gate.multiQubits = null;
                     }
                 }
             } else {
-                // Add new gate
-                if (allowMultiple && controlQubits.length > 1) {
-                    // Multiple controls - store in multiQubits
+                this._applyInsertShift(targetQubit, { shouldShift, insertColumn: column });
+                if (requiredControls !== null) {
+                    const jointQubits = [...controlQubits].sort((a, b) => a - b).concat(targetQubit);
+                    this.circuit.addGate(gateType, targetQubit, column, null, { jointQubits });
+                } else if (allowMultiple && controlQubits.length > 1) {
                     this.circuit.addGate(gateType, targetQubit, column, null, {}, controlQubits);
+                } else if (['CX', 'CY', 'CZ'].includes(gateType)) {
+                    this.circuit.addGate(gateType, targetQubit, column, null, {}, [controlQubits[0]]);
                 } else {
-                    // Single control
                     this.circuit.addGate(gateType, targetQubit, column, controlQubits[0]);
                 }
             }
 
-            // Invalidate state so it gets recomputed
-            this.circuit.state = null;
-            this.renderCircuit();
-            this.updateVisualization();
-            this.syncCircuitToCode();
+            modal.classList.remove('active');
+            this._refreshCircuitAfterGateEdit();
+            return;
         }
 
         modal.classList.remove('active');
@@ -1590,10 +2575,27 @@ class CircuitUI {
         // If clicking on a control block, redirect to the actual gate
         if (type === 'CONTROL') {
             const targetQubit = parseInt(gateEl.dataset.targetQubit);
+            const parentGateType = gateEl.dataset.parentGateType || null;
             const gate = this.circuit.gates.find(g =>
-                g.qubit === targetQubit && g.column === column
+                g.qubit === targetQubit &&
+                g.column === column &&
+                (!parentGateType || g.type === parentGateType)
             );
-            if (gate && ['CX', 'CY', 'CZ'].includes(gate.type)) {
+            if (!gate) return;
+            if (gate.type === 'CSWAP') {
+                const joint = gate.params && gate.params.jointQubits;
+                if (joint && joint.length === 3) {
+                    this.showTargetSelectionModal('CSWAP', joint[2], column, { control: joint[0], swapA: joint[1] });
+                }
+                return;
+            }
+            const joint = gate.params && gate.params.jointQubits;
+            if (joint && joint.length > 1 && this.customGateMeta[gate.type]) {
+                const controls = joint.filter((q) => q !== gate.qubit);
+                this.showTargetSelectionModal(gate.type, gate.qubit, column, controls);
+                return;
+            }
+            if (['CX', 'CY', 'CZ'].includes(gate.type)) {
                 const controls = gate.multiQubits && gate.multiQubits.length > 0
                     ? gate.multiQubits
                     : (gate.target !== null ? [gate.target] : []);
@@ -1610,6 +2612,18 @@ class CircuitUI {
             );
             if (gate) {
                 this.showTargetSelectionModal('SWAP', gate.qubit, column, gate.target);
+            }
+            return;
+        }
+
+        if (type === 'CSWAP_PARTNER') {
+            const partnerQubit = parseInt(gateEl.dataset.partnerQubit);
+            const gate = this.circuit.gates.find(g =>
+                g.qubit === partnerQubit && g.column === column && g.type === 'CSWAP'
+            );
+            if (gate && gate.params && gate.params.jointQubits && gate.params.jointQubits.length === 3) {
+                const [control, swapA, swapB] = gate.params.jointQubits;
+                this.showTargetSelectionModal('CSWAP', swapB, column, { control, swapA });
             }
             return;
         }
@@ -1641,8 +2655,17 @@ class CircuitUI {
                 ? gate.multiQubits
                 : (gate.target !== null ? [gate.target] : []);
             this.showTargetSelectionModal(type, gate.qubit, column, controls);
+        } else if (gate.params && Array.isArray(gate.params.jointQubits) && gate.params.jointQubits.length > 1
+            && this.customGateMeta[type]) {
+            const controls = gate.params.jointQubits.filter((q) => q !== gate.qubit);
+            this.showTargetSelectionModal(type, gate.qubit, column, controls);
         } else if (type === 'SWAP') {
             this.showTargetSelectionModal('SWAP', gate.qubit, column, gate.target);
+        } else if (type === 'CSWAP') {
+            const joint = gate.params && gate.params.jointQubits;
+            if (joint && joint.length === 3) {
+                this.showTargetSelectionModal('CSWAP', joint[2], column, { control: joint[0], swapA: joint[1] });
+            }
         }
     }
 
@@ -1654,9 +2677,22 @@ class CircuitUI {
         // If this is a control block, find and remove the actual gate
         if (gateType === 'CONTROL') {
             const targetQubit = parseInt(gateEl.dataset.targetQubit);
-            this.circuit.removeGate(targetQubit, column);
+            const parentGateType = gateEl.dataset.parentGateType || null;
+            const gate = parentGateType
+                ? this.circuit.gates.find(g =>
+                    g.type === parentGateType && g.qubit === targetQubit && g.column === column
+                )
+                : null;
+            if (gate) {
+                this.circuit.removeGate(gate.qubit, column);
+            } else {
+                this.circuit.removeGate(targetQubit, column);
+            }
         } else if (gateType === 'SWAP_PARTNER') {
             // Find and remove the actual SWAP gate
+            const partnerQubit = parseInt(gateEl.dataset.partnerQubit);
+            this.circuit.removeGate(partnerQubit, column);
+        } else if (gateType === 'CSWAP_PARTNER') {
             const partnerQubit = parseInt(gateEl.dataset.partnerQubit);
             this.circuit.removeGate(partnerQubit, column);
         } else if (gateType === 'JOINT_PARTNER') {
@@ -1673,7 +2709,8 @@ class CircuitUI {
         this.syncCircuitToCode();
     }
 
-    showParameterModal(gateType, qubit, column, currentAngle = Math.PI / 2, isEdit = false) {
+    showParameterModal(gateType, qubit, column, currentAngle = Math.PI / 2, isEdit = false, insertPlan = null) {
+        const plan = insertPlan || { shouldShift: false, insertColumn: column };
         const modal = document.getElementById('parameterModal');
         const title = document.getElementById('modalTitle');
         const inputs = document.getElementById('parameterInputs');
@@ -1702,8 +2739,10 @@ class CircuitUI {
         modal.classList.add('active');
         modal.dataset.gateType = gateType;
         modal.dataset.qubit = qubit;
-        modal.dataset.column = column;
+        modal.dataset.column = plan.insertColumn;
+        modal.dataset.shouldShift = plan.shouldShift ? '1' : '0';
         modal.dataset.isEdit = isEdit;
+        this._restoreShiftPreviewForModal(qubit, plan);
     }
 
     confirmGateParameters() {
@@ -1712,6 +2751,7 @@ class CircuitUI {
         const qubit = parseInt(modal.dataset.qubit);
         const column = parseInt(modal.dataset.column);
         const isEdit = modal.dataset.isEdit === 'true';
+        const shouldShift = modal.dataset.shouldShift === '1';
         const angle = parseFloat(document.getElementById('angleInput').value);
 
         if (isEdit) {
@@ -1723,6 +2763,9 @@ class CircuitUI {
                 gate.params = { angle };
             }
         } else {
+            if (shouldShift) {
+                this.circuit.shiftForInsertOnWire(qubit, column);
+            }
             this.circuit.addGate(gateType, qubit, column, null, { angle });
         }
 
@@ -1732,11 +2775,63 @@ class CircuitUI {
         this.renderCircuit();
         this.updateVisualization();
         this.syncCircuitToCode();
+        this._clearShiftPreview();
     }
 
     cancelGateParameters() {
         const modal = document.getElementById('parameterModal');
         modal.classList.remove('active');
+    }
+
+    refreshExecutionTimeline() {
+        this.executionTimeline = this.circuit.buildExecutionTimeline();
+    }
+
+    groupGatesForStepDisplay(gates) {
+        return GateDisplay.groupGatesForStepDisplay(gates);
+    }
+
+    formatGateGroupLabel(group) {
+        return GateDisplay.formatGateGroupLabel(group);
+    }
+
+    formatGateOperationLabel(gate) {
+        return GateDisplay.formatGateGroupLabel(gate ? [gate] : []);
+    }
+
+    formatExecutionStepGateLabel(step) {
+        return GateDisplay.formatExecutionStepGateLabel(step);
+    }
+
+    formatExecutionStepRepeatLabel(step) {
+        return GateDisplay.formatExecutionStepRepeatLabel(step);
+    }
+
+    formatExecutionStepLabel(step) {
+        return GateDisplay.formatExecutionStepLabel(step);
+    }
+
+    populateStepGatesElement(stepGatesEl, step) {
+        stepGatesEl.innerHTML = '';
+        stepGatesEl.className = 'step-item-gates';
+
+        if (!step.gates || step.gates.length === 0) {
+            stepGatesEl.textContent = step.label || 'Initial state';
+            return;
+        }
+
+        const gateLine = document.createElement('div');
+        gateLine.className = 'step-item-gate-ops';
+        gateLine.textContent = this.formatExecutionStepGateLabel(step);
+        stepGatesEl.appendChild(gateLine);
+
+        const repeatLabel = this.formatExecutionStepRepeatLabel(step);
+        if (repeatLabel) {
+            const repLine = document.createElement('div');
+            repLine.className = 'step-item-repeat';
+            repLine.textContent = repeatLabel;
+            stepGatesEl.appendChild(repLine);
+        }
     }
 
     runCircuit() {
@@ -1748,48 +2843,42 @@ class CircuitUI {
         this.stopPlayback();
         this.circuit.state = new QuantumState(this.circuit.numQubits);
 
-        // Build step states
+        this.refreshExecutionTimeline();
+
+        // Build step states from unrolled execution timeline
         this.stepStates = [];
         const initialState = new QuantumState(this.circuit.numQubits);
         this.stepStates.push({
             state: initialState,
             gates: [],
-            column: -1
+            column: -1,
+            repeatContext: null,
+            label: 'Initial state'
         });
 
-        // Get the execution sequence (respects REPEAT blocks)
-        const executionSequence = this.circuit.buildExecutionSequence();
+        for (const step of this.executionTimeline) {
+            step.gates.forEach((gate) => this.circuit.executeGate(gate));
 
-        // Group the execution sequence by original column for step display
-        // But execute in the order returned (which handles repeats)
-        let stepIndex = 0;
-        let currentGates = [];
-
-        for (let i = 0; i < executionSequence.length; i++) {
-            const gate = executionSequence[i];
-            this.circuit.executeGate(gate);
-            currentGates.push(gate);
-
-            // Check if next gate is at a different column or this is the last gate
-            const nextGate = executionSequence[i + 1];
-            if (!nextGate || nextGate.column !== gate.column) {
-                // Save state after this batch
-                const stateCopy = new QuantumState(this.circuit.numQubits);
-                if (this.circuit.state && this.circuit.state.amplitudes) {
-                    stateCopy.amplitudes = [...this.circuit.state.amplitudes];
-                }
-                this.stepStates.push({
-                    state: stateCopy,
-                    gates: [...currentGates],
-                    column: gate.column,
-                    stepIndex: stepIndex++
-                });
-                currentGates = [];
+            const stateCopy = new QuantumState(this.circuit.numQubits);
+            if (this.circuit.state && this.circuit.state.amplitudes) {
+                stateCopy.amplitudes = [...this.circuit.state.amplitudes];
             }
+            this.stepStates.push({
+                state: stateCopy,
+                gates: [...step.gates],
+                column: step.column,
+                repeatContext: step.repeatContext,
+                label: this.formatExecutionStepLabel(step)
+            });
         }
 
-        // Update to final state
-        this.currentColumn = this.stepStates.length > 1 ? this.stepStates[this.stepStates.length - 1].column : 0;
+        this.currentStepIndex = this.executionTimeline.length > 0
+            ? this.executionTimeline.length - 1
+            : -1;
+        this.currentColumn = this.stepStates.length > 1
+            ? this.stepStates[this.stepStates.length - 1].column
+            : 0;
+        // Keep state vector / Bloch on pre-measurement amplitudes; timeline steps still record collapse.
         this.updateVisualization();
         this.renderStepTimeline();
         this.updateStepInfo();
@@ -1799,9 +2888,11 @@ class CircuitUI {
     resetExecution() {
         this.stopPlayback();
         this.currentColumn = 0;
+        this.currentStepIndex = -1;
         this.executionHistory = [];
         this.historyIndex = -1;
         this.stepStates = [];
+        this.refreshExecutionTimeline();
         this.circuit.state = new QuantumState(this.circuit.numQubits);
         this.updateVisualization();
         this.renderStepTimeline();
@@ -1829,13 +2920,7 @@ class CircuitUI {
             stepNumber.textContent = index === 0 ? 'Initial' : `Step ${index}`;
 
             const stepGates = document.createElement('div');
-            stepGates.className = 'step-item-gates';
-            if (step.gates && step.gates.length > 0) {
-                const gateNames = step.gates.map(g => g.type || 'Unknown').join(', ');
-                stepGates.textContent = gateNames;
-            } else {
-                stepGates.textContent = 'Initial state';
-            }
+            this.populateStepGatesElement(stepGates, step);
 
             stepItem.appendChild(stepNumber);
             stepItem.appendChild(stepGates);
@@ -1867,64 +2952,75 @@ class CircuitUI {
         stateCopy.amplitudes = [...step.state.amplitudes];
         this.circuit.state = stateCopy;
         this.currentColumn = step.column || 0;
+        this.currentStepIndex = stepIndex > 0 ? stepIndex - 1 : -1;
 
         // Update timeline highlighting
         document.querySelectorAll('.step-item').forEach((item, idx) => {
             item.classList.toggle('active', idx === stepIndex);
         });
 
-        this.updateVisualization();
+        this._applyStateToVisualizer(this._computeDisplayStateForStep(stepIndex), { densityStepIndex: stepIndex });
         this.updateStepInfo();
     }
 
     stepForward() {
         this.stopPlayback();
+        this.refreshExecutionTimeline();
 
-        // Save current state to history
+        if (this.executionTimeline.length === 0) {
+            this.updateStepInfo();
+            return;
+        }
+
+        if (this.currentStepIndex === undefined || this.currentStepIndex < -1) {
+            this.currentStepIndex = -1;
+        }
+
+        const nextIndex = this.currentStepIndex + 1;
+        if (nextIndex >= this.executionTimeline.length) {
+            if (this.loopEnabled) {
+                this.circuit.state = new QuantumState(this.circuit.numQubits);
+                this.currentStepIndex = -1;
+                this.currentColumn = 0;
+            } else {
+                this.circuit.state = new QuantumState(this.circuit.numQubits);
+                this.currentStepIndex = -1;
+                this.currentColumn = 0;
+            }
+            this.executionHistory = [];
+            this.historyIndex = -1;
+            this.clearExecutionHighlight();
+            this._applyStateToVisualizer(this._computeDisplayStateForStep(0), { densityStepIndex: 0 });
+            this.updateStepInfo();
+            return;
+        }
+
         if (this.historyIndex < this.executionHistory.length - 1) {
-            // If we're in the middle of history, truncate
             this.executionHistory = this.executionHistory.slice(0, this.historyIndex + 1);
         }
 
-        // Save state before step
         const stateCopy = new QuantumState(this.circuit.numQubits);
         stateCopy.amplitudes = [...this.circuit.state.amplitudes];
         this.executionHistory.push({
             state: stateCopy,
-            column: this.currentColumn
+            column: this.currentColumn,
+            stepIndex: this.currentStepIndex
         });
         this.historyIndex = this.executionHistory.length - 1;
 
-        // Reset if we're at the beginning
-        if (this.currentColumn === 0 && this.executionHistory.length === 1) {
+        if (this.currentStepIndex === -1 && this.executionHistory.length === 1) {
             this.circuit.state = new QuantumState(this.circuit.numQubits);
         }
 
-        // Execute one column at a time
-        const nextColumn = this.currentColumn;
-        const gatesAtColumn = this.circuit.getGatesAtColumn(nextColumn);
-
-        if (gatesAtColumn.length > 0) {
-            // Highlight gates being executed
-            this.highlightGates(gatesAtColumn);
-
-            gatesAtColumn.forEach(gate => {
-                this.circuit.executeGate(gate);
-            });
-            this.currentColumn++;
-            this.updateVisualization();
-        } else {
-            // At end - loop if enabled, otherwise reset
-            if (this.loopEnabled) {
-                this.currentColumn = 0;
-                this.circuit.state = new QuantumState(this.circuit.numQubits);
-            } else {
-                this.currentColumn = 0;
-                this.circuit.state = new QuantumState(this.circuit.numQubits);
-            }
-            this.clearExecutionHighlight();
-        }
-
+        const step = this.executionTimeline[nextIndex];
+        this.highlightGates(step.gates);
+        step.gates.forEach((gate) => this.circuit.executeGate(gate));
+        this.currentStepIndex = nextIndex;
+        this.currentColumn = step.column;
+        const displayStepIndex = Math.min(nextIndex + 1, this.stepStates.length - 1);
+        this._applyStateToVisualizer(this._computeDisplayStateForStep(displayStepIndex), {
+            densityStepIndex: displayStepIndex
+        });
         this.updateStepInfo();
     }
 
@@ -1936,15 +3032,19 @@ class CircuitUI {
             const historyEntry = this.executionHistory[this.historyIndex];
             this.circuit.state = historyEntry.state;
             this.currentColumn = historyEntry.column;
-            this.updateVisualization();
+            this.currentStepIndex = historyEntry.stepIndex ?? -1;
+            const displayStepIndex = Math.max(0, (historyEntry.stepIndex ?? -1) + 1);
+            this._applyStateToVisualizer(this._computeDisplayStateForStep(displayStepIndex), {
+                densityStepIndex: displayStepIndex
+            });
             this.updateStepInfo();
             this.clearExecutionHighlight();
         } else if (this.historyIndex === 0) {
-            // Go back to initial state
             this.circuit.state = new QuantumState(this.circuit.numQubits);
             this.currentColumn = 0;
+            this.currentStepIndex = -1;
             this.historyIndex = -1;
-            this.updateVisualization();
+            this._applyStateToVisualizer(this._computeDisplayStateForStep(0), { densityStepIndex: 0 });
             this.updateStepInfo();
             this.clearExecutionHighlight();
         }
@@ -1965,8 +3065,9 @@ class CircuitUI {
 
         const interval = 1000 / this.playbackSpeed;
         this.playbackInterval = setInterval(() => {
-            const gatesAtColumn = this.circuit.getGatesAtColumn(this.currentColumn);
-            if (gatesAtColumn.length > 0 || this.loopEnabled) {
+            this.refreshExecutionTimeline();
+            const atEnd = this.currentStepIndex >= this.executionTimeline.length - 1;
+            if (!atEnd || this.loopEnabled) {
                 this.stepForward();
             } else {
                 this.stopPlayback();
@@ -2031,22 +3132,18 @@ class CircuitUI {
         const stepInfoEl = document.getElementById('stepInfo');
         if (!stepInfoEl) return;
 
-        // Total steps is the number of unique columns with gates
-        const totalColumns = this.stepStates.length > 0 ? this.stepStates.length - 1 : this.circuit.maxColumn;
+        this.refreshExecutionTimeline();
+        const total = this.executionTimeline.length;
+        const current = Math.max(0, (this.currentStepIndex ?? -1) + 1);
+        stepInfoEl.textContent = `Step: ${current}/${total}`;
+    }
 
-        // Find current step index in timeline
-        let currentStep = 0;
-        if (this.stepStates.length > 0) {
-            for (let i = 0; i < this.stepStates.length; i++) {
-                if (this.stepStates[i].column >= this.currentColumn) {
-                    currentStep = i;
-                    break;
-                }
-                currentStep = i;
-            }
-        }
-
-        stepInfoEl.textContent = `Step: ${currentStep}/${totalColumns}`;
+    updateCircuitInfo() {
+        const depthEl = document.getElementById('circuitDepth');
+        const gateCountEl = document.getElementById('gateCount');
+        if (depthEl) depthEl.textContent = `Depth: ${this.circuit.getDepth()}`;
+        if (gateCountEl) gateCountEl.textContent = `Gates: ${this.circuit.getGateCount()}`;
+        this.updateStepInfo();
     }
 
     zoomIn() {
@@ -2065,12 +3162,6 @@ class CircuitUI {
         }
     }
 
-    resetZoom() {
-        this.zoomLevel = 1;
-        this.renderCircuit();
-        this.updateZoomDisplay();
-    }
-
     updateZoomDisplay() {
         const zoomLevelEl = document.getElementById('zoomLevel');
         if (zoomLevelEl) {
@@ -2083,6 +3174,7 @@ class CircuitUI {
         this.isUpdatingFromCircuit = true;
         this.circuit.clear();
         this.currentColumn = 0;
+        this.currentStepIndex = -1;
         this.selectedGate = null;
         this.executionHistory = [];
         this.historyIndex = -1;
@@ -2090,6 +3182,20 @@ class CircuitUI {
         this.updateVisualization();
         this.syncCircuitToCode();
         this.isUpdatingFromCircuit = false;
+    }
+
+    /** Re-render and refresh viz after qubit count changes (respects auto-run setting). */
+    _applyAfterQubitCountChange() {
+        document.getElementById('qubitCount').value = formatQubitCountLabel(this.circuit.numQubits);
+        this.renderCircuit();
+        this.syncCircuitToCode();
+        const settings = this.getSettings();
+        if (settings.autoRun) {
+            this.runCircuit();
+        } else {
+            this.circuit.state = null;
+            this.updateVisualization();
+        }
     }
 
     addQubit() {
@@ -2101,10 +3207,7 @@ class CircuitUI {
         }
 
         this.circuit.addQubit();
-        document.getElementById('qubitCount').value = `${this.circuit.numQubits} Qubits`;
-        this.renderCircuit();
-        this.updateVisualization();
-        this.syncCircuitToCode();
+        this._applyAfterQubitCountChange();
     }
 
     removeQubit() {
@@ -2113,10 +3216,7 @@ class CircuitUI {
             return;
         }
         this.circuit.removeQubit();
-        document.getElementById('qubitCount').value = `${this.circuit.numQubits} Qubits`;
-        this.renderCircuit();
-        this.updateVisualization();
-        this.syncCircuitToCode();
+        this._applyAfterQubitCountChange();
     }
 
     setQubitCount(count) {
@@ -2131,56 +3231,89 @@ class CircuitUI {
         while (this.circuit.numQubits > actualCount) {
             this.circuit.removeQubit();
         }
-        document.getElementById('qubitCount').value = `${this.circuit.numQubits} Qubits`;
-        this.renderCircuit();
-        this.updateVisualization();
-        this.syncCircuitToCode();
+        this._applyAfterQubitCountChange();
     }
 
-    updateVisualization() {
-        if (!this.circuit) return;
-
-        // Auto-compute circuit state if it doesn't exist
-        // This allows real-time updates when gates are added (before clicking Run)
-        if (!this.circuit.state) {
-            this.circuit.state = new QuantumState(this.circuit.numQubits, this.circuit.useOptimizedGates);
-            // Execute all gates in sequence to compute current state
-            const executionSequence = this.circuit.buildExecutionSequence();
-            for (const gate of executionSequence) {
-                this.circuit.executeGate(gate);
-            }
-        }
+    /** @param {QuantumState|null} state - explicit state; omit for pre-measurement unitary preview */
+    _applyStateToVisualizer(state, { densityStepIndex } = {}) {
+        if (!this.circuit || !state) return;
 
         const settings = this.getSettings();
         const vizSettings = {
             precision: settings.precision,
             hideNegligibles: settings.hideNegligibles,
             sortBy: settings.sortBy,
-            sortOrder: settings.sortOrder
+            sortOrder: settings.sortOrder,
+            measurePreviewQubits: this.circuit.getMeasureQubitIndices?.() ?? []
         };
 
         if (this.visualizer) {
-            this.visualizer.updateVisualization(this.circuit.state, vizSettings);
-            this.visualizer.updateStateVector(this.circuit.state, vizSettings);
-            this.visualizer.updateMeasurementResults(this.circuit.state, vizSettings);
+            this.visualizer.updateVisualization(state, vizSettings);
+            this.visualizer.updateStateVector(state, vizSettings);
+            this.visualizer.updateMeasurementResults(state, vizSettings);
         }
 
         if (this.graphVisualizer) {
-            this.graphVisualizer.update(this.circuit.state, vizSettings);
+            this.graphVisualizer.update(state, vizSettings);
         }
 
-        // Update NMR simulator if it's been initialized
         if (this.nmrSimulator && this.nmrInitialized) {
-            this.nmrSimulator.onCircuitChanged(this.circuit, this.circuit.state);
+            if (densityStepIndex !== undefined && densityStepIndex !== null) {
+                this.nmrSimulator.updateDensityViewState(state, densityStepIndex);
+            } else {
+                this.nmrSimulator.onCircuitChanged(this.circuit, state);
+            }
         }
     }
 
-    updateCircuitInfo() {
-        const depthEl = document.getElementById('circuitDepth');
-        const gateCountEl = document.getElementById('gateCount');
-        if (depthEl) depthEl.textContent = `Depth: ${this.circuit.getDepth()}`;
-        if (gateCountEl) gateCountEl.textContent = `Gates: ${this.circuit.getGateCount()}`;
-        this.updateStepInfo();
+    _cloneCircuitState(source) {
+        const copy = new QuantumState(source.numQubits, this.circuit.useOptimizedGates);
+        if (source.amplitudes) {
+            copy.amplitudes = [...source.amplitudes];
+        }
+        return copy;
+    }
+
+    /**
+     * State for Bloch / state-vector panels at timeline index stepIndex.
+     * Replays step gates with preview (MEASURE skipped) so scrubbing never shows a random collapse.
+     */
+    _computeDisplayStateForStep(stepIndex) {
+        if (!this.circuit || stepIndex < 0 || stepIndex >= this.stepStates.length) {
+            return new QuantumState(this.circuit?.numQubits ?? 0, this.circuit?.useOptimizedGates);
+        }
+        if (stepIndex === 0) {
+            return new QuantumState(this.circuit.numQubits, this.circuit.useOptimizedGates);
+        }
+
+        const saved = this.circuit.state;
+        this.circuit.state = new QuantumState(this.circuit.numQubits, this.circuit.useOptimizedGates);
+        for (let i = 1; i <= stepIndex; i++) {
+            const gates = this.stepStates[i]?.gates;
+            if (gates) {
+                gates.forEach((gate) => this.circuit.executeGate(gate, { preview: true }));
+            }
+        }
+        const display = this._cloneCircuitState(this.circuit.state);
+        this.circuit.state = saved;
+        return display;
+    }
+
+    _showStepState(stepIndex) {
+        if (!this.circuit || stepIndex < 0 || stepIndex >= this.stepStates.length) return;
+        const step = this.stepStates[stepIndex];
+        if (!step || !step.state) return;
+        this.circuit.state = this._cloneCircuitState(step.state);
+        this._applyStateToVisualizer(this._computeDisplayStateForStep(stepIndex));
+    }
+
+    updateVisualization() {
+        if (!this.circuit) return;
+
+        // Live analysis: unitary evolution only — MEASURE is stochastic and was
+        // collapsing the displayed state vector (e.g. SWAP test ancilla looked 100% |1⟩).
+        this.circuit.simulatePreview();
+        this._applyStateToVisualizer(this.circuit.state);
     }
 
     switchTab(tab) {
@@ -2201,14 +3334,21 @@ class CircuitUI {
             editorPanel.classList.add('active');
         }
 
+        // Control/target buses use slot geometry — re-measure after the panel is visible
+        if (tab === 'circuit') {
+            requestAnimationFrame(() => {
+                this._renderControlConnectors();
+            });
+        }
+
         // Initialize NMR simulator when NMR tab is first opened
         if (tab === 'nmr' && !this.nmrInitialized) {
             this.initializeNMRSimulator();
         }
 
         // Update NMR when switching to that tab
-        if (tab === 'nmr' && this.nmrSimulator) {
-            this.nmrSimulator.onCircuitChanged(this.circuit, this.circuit.state);
+        if (tab === 'nmr' && this.nmrSimulator && this.circuit) {
+            this.updateVisualization();
         }
 
         // Initialize Gate Creator when first opened
@@ -2216,14 +3356,33 @@ class CircuitUI {
             this.initializeGateCreatorTab();
         }
 
-        // Initialize resources tab when first opened
-        if (tab === 'resources' && !this.resourcesInitialized) {
-            this.initializeResourcesTab();
+        // Initialize analysis tab when first opened
+        if (tab === 'analysis') {
+            if (!this.nmrInitialized) {
+                this.initializeNMRSimulator();
+            }
+            if (!this.analysisInitialized) {
+                this.initializeAnalysisTab();
+            }
         }
 
-        // Update resources when switching to that tab
-        if (tab === 'resources' && this.nmrSimulator) {
-            this.nmrSimulator.updateDensityMatrix();
+        if (tab === 'analysis' && this.nmrSimulator) {
+            if (this.circuit) {
+                this.updateVisualization();
+            } else {
+                this.nmrSimulator.updateDensityMatrix();
+            }
+            this.nmrSimulator._kickDensityMatrix3DAfterAnalysisShown();
+            this.updateAnalysisVisualization(this.nmrSimulator.getAnalysisViewState());
+        }
+
+        // Initialize Other Resources tab when first opened
+        if (tab === 'resources') {
+            if (!this.nmrInitialized) {
+                this.initializeNMRSimulator();
+            } else if (!this.resourcesInitialized) {
+                this.initializeResourcesTab();
+            }
         }
     }
 
@@ -2685,7 +3844,7 @@ class CircuitUI {
 
         const normalizeGateName = (name) => String(name ?? '').trim().toUpperCase();
         const validateGateName = (name) => /^[A-Z][A-Z0-9_]{0,23}$/.test(name);
-        const existingBuiltIns = new Set(['H', 'X', 'Y', 'Z', 'S', 'T', 'RX', 'RY', 'RZ', 'CX', 'CY', 'CZ', 'SWAP', 'MEASURE', 'REPEAT', 'END', 'I']);
+        const existingBuiltIns = new Set(['H', 'X', 'Y', 'Z', 'S', 'T', 'RX', 'RY', 'RZ', 'CX', 'CY', 'CZ', 'SWAP', 'CSWAP', 'MEASURE', 'REPEAT', 'END', 'I']);
         const getColor = () => colorOptions.find(o => o.id === selectedColorId) || colorOptions[0];
 
         const validateAll = () => {
@@ -2789,6 +3948,20 @@ class CircuitUI {
 
         const gcPixelRatio = () => Math.min(2, window.devicePixelRatio || 1);
 
+        const syncGCBlochTheme = () => {
+            if (!gcBlochScene || !window.QubibyteTheme) return;
+            const bg = window.QubibyteTheme.createThreeBackground();
+            gcBlochScene.background = bg;
+            if (gcBlochRenderer) {
+                gcBlochRenderer.setClearColor(bg, 1);
+            }
+        };
+
+        const publishGCBlochGlobals = () => {
+            window.gcBlochScene = gcBlochScene || null;
+            window.gcBlochRenderer = gcBlochRenderer || null;
+        };
+
         const disposeGCBlochScene = () => {
             if (!gcBlochScene) return;
             gcBlochScene.traverse((obj) => {
@@ -2806,6 +3979,7 @@ class CircuitUI {
             gcBlochCamera = null;
             gcSphereGroup = null;
             gcMarkerGroup = null;
+            publishGCBlochGlobals();
         };
 
         const stopGCBlochLoop = () => {
@@ -3021,7 +4195,13 @@ class CircuitUI {
             gcVisAbort = new AbortController();
             document.addEventListener('visibilitychange', syncGCBlochLoop, { signal: gcVisAbort.signal });
             syncGCBlochLoop();
+            publishGCBlochGlobals();
         };
+
+        if (!this._gcThemeListener) {
+            this._gcThemeListener = () => syncGCBlochTheme();
+            window.addEventListener('qubibyte-theme-change', this._gcThemeListener);
+        }
 
         const updateBlochMarkers = () => {
             if (!gcMarkerGroup) return;
@@ -3159,7 +4339,10 @@ class CircuitUI {
             item.draggable = true;
             item.style.setProperty('--gate-custom-bg', color.bg);
             item.style.setProperty('--gate-custom-glow', color.glow);
-            item.innerHTML = `<span class="gate-symbol">${label}</span><span class="gate-name">${displayName}</span>`;
+            item.innerHTML = `<span class="gate-symbol"><span class="gate-symbol-label">${label}</span></span><span class="gate-name" aria-hidden="true">${displayName}</span><button class="gate-info-icon" data-gate="${gateKey}" type="button" title="Gate Information">ℹ</button>`;
+            item.setAttribute('aria-label', displayName);
+            const symLabel = item.querySelector('.gate-symbol-label');
+            if (symLabel) fitGateLabel(symLabel, label);
             list.appendChild(item);
         };
 
@@ -3234,27 +4417,87 @@ class CircuitUI {
     }
 
     /**
-     * Initialize the Resources tab content
+     * Initialize the Data Analysis tab
+     */
+    initializeAnalysisTab() {
+        if (this.analysisInitialized) return;
+
+        const analysisContainer = document.getElementById('analysisContainer');
+        if (!analysisContainer) {
+            console.warn('Analysis container not found');
+            return;
+        }
+
+        if (!this.nmrSimulator) {
+            console.warn('NMR simulator required for Data Analysis tab');
+            return;
+        }
+
+        this.nmrSimulator.renderDataAnalysisContent('analysisContainer');
+
+        this.analysisBlochViz = new QubitVisualizer('analysis-qubitVisualization', {
+            stateVectorElId: 'analysis-stateVector',
+            measurementResultsElId: 'analysis-measurementResults'
+        });
+        this.analysisBarGraph = new ProbabilityGraphs('analysis-barChart', {
+            forcedView: 'bar',
+            hideViewTabs: true
+        });
+        this.analysisPieGraph = new ProbabilityGraphs('analysis-pieChart', {
+            forcedView: 'pie',
+            hideViewTabs: true
+        });
+
+        this.nmrSimulator.setAnalysisViewCallback((state) => {
+            this.updateAnalysisVisualization(state);
+        });
+
+        this.analysisInitialized = true;
+        this.updateAnalysisVisualization(this.circuit?.state);
+    }
+
+    updateAnalysisVisualization(quantumState) {
+        if (!this.analysisInitialized || !quantumState) return;
+
+        const settings = this.getSettings();
+        const vizSettings = {
+            precision: settings.precision,
+            hideNegligibles: settings.hideNegligibles,
+            sortBy: settings.sortBy,
+            sortOrder: settings.sortOrder
+        };
+
+        if (this.analysisBlochViz) {
+            this.analysisBlochViz.updateVisualization(quantumState, vizSettings);
+            this.analysisBlochViz.updateStateVector(quantumState, vizSettings);
+            this.analysisBlochViz.updateMeasurementResults(quantumState, vizSettings);
+        }
+        if (this.analysisBarGraph) {
+            this.analysisBarGraph.update(quantumState, vizSettings);
+        }
+        if (this.analysisPieGraph) {
+            this.analysisPieGraph.update(quantumState, vizSettings);
+        }
+    }
+
+    /**
+     * Initialize the Other Resources tab content
      */
     initializeResourcesTab() {
+        if (this.resourcesInitialized) return;
+
         const resourcesContainer = document.getElementById('resourcesContainer');
         if (!resourcesContainer) {
             console.warn('Resources container not found');
             return;
         }
 
-        // If NMR simulator exists, use it to render resources
-        if (this.nmrSimulator) {
-            this.nmrSimulator.renderResourcesContent('resourcesContainer');
-            this.resourcesInitialized = true;
-        } else {
-            // Initialize NMR simulator first if needed
-            this.initializeNMRSimulator();
-            if (this.nmrSimulator) {
-                this.nmrSimulator.renderResourcesContent('resourcesContainer');
-                this.resourcesInitialized = true;
-            }
+        if (!this.nmrSimulator) {
+            console.warn('NMR simulator required for Other Resources tab');
+            return;
         }
+        this.nmrSimulator.renderOtherResourcesContent('resourcesContainer');
+        this.resourcesInitialized = true;
     }
 
     /**
@@ -3273,7 +4516,7 @@ class CircuitUI {
                 console.error('NMRSimulatorUI class not loaded');
                 nmrContainer.innerHTML = `
                     <div class="nmr-error">
-                        <p>NMR Simulator failed to load. Please refresh the page.</p>
+                        <p>NMR Analysis failed to load. Please refresh the page.</p>
                     </div>
                 `;
                 return;
@@ -3281,6 +4524,12 @@ class CircuitUI {
 
             this.nmrSimulator = new NMRSimulatorUI('nmrSimulatorContainer');
             this.nmrInitialized = true;
+
+            // Other Resources DOM can be built early; Data Analysis waits until first open
+            // so the 3D density mount has real layout (hidden panels are 0×0).
+            if (!this.resourcesInitialized) {
+                this.initializeResourcesTab();
+            }
 
             // Sync current circuit state
             if (this.circuit && this.circuit.state) {
@@ -3292,7 +4541,7 @@ class CircuitUI {
             console.error('Failed to initialize NMR Simulator:', error);
             nmrContainer.innerHTML = `
                 <div class="nmr-error">
-                    <p>Error initializing NMR Simulator: ${error.message}</p>
+                    <p>Error initializing NMR Analysis: ${error.message}</p>
                 </div>
             `;
         }
@@ -3308,7 +4557,7 @@ class CircuitUI {
     }
 
     switchVizTab(tab) {
-        // Only target tabs and panels within the first viz-region (Measurement/State Vector)
+        // Only target tabs and panels within the first viz-region (Probabilities/State Vector)
         const vizRegion1 = document.querySelector('.viz-region-1');
         if (!vizRegion1) return;
 
@@ -3381,8 +4630,7 @@ class CircuitUI {
             this.syncCodeToCircuit();
         }, this.codeChangeDebounceDelay);
 
-        // Update error state immediately
-        this.updateErrorState();
+        // Errors and Fix-with-QubiAI UI update via debounced syntax validation (qubiErrorStateChanged)
     }
 
     syncCodeToCircuit() {
@@ -3390,6 +4638,10 @@ class CircuitUI {
 
         const code = document.getElementById('qubiCode').value;
         const errorEl = document.getElementById('qubiErrors');
+
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.validateLines();
+        }
 
         // Check for errors first
         const hasErrors = this.hasCodeErrors();
@@ -3413,6 +4665,7 @@ class CircuitUI {
             const activeDefines = new Set();
 
             this.qubiExecutor.execute(code, {
+                maxQubits: this.getSettings().maxQubits || 12,
                 resolveImport,
                 onDefineGate: (gateName, displayName, colorId) => {
                     try {
@@ -3458,7 +4711,11 @@ class CircuitUI {
                                 item.draggable = true;
                                 item.style.setProperty('--gate-custom-bg', resolvedColor.bg);
                                 item.style.setProperty('--gate-custom-glow', resolvedColor.glow);
-                                item.innerHTML = `<span class="gate-symbol">${t.slice(0, 4)}</span><span class="gate-name">${finalDisplayName}</span>`;
+                                const symLabelText = t.slice(0, 4);
+                                item.innerHTML = `<span class="gate-symbol"><span class="gate-symbol-label">${symLabelText}</span></span><span class="gate-name" aria-hidden="true">${finalDisplayName}</span><button class="gate-info-icon" data-gate="${t}" type="button" title="Gate Information">ℹ</button>`;
+                                item.setAttribute('aria-label', finalDisplayName);
+                                const symLabel = item.querySelector('.gate-symbol-label');
+                                if (symLabel) fitGateLabel(symLabel, symLabelText);
                                 list.appendChild(item);
                             }
                         }
@@ -3476,7 +4733,7 @@ class CircuitUI {
             if (this.syntaxHighlighter) this.syntaxHighlighter.debouncedValidation?.();
 
             // Update qubit count display to match circuit
-            document.getElementById('qubitCount').value = `${this.circuit.numQubits} Qubits`;
+            document.getElementById('qubitCount').value = formatQubitCountLabel(this.circuit.numQubits);
 
             this.renderCircuit();
             this.updateVisualization();
@@ -3516,6 +4773,10 @@ class CircuitUI {
                             break;
                         }
                     }
+                }
+                if (!matched && error.qubiLine != null) {
+                    this.syntaxHighlighter.lineErrors.set(error.qubiLine, msg);
+                    matched = true;
                 }
                 if (!matched) {
                     // Attach to the last non-empty line as fallback
@@ -3574,7 +4835,6 @@ class CircuitUI {
         const runBtn = document.getElementById('runBtn');
         const hasErrors = this.hasCodeErrors();
         const fixBtn = document.getElementById('fixWithQubiAiBtn');
-        const toolbar = fixBtn ? fixBtn.closest('.editor-toolbar') : null;
 
         if (runBtn) {
             if (hasErrors) {
@@ -3592,10 +4852,6 @@ class CircuitUI {
             fixBtn.style.display = hasErrors ? '' : 'none';
             fixBtn.disabled = !hasErrors;
             fixBtn.title = hasErrors ? 'Prefill QubiAI with error details so you can generate a fix' : '';
-        }
-
-        if (toolbar) {
-            toolbar.classList.toggle('qubi-fix-hidden', !hasErrors);
         }
     }
 
@@ -3619,7 +4875,6 @@ class CircuitUI {
 
         const input = document.getElementById('qubiAiInput');
         const btn = document.getElementById('qubiAiBtn');
-        const statusEl = document.getElementById('qubiAiStatus');
         const charcount = document.getElementById('qubiAiCharcount');
         const editor = document.getElementById('qubiCode');
         if (!input || !btn || !editor) return;
@@ -3646,10 +4901,6 @@ class CircuitUI {
         // Nudge the user to hit Generate.
         btn.classList.add('attention');
         window.setTimeout(() => btn.classList.remove('attention'), 2600);
-        if (statusEl) {
-            statusEl.textContent = 'Ready? Press Generate';
-            statusEl.className = 'qubi-ai-status';
-        }
         if (charcount) {
             const len = input.value.length;
             charcount.textContent = `${len} / ${MAX}`;
@@ -4062,7 +5313,7 @@ class CircuitUI {
             categories[cat].push({ key, algo });
         });
 
-        const categoryOrder = ['Entanglement', 'Communication', 'Algorithm', 'Concept', 'Error Correction'];
+        const categoryOrder = ['Entanglement', 'Algorithm', 'Communication', 'Concept', 'Error Correction'];
         const categoryIcons = {
             'Entanglement': '🔗', 'Communication': '📡', 'Algorithm': '⚙️',
             'Concept': '💡', 'Error Correction': '🛡️'
@@ -4533,27 +5784,66 @@ class CircuitUI {
         const title = document.getElementById('gateInfoTitle');
         const content = document.getElementById('gateInfoContent');
 
-        const info = getGateInfo(gateType);
+        const customMeta = this.customGateMeta[gateType];
+        const customK = this.getCustomGateWireCount(gateType);
+        let info = getGateInfo(gateType);
+        if (customMeta && typeof GateMatrices !== 'undefined' && GateMatrices[gateType]) {
+            const flat = GateMatrices[gateType];
+            const dim = Math.round(Math.sqrt(flat.length));
+            const rows = [];
+            for (let r = 0; r < dim; r++) {
+                const row = [];
+                for (let c = 0; c < dim; c++) {
+                    const z = flat[r * dim + c];
+                    if (z && typeof z === 'object' && ('re' in z || 'im' in z)) {
+                        const re = z.re ?? 0;
+                        const im = z.im ?? 0;
+                        if (Math.abs(im) < 1e-12) row.push(re);
+                        else if (Math.abs(re) < 1e-12) row.push(im === 1 ? 'i' : im === -1 ? '-i' : `${im}i`);
+                        else row.push(`${re}${im >= 0 ? '+' : ''}${im}i`);
+                    } else {
+                        row.push(String(z));
+                    }
+                }
+                rows.push(row);
+            }
+            info = {
+                name: customMeta.displayName || gateType,
+                matrix: rows,
+                description: customK > 1
+                    ? `${customK}-qubit custom unitary. Drop on the target wire, then select ${customK - 1} control wire(s).`
+                    : 'Single-qubit custom unitary defined via #define.',
+                category: customK > 1 ? 'Multi Qubit (Custom)' : 'Single Qubit (Custom)'
+            };
+        }
         title.textContent = info.name;
 
-        // Default qubits for display
-        const isMultiGate = ['CX', 'CY', 'CZ', 'SWAP'].includes(gateType);
-        // SWAP is fixed to 2-qubit display; others allow 2-3
-        const defaultQubits = isMultiGate ? 2 : 1;
-        let currentQubits = defaultQubits;
+        const isControlFlow = gateType === 'REPEAT' || gateType === 'END';
+        const isFixedMultiGate = gateType === 'SWAP' || gateType === 'CSWAP';
+        const isMultiGate = ['CX', 'CY', 'CZ'].includes(gateType) || customK > 1;
+        const defaultQubits = gateType === 'CSWAP' ? 3
+            : (gateType === 'SWAP' ? 2
+                : (customK > 1 ? customK : (isMultiGate ? 2 : 1)));
 
         const matrixContainerId = 'gateInfoMatrixContainer';
 
-        const matrixHtml = typeof info.matrix === 'string'
-            ? `<div class="matrix-text">${info.matrix}</div>`
-            : formatMatrix(getMatrixForQubits(gateType, defaultQubits));
+        let matrixSection = '';
+        if (!isControlFlow && info.matrix != null) {
+            const matrixHtml = typeof info.matrix === 'string'
+                ? `<div class="matrix-text">${info.matrix}</div>`
+                : formatMatrix(getMatrixForQubits(gateType, defaultQubits));
+            matrixSection = `
+                <h4>Matrix Representation:</h4>
+                <div id="${matrixContainerId}" class="matrix">${matrixHtml}</div>
+            `;
+        }
 
         let qubitSlider = '';
-        if (isMultiGate) {
+        if (isMultiGate && !customMeta && !isFixedMultiGate) {
             qubitSlider = `
                 <div class="parameter-group">
                     <label for="gateInfoQubits">Display with qubits (2-3):</label>
-                    <input type="range" id="gateInfoQubits" min="2" max="${gateType === 'SWAP' ? 2 : 3}" step="1" value="${defaultQubits}">
+                    <input type="range" id="gateInfoQubits" min="2" max="3" step="1" value="${defaultQubits}">
                     <span id="gateInfoQubitsValue">${defaultQubits}</span>
                 </div>
             `;
@@ -4564,16 +5854,15 @@ class CircuitUI {
                 <p><strong>Category:</strong> ${info.category}</p>
                 <p class="description">${info.description}</p>
                 ${qubitSlider}
-                <h4>Matrix Representation:</h4>
-                <div id="${matrixContainerId}" class="matrix">${matrixHtml}</div>
+                ${matrixSection}
             </div>
         `;
 
-        if (isMultiGate) {
+        if (isMultiGate && !customMeta && !isFixedMultiGate) {
             const slider = document.getElementById('gateInfoQubits');
             const valueLabel = document.getElementById('gateInfoQubitsValue');
             slider.addEventListener('input', () => {
-                currentQubits = parseInt(slider.value);
+                const currentQubits = parseInt(slider.value);
                 valueLabel.textContent = currentQubits;
                 const matrix = getMatrixForQubits(gateType, currentQubits);
                 const matrixHtmlUpdated = typeof matrix === 'string' ? `<div class="matrix-text">${matrix}</div>` : formatMatrix(matrix);
@@ -4654,7 +5943,7 @@ class CircuitUI {
         }
 
         const computedStyle = getComputedStyle(document.documentElement);
-        const bgColor = includeBackground ? computedStyle.getPropertyValue('--background').trim() || '#0f172a' : null;
+        const bgColor = includeBackground ? computedStyle.getPropertyValue('--background').trim() || '#0a0a1a' : null;
 
         const options = {
             scale: highRes ? 2 : 1,
@@ -4715,7 +6004,7 @@ class CircuitUI {
         }
 
         const computedStyle = getComputedStyle(document.documentElement);
-        const bgColor = includeBackground ? computedStyle.getPropertyValue('--background').trim() || '#0f172a' : null;
+        const bgColor = includeBackground ? computedStyle.getPropertyValue('--background').trim() || '#0a0a1a' : null;
 
         const options = {
             scale: highRes ? 2 : 1,
@@ -4765,7 +6054,7 @@ class CircuitUI {
         const height = canvas.scrollHeight;
 
         const computedStyle = getComputedStyle(document.documentElement);
-        const bgColor = computedStyle.getPropertyValue('--background').trim() || '#0f172a';
+        const bgColor = computedStyle.getPropertyValue('--background').trim() || '#0a0a1a';
         const primaryColor = computedStyle.getPropertyValue('--primary-color').trim() || '#6366f1';
         const textSecondary = computedStyle.getPropertyValue('--text-secondary').trim() || '#94a3b8';
 
@@ -4796,7 +6085,8 @@ class CircuitUI {
             'Y': '#22c55e', 'CY': '#22c55e', 'RY': '#22c55e',
             'Z': '#3b82f6', 'CZ': '#3b82f6', 'RZ': '#3b82f6',
             'S': '#f59e0b', 'T': '#f59e0b',
-            'SWAP': '#ec4899',
+            'SWAP': '#f97316',
+            'CSWAP': '#f97316',
             'MEASURE': '#64748b'
         };
 
@@ -4819,7 +6109,7 @@ class CircuitUI {
                 'H': 'H', 'X': 'X', 'Y': 'Y', 'Z': 'Z',
                 'S': 'S', 'T': 'T',
                 'RX': 'RX', 'RY': 'RY', 'RZ': 'RZ',
-                'CX': 'X', 'CY': 'Y', 'CZ': 'Z', 'SWAP': '⇄',
+                'CX': 'X', 'CY': 'Y', 'CZ': 'Z', 'SWAP': '⇄', 'CSWAP': 'CS',
                 'MEASURE': 'M'
             };
             const symbol = symbols[type] || type;
@@ -4912,7 +6202,7 @@ class CircuitUI {
         }
 
         const computedStyle = getComputedStyle(document.documentElement);
-        const bgColor = includeBackground ? computedStyle.getPropertyValue('--background').trim() || '#0f172a' : '#ffffff';
+        const bgColor = includeBackground ? computedStyle.getPropertyValue('--background').trim() || '#0a0a1a' : '#ffffff';
 
         const options = {
             scale: highRes ? 2 : 1,

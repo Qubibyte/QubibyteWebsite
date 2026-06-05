@@ -73,6 +73,16 @@
         );
     }
 
+    function createThreeBackgroundFromElement(element, fallbackHex = 0x0f172a) {
+        if (element && typeof getComputedStyle !== 'undefined') {
+            const css = getComputedStyle(element).backgroundColor;
+            if (css && css !== 'rgba(0, 0, 0, 0)' && css !== 'transparent') {
+                return cssColorToThree(css, fallbackHex);
+            }
+        }
+        return cssColorToThree(getCssVar('--background', '#0f172a'), fallbackHex);
+    }
+
     function createThreeBackground() {
         const css = getCssVar('--viz-3d-bg', getCssVar('--background', '#0f172a'));
         return cssColorToThree(css, 0x0f172a);
@@ -88,9 +98,13 @@
 
         const ui = global.circuitUI;
         if (ui?.visualizer) {
-            setSceneBackground(ui.visualizer.blochScene);
-            if (ui.visualizer.blochRenderer) {
-                ui.visualizer.blochRenderer.setClearColor(createThreeBackground(), 1);
+            if (typeof ui.visualizer.applyBlochBackground === 'function') {
+                ui.visualizer.applyBlochBackground();
+            } else {
+                setSceneBackground(ui.visualizer.blochScene);
+                if (ui.visualizer.blochRenderer) {
+                    ui.visualizer.blochRenderer.setClearColor(createThreeBackground(), 1);
+                }
             }
             if (ui.visualizer.maximizedBlochRenderer && ui.visualizer.blochScene) {
                 ui.visualizer.maximizedBlochRenderer.setClearColor(createThreeBackground(), 1);
@@ -116,6 +130,13 @@
         }
         if (nmr?.moleculeViz?.applyTheme) {
             nmr.moleculeViz.applyTheme();
+        }
+        if (typeof nmr?.updateMolecule === 'function' && typeof nmr?.updateSpectrum === 'function') {
+            nmr.updateMolecule();
+            nmr.updateSpectrum();
+            if (typeof nmr.updateDensityMatrix === 'function') {
+                nmr.updateDensityMatrix();
+            }
         }
     }
 
@@ -263,6 +284,7 @@
         updateLogos: updateThemeLogos,
         themes: THEMES,
         createThreeBackground,
+        createThreeBackgroundFromElement,
         refreshVisuals: refreshAllVisuals,
         getChartColors() {
             return {

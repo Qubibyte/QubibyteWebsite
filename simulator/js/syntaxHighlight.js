@@ -30,6 +30,7 @@ const QUBI_BUILTIN_COMPLETIONS = /** @type {QubiAcItem[]} */ ([
     { insert: 'CY', label: 'CY', desc: 'Controlled-Y on the last wire', examples: _qubiExCtrl.map((s) => s.replace('G', 'CY')), acLayout: 'ctrl-last' },
     { insert: 'CZ', label: 'CZ', desc: 'Controlled-Z on the last wire', examples: _qubiExCtrl.map((s) => s.replace('G', 'CZ')), acLayout: 'ctrl-last' },
     { insert: 'SWAP', label: 'SWAP', desc: 'Swap two qubits', examples: ['SWAP [0,1]', 'SWAP [1,0]'], acLayout: 'swap2' },
+    { insert: 'CSWAP', label: 'CSWAP', desc: 'Fredkin gate — controlled-SWAP (CS)', examples: ['CSWAP [0,1,2]'], acLayout: 'cswap3' },
     { insert: 'MEASURE', label: 'MEASURE', desc: 'Projective measurement', examples: ['MEASURE 0', 'MEASURE 1'], acLayout: 'measure-q' },
     { insert: 'REPEAT', label: 'REPEAT', desc: 'Repeat the following block N times (closes with END)', examples: ['REPEAT 3', 'H 0', 'END'], acLayout: 'repeat-block' },
     { insert: 'END', label: 'END', desc: 'End innermost REPEAT block', examples: ['REPEAT 2', 'X 0', 'END'], acLayout: 'repeat-end' },
@@ -97,13 +98,13 @@ class QubiSyntaxHighlighter {
         }
         
         this.debounceTimer = null;
-        this.debounceDelay = 400; // ms to wait before full syntax validation
+        this.debounceDelay = 1200; // ms after typing stops before showing validation errors
         this.lineErrors = new Map(); // Store error messages for each line
         
         this.validGates = new Set([
             'H', 'X', 'Y', 'Z', 'S', 'T',
             'RX', 'RY', 'RZ',
-            'CX', 'CY', 'CZ', 'SWAP',
+            'CX', 'CY', 'CZ', 'SWAP', 'CSWAP',
             'MEASURE'
         ]);
         
@@ -123,12 +124,26 @@ class QubiSyntaxHighlighter {
         this._acMode = null;
 
         this.initEventListeners();
+        this.initEditorResizeObserver();
         this.initAutocompleteUi();
         this.updateHighlight();
         this.updateLineNumbers();
         this.updateWrapperWidth();
         this.updateWrapperHeight();
         this.hideAutocomplete();
+    }
+
+    initEditorResizeObserver() {
+        const container = this.textarea?.closest('.code-editor-container');
+        if (!container || typeof ResizeObserver === 'undefined') return;
+
+        this._editorResizeObserver = new ResizeObserver(() => {
+            requestAnimationFrame(() => {
+                this.updateWrapperHeight();
+                this.syncScroll();
+            });
+        });
+        this._editorResizeObserver.observe(container);
     }
 
     setCode(code, opts = {}) {
@@ -223,15 +238,15 @@ class QubiSyntaxHighlighter {
     }
 
     initAutocompleteUi() {
-        const wrapper = this.textarea && this.textarea.closest('.code-editor-wrapper');
-        if (!wrapper) return;
+        if (!this.textarea) return;
         const root = document.createElement('div');
         root.className = 'qubi-autocomplete';
         root.style.display = 'none';
         root.setAttribute('role', 'listbox');
         root.setAttribute('aria-label', 'Qubi completions');
         root.addEventListener('wheel', (e) => e.stopPropagation(), { passive: true });
-        wrapper.appendChild(root);
+        // Portal to body so the dropdown cannot expand editor scroll height or scroll the code.
+        document.body.appendChild(root);
         this.autocompleteRoot = root;
     }
 
@@ -449,6 +464,18 @@ class QubiSyntaxHighlighter {
                     `<p class="qubi-ac-panel-note">Use <code>SWAP [a,b]</code> — order does not matter; the gate is symmetric.</p>` +
                     `</div>`
                 );
+            case 'cswap3':
+                return (
+                    `<div class="qubi-ac-panel qubi-ac-panel-swap" aria-label="CSWAP arguments">` +
+                    `<div class="qubi-ac-panel-h">Fredkin gate — three wires</div>` +
+                    `<div class="qubi-ac-flow">` +
+                    `<div class="qubi-ac-node qubi-ac-node-ctl"><span class="qubi-ac-node-k">Control</span><span class="qubi-ac-node-v">first index</span></div>` +
+                    `<span class="qubi-ac-flow-arrow" aria-hidden="true">→</span>` +
+                    `<div class="qubi-ac-node qubi-ac-node-swap"><span class="qubi-ac-node-k">Swap A / B</span><span class="qubi-ac-node-v">second &amp; third indices</span></div>` +
+                    `</div>` +
+                    `<p class="qubi-ac-panel-note">Use <code>CSWAP [c,a,b]</code> — swaps wires <code>a</code> and <code>b</code> when control <code>c</code> is |1⟩.</p>` +
+                    `</div>`
+                );
             case 'broadcast':
                 return (
                     `<div class="qubi-ac-panel qubi-ac-panel-broadcast" aria-label="Single-qubit gate wiring">` +
@@ -537,6 +564,9 @@ class QubiSyntaxHighlighter {
     positionAutocomplete() {
         if (!this.autocompleteRoot || !this.textarea || this.autocompleteRoot.style.display === 'none') return;
         const ta = this.textarea;
+        const wrap = ta.closest('.code-editor-wrapper');
+        if (!wrap) return;
+
         const lh = parseFloat(getComputedStyle(ta).lineHeight) || 22;
         const padT = parseFloat(getComputedStyle(ta).paddingTop) || 16;
         const padL = parseFloat(getComputedStyle(ta).paddingLeft) || 16;
@@ -544,26 +574,56 @@ class QubiSyntaxHighlighter {
         const lines = before.split('\n');
         const lineIdx = lines.length - 1;
         const colPrefix = lines[lineIdx];
-        const top = padT + (lineIdx + 1) * lh;
-        const left = padL + this.measureEditorTextWidth(colPrefix);
+
+        const wr = wrap.getBoundingClientRect();
+        const caretBottom = wr.top + padT + (lineIdx + 1) * lh - wrap.scrollTop;
+        const caretTop = wr.top + padT + lineIdx * lh - wrap.scrollTop;
+        let top = caretBottom;
+        let left = wr.left + padL + this.measureEditorTextWidth(colPrefix) - wrap.scrollLeft;
+
+        this.autocompleteRoot.style.position = 'fixed';
         this.autocompleteRoot.style.top = `${top}px`;
         this.autocompleteRoot.style.left = `${left}px`;
+
         requestAnimationFrame(() => {
             if (!this.autocompleteRoot || this.autocompleteRoot.style.display === 'none') return;
-            const wrap = ta.closest('.code-editor-wrapper');
-            if (!wrap) return;
-            const wr = wrap.getBoundingClientRect();
             const pr = this.autocompleteRoot.getBoundingClientRect();
-            if (pr.bottom > window.innerHeight - 6) {
-                const above = padT + lineIdx * lh - pr.height;
-                if (above >= 0) this.autocompleteRoot.style.top = `${above}px`;
+            const pad = 6;
+
+            if (pr.bottom > window.innerHeight - pad) {
+                const aboveTop = caretTop - pr.height;
+                if (aboveTop >= pad) top = aboveTop;
+                else top = Math.max(pad, window.innerHeight - pad - pr.height);
             }
-            if (pr.right > wr.right - 4) {
-                const shift = pr.right - wr.right + 8;
-                const cur = parseFloat(this.autocompleteRoot.style.left) || left;
-                this.autocompleteRoot.style.left = `${Math.max(padL, cur - shift)}px`;
+
+            if (pr.right > window.innerWidth - pad) {
+                left = Math.max(pad, window.innerWidth - pad - pr.width);
             }
+            if (left < wr.left + pad) {
+                left = wr.left + pad;
+            }
+
+            this.autocompleteRoot.style.top = `${top}px`;
+            this.autocompleteRoot.style.left = `${left}px`;
         });
+    }
+
+    /** Keep selection visible inside the dropdown only — never scroll the code editor. */
+    scrollAutocompleteSelectionIntoView() {
+        const root = this.autocompleteRoot;
+        if (!root || root.style.display === 'none') return;
+        const active = root.querySelector('.qubi-autocomplete-item.is-active');
+        if (!active) return;
+
+        const itemTop = active.offsetTop;
+        const itemBottom = itemTop + active.offsetHeight;
+        const viewTop = root.scrollTop;
+        const viewBottom = viewTop + root.clientHeight;
+        if (itemTop < viewTop) {
+            root.scrollTop = itemTop;
+        } else if (itemBottom > viewBottom) {
+            root.scrollTop = itemBottom - root.clientHeight;
+        }
     }
 
     renderAutocompleteList() {
@@ -592,10 +652,7 @@ class QubiSyntaxHighlighter {
             });
             root.appendChild(btn);
         });
-        requestAnimationFrame(() => {
-            const active = root.querySelector('.qubi-autocomplete-item.is-active');
-            if (active) active.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-        });
+        requestAnimationFrame(() => this.scrollAutocompleteSelectionIntoView());
     }
 
     applyAutocompleteSelection() {
@@ -733,14 +790,19 @@ class QubiSyntaxHighlighter {
             this.hideTooltip();
             this.hideMatrixPopup();
             this.updateHighlightImmediate(); // Show text immediately
-            this.updateLineNumbers(); // Update line numbers immediately
-            this.updateWrapperWidth(); // Update wrapper width for horizontal scrolling
-            this.updateWrapperHeight(); // Update wrapper height for vertical scrolling
+            // Hide error markers while typing; debouncedValidation re-checks after pause
+            if (this.lineErrors.size > 0) {
+                this.lineErrors.clear();
+                this.dispatchErrorStateChanged();
+            }
+            this.updateLineNumbers();
+            this.updateWrapperWidth();
+            this.updateWrapperHeight();
             this.syncScroll();
-            this.debouncedValidation(); // Validate after delay
+            this.debouncedValidation();
             this.updateAutocompletePanel();
         });
-        
+
         // Scroll sync - listen to wrapper scroll instead
         const wrapper = this.textarea.closest('.code-editor-wrapper');
         if (wrapper) {
@@ -787,10 +849,13 @@ class QubiSyntaxHighlighter {
             }
         });
         
-        // Hide tooltip when textarea loses focus
+        // Hide tooltip when textarea loses focus; validate immediately on blur
         this.textarea.addEventListener('blur', () => {
             this.hideTooltip();
             this.hideAutocomplete();
+            clearTimeout(this.debounceTimer);
+            this.updateHighlight();
+            this.updateLineNumbers();
         });
 
         // Matrix preview popup on hover over #define lines
@@ -929,18 +994,13 @@ class QubiSyntaxHighlighter {
     }
 
     updateWrapperHeight() {
-        // Ensure the wrapper can scroll vertically as lines grow.
-        // We keep textarea overflow hidden and instead grow the absolute-positioned layers.
+        // Grow textarea/highlight to content height only (no filler below last line).
         if (!this.textarea || !this.highlight) return;
 
-        const wrapper = this.textarea.closest('.code-editor-wrapper');
-        const minHeight = wrapper ? wrapper.clientHeight : 0;
-
-        // Temporarily shrink so scrollHeight reflects content, not previous set height.
         this.textarea.style.height = '0px';
         const contentHeight = this.textarea.scrollHeight;
+        const finalHeight = Math.max(contentHeight, 1);
 
-        const finalHeight = Math.max(minHeight, contentHeight);
         this.textarea.style.height = `${finalHeight}px`;
         this.highlight.style.height = `${finalHeight}px`;
     }
@@ -1112,6 +1172,11 @@ class QubiSyntaxHighlighter {
         
         // END
         if (line === 'END') return null;
+
+        const maxQubitsLimit =
+            typeof globalThis.qubiReadMaxQubits === 'function'
+                ? globalThis.qubiReadMaxQubits()
+                : 12;
         
         // Extract the first word (potential gate name)
         const firstWord = line.split(/[\s(\[]/)[0];
@@ -1123,7 +1188,7 @@ class QubiSyntaxHighlighter {
                 Object.prototype.hasOwnProperty.call(globalThis.GateMatrices, firstWord));
 
         if (!this.validGates.has(firstWord) && !this.keywords.has(firstWord) && !dynamicGateOk) {
-            return `"${firstWord}" is not a recognized gate. Valid gates: H, X, Y, Z, S, T, RX, RY, RZ, CX, CY, CZ, SWAP, MEASURE`;
+            return `"${firstWord}" is not a recognized gate. Valid gates: H, X, Y, Z, S, T, RX, RY, RZ, CX, CY, CZ, SWAP, CSWAP, MEASURE`;
         }
         
         // Rotation gates: RX q [θ], RX (q,…) [θ], RX [q,…] [θ]; omitted θ defaults to π/2 (executor-aligned)
@@ -1139,6 +1204,16 @@ class QubiSyntaxHighlighter {
                 if (!qs.length || !qs.every((q) => Number.isInteger(q) && q >= 0)) {
                     return 'Invalid qubit indices in [ ]';
                 }
+                const dupRotB =
+                    typeof globalThis.qubiDuplicateQubitMessage === 'function'
+                        ? globalThis.qubiDuplicateQubitMessage(qs)
+                        : null;
+                if (dupRotB) return dupRotB;
+                const rangeRotB =
+                    typeof globalThis.qubiFirstQubitRangeErrorInList === 'function'
+                        ? globalThis.qubiFirstQubitRangeErrorInList(qs, maxQubitsLimit)
+                        : null;
+                if (rangeRotB) return rangeRotB;
                 const angPart = bracket[3];
                 if (angPart != null && String(angPart).trim()) {
                     const ang =
@@ -1161,6 +1236,16 @@ class QubiSyntaxHighlighter {
                 if (!qs.length || !qs.every(q => Number.isInteger(q) && q >= 0)) {
                     return 'Invalid qubit indices in ( )';
                 }
+                const dupRotP =
+                    typeof globalThis.qubiDuplicateQubitMessage === 'function'
+                        ? globalThis.qubiDuplicateQubitMessage(qs)
+                        : null;
+                if (dupRotP) return dupRotP;
+                const rangeRotP =
+                    typeof globalThis.qubiFirstQubitRangeErrorInList === 'function'
+                        ? globalThis.qubiFirstQubitRangeErrorInList(qs, maxQubitsLimit)
+                        : null;
+                if (rangeRotP) return rangeRotP;
                 const angPart = paren[3];
                 if (angPart != null && String(angPart).trim()) {
                     const ang =
@@ -1175,6 +1260,12 @@ class QubiSyntaxHighlighter {
             }
             const single = line.match(/^(RX|RY|RZ)\s+(\d+)(?:\s+(.+))?$/i);
             if (single) {
+                const qSingle = parseInt(single[2], 10);
+                const rangeRotSingle =
+                    typeof globalThis.qubiFirstQubitRangeErrorInList === 'function'
+                        ? globalThis.qubiFirstQubitRangeErrorInList([qSingle], maxQubitsLimit)
+                        : null;
+                if (rangeRotSingle) return rangeRotSingle;
                 const angPart = single[3];
                 if (angPart != null && String(angPart).trim()) {
                     const ang =
@@ -1192,6 +1283,12 @@ class QubiSyntaxHighlighter {
         
         // Gate with shorthand: H 0
         if (/^[A-Z0-9]+\s+\d+$/.test(line)) {
+            const qShort = parseInt(line.split(/\s+/)[1], 10);
+            const rangeShort =
+                typeof globalThis.qubiFirstQubitRangeErrorInList === 'function'
+                    ? globalThis.qubiFirstQubitRangeErrorInList([qShort], maxQubitsLimit)
+                    : null;
+            if (rangeShort) return rangeShort;
             return null;
         }
 
@@ -1200,7 +1297,7 @@ class QubiSyntaxHighlighter {
         }
 
         // CX/CY/CZ/SWAP: (0,1) parallel form is invalid — use […] or ([…], …)
-        const badCxParen = line.trim().match(/^(CX|CY|CZ|SWAP)\s*\(\s*[0-9]/i);
+        const badCxParen = line.trim().match(/^(CX|CY|CZ|SWAP|CSWAP)\s*\(\s*[0-9]/i);
         if (badCxParen) {
             const g = badCxParen[1].toUpperCase();
             return `${g} cannot use (…) with bare qubit indices (that would mean parallel single-qubit ${g}s). Use ${g} [controls…, target] or ${g} ([…], […]).`;
@@ -1209,7 +1306,19 @@ class QubiSyntaxHighlighter {
         const gateRest = line.trim().match(/^([A-Z0-9]+)\s+(.+)$/);
         if (gateRest && globalThis.QubiParser && typeof globalThis.QubiParser.tryTokenizeGateRegister === 'function') {
             const tok = globalThis.QubiParser.tryTokenizeGateRegister(gateRest[1], gateRest[2].trim(), 0);
-            if (tok) return null;
+            if (tok) {
+                const dupErr =
+                    typeof globalThis.QubiParser.duplicateQubitErrorForGateToken === 'function'
+                        ? globalThis.QubiParser.duplicateQubitErrorForGateToken(tok)
+                        : null;
+                if (dupErr) return dupErr;
+                const rangeErr =
+                    typeof globalThis.QubiParser.qubitRangeErrorForGateToken === 'function'
+                        ? globalThis.QubiParser.qubitRangeErrorForGateToken(tok, maxQubitsLimit)
+                        : null;
+                if (rangeErr) return rangeErr;
+                return null;
+            }
         }
 
         // Gate with parentheses only (single-qubit parallel): H (0,1,2)
@@ -1219,8 +1328,21 @@ class QubiSyntaxHighlighter {
             if (!content || !/^[\d,\s]+$/.test(content)) {
                 return 'Invalid qubit list in parentheses. Use numbers separated by commas (e.g., (0,1,2))';
             }
-            if (['CX', 'CY', 'CZ', 'SWAP'].includes(g0)) {
+            if (['CX', 'CY', 'CZ', 'SWAP', 'CSWAP'].includes(g0)) {
                 return `${g0} cannot use (…) with bare qubit indices; use square brackets.`;
+            }
+            const qsParen = content.split(',').map((x) => parseInt(x.trim(), 10));
+            if (qsParen.length && qsParen.every((q) => Number.isInteger(q) && q >= 0)) {
+                const dupParen =
+                    typeof globalThis.qubiDuplicateQubitMessage === 'function'
+                        ? globalThis.qubiDuplicateQubitMessage(qsParen)
+                        : null;
+                if (dupParen) return dupParen;
+                const rangeParen =
+                    typeof globalThis.qubiFirstQubitRangeErrorInList === 'function'
+                        ? globalThis.qubiFirstQubitRangeErrorInList(qsParen, maxQubitsLimit)
+                        : null;
+                if (rangeParen) return rangeParen;
             }
             return null;
         }
@@ -1230,6 +1352,26 @@ class QubiSyntaxHighlighter {
             const content = line.match(/\[([^\]]*)\]/)?.[1];
             if (!content || !/^[\d,\s]+$/.test(content)) {
                 return 'Invalid qubit list in brackets. Use numbers separated by commas (e.g., [0,1,2])';
+            }
+            const qsBracket = content.split(',').map((x) => parseInt(x.trim(), 10));
+            if (qsBracket.length && qsBracket.every((q) => Number.isInteger(q) && q >= 0)) {
+                const dupBracket =
+                    typeof globalThis.qubiDuplicateQubitMessage === 'function'
+                        ? globalThis.qubiDuplicateQubitMessage(qsBracket)
+                        : null;
+                if (dupBracket) return dupBracket;
+                const rangeBracket =
+                    typeof globalThis.qubiFirstQubitRangeErrorInList === 'function'
+                        ? globalThis.qubiFirstQubitRangeErrorInList(qsBracket, maxQubitsLimit)
+                        : null;
+                if (rangeBracket) return rangeBracket;
+            }
+            const gateName = line.trim().match(/^([A-Z0-9]+)\s*\[/i)?.[1]?.toUpperCase();
+            if (gateName === 'CSWAP' && qsBracket.length !== 3) {
+                return 'CSWAP [c,a,b] requires exactly three qubit indices (control, swap wire A, swap wire B).';
+            }
+            if (gateName === 'SWAP' && qsBracket.length !== 2) {
+                return 'SWAP [a,b] requires exactly two qubit indices.';
             }
             return null;
         }
@@ -1269,6 +1411,11 @@ class QubiSyntaxHighlighter {
         this.updateWrapperHeight();
         
         // Trigger error state update event
+        this.dispatchErrorStateChanged();
+    }
+
+    dispatchErrorStateChanged() {
+        if (!this.textarea) return;
         const errorEvent = new CustomEvent('qubiErrorStateChanged', {
             detail: { hasErrors: this.lineErrors.size > 0 }
         });
@@ -1512,7 +1659,7 @@ function qubiHighlightCodeToHtml(code) {
     shim.validGates = new Set([
         'H', 'X', 'Y', 'Z', 'S', 'T',
         'RX', 'RY', 'RZ',
-        'CX', 'CY', 'CZ', 'SWAP',
+        'CX', 'CY', 'CZ', 'SWAP', 'CSWAP',
         'MEASURE'
     ]);
     shim.keywords = new Set(['REPEAT', 'END']);

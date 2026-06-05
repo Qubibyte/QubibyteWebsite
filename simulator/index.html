@@ -26,6 +26,9 @@
     <meta name="twitter:image" content="/images/logo.png">
     <link rel="canonical" href="https://qubibyte.org/simulator/">
     <link rel="icon" type="image/x-icon" href="/images/fav.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/components.css">
     <link rel="stylesheet" href="styles/nmr.css">
@@ -48,8 +51,8 @@
                 <h1 class="title">Quantum Circuit Simulator</h1>
             </div>
             <div class="header-controls">
+                <button id="settingsBtn" class="btn btn-secondary">Settings</button>
                 <button id="clearBtn" class="btn btn-secondary">Clear Circuit</button>
-                <button id="resetBtn" class="btn btn-secondary">Reset</button>
                 <button id="exportBtn" class="btn btn-secondary">Export</button>
                 <button id="runBtn" class="btn btn-primary">Run Circuit</button>
             </div>
@@ -59,59 +62,55 @@
         <div class="main-content">
             <!-- Left Sidebar - Gate Palette -->
             <aside class="sidebar">
-                <div class="sidebar-header">
-                    <div class="sidebar-header-buttons">
-                        <button id="algorithmsBtn" class="btn btn-small">Examples</button>
-                        <button id="settingsBtn" class="btn btn-small">Settings</button>
-                    </div>
-                </div>
                 <p class="mobile-gate-hint">Tap a gate, then tap a slot on the circuit to place it</p>
-                <div class="gate-palette">
+                <div class="sidebar-gates-panel">
+                    <h2 class="sidebar-panel-title">Gates</h2>
+                    <div class="gate-palette">
                     <div class="gate-category">
                         <h3 class="category-title">Single Qubit Gates</h3>
                         <div class="gate-list">
                             <div class="gate-item" data-gate="H" draggable="true">
-                                <span class="gate-symbol">H</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--single">H</span></span>
                                 <span class="gate-name">Hadamard</span>
                                 <button class="gate-info-icon" data-gate="H" title="Gate Information">ℹ</button>
                             </div>
                             <div class="gate-item" data-gate="X" draggable="true">
-                                <span class="gate-symbol">X</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--single">X</span></span>
                                 <span class="gate-name">Pauli-X</span>
                                 <button class="gate-info-icon" data-gate="X" title="Gate Information">ℹ</button>
                             </div>
                             <div class="gate-item" data-gate="Y" draggable="true">
-                                <span class="gate-symbol">Y</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--single">Y</span></span>
                                 <span class="gate-name">Pauli-Y</span>
                                 <button class="gate-info-icon" data-gate="Y" title="Gate Information">ℹ</button>
                             </div>
                             <div class="gate-item" data-gate="Z" draggable="true">
-                                <span class="gate-symbol">Z</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--single">Z</span></span>
                                 <span class="gate-name">Pauli-Z</span>
                                 <button class="gate-info-icon" data-gate="Z" title="Gate Information">ℹ</button>
                             </div>
                             <div class="gate-item" data-gate="S" draggable="true">
-                                <span class="gate-symbol">S</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--single">S</span></span>
                                 <span class="gate-name">Phase</span>
                                 <button class="gate-info-icon" data-gate="S" title="Gate Information">ℹ</button>
                             </div>
                             <div class="gate-item" data-gate="T" draggable="true">
-                                <span class="gate-symbol">T</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--single">T</span></span>
                                 <span class="gate-name">T Gate</span>
                                 <button class="gate-info-icon" data-gate="T" title="Gate Information">ℹ</button>
                             </div>
                             <div class="gate-item" data-gate="RX" draggable="true">
-                                <span class="gate-symbol">RX</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--double">RX</span></span>
                                 <span class="gate-name">Rotation X</span>
                                 <button class="gate-info-icon" data-gate="RX" title="Gate Information">ℹ</button>
                             </div>
                             <div class="gate-item" data-gate="RY" draggable="true">
-                                <span class="gate-symbol">RY</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--double">RY</span></span>
                                 <span class="gate-name">Rotation Y</span>
                                 <button class="gate-info-icon" data-gate="RY" title="Gate Information">ℹ</button>
                             </div>
                             <div class="gate-item" data-gate="RZ" draggable="true">
-                                <span class="gate-symbol">RZ</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--double">RZ</span></span>
                                 <span class="gate-name">Rotation Z</span>
                                 <button class="gate-info-icon" data-gate="RZ" title="Gate Information">ℹ</button>
                             </div>
@@ -121,24 +120,29 @@
                         <h3 class="category-title">Multi Qubit Gates</h3>
                         <div class="gate-list">
                             <div class="gate-item" data-gate="CX" draggable="true">
-                                <span class="gate-symbol">CX</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--double">CX</span></span>
                                 <span class="gate-name">Controlled-X</span>
                                 <button class="gate-info-icon" data-gate="CX" title="Gate Information">ℹ</button>
                             </div>
                             <div class="gate-item" data-gate="CY" draggable="true">
-                                <span class="gate-symbol">CY</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--double">CY</span></span>
                                 <span class="gate-name">Controlled-Y</span>
                                 <button class="gate-info-icon" data-gate="CY" title="Gate Information">ℹ</button>
                             </div>
                             <div class="gate-item" data-gate="CZ" draggable="true">
-                                <span class="gate-symbol">CZ</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--double">CZ</span></span>
                                 <span class="gate-name">Controlled-Z</span>
                                 <button class="gate-info-icon" data-gate="CZ" title="Gate Information">ℹ</button>
                             </div>
                             <div class="gate-item" data-gate="SWAP" draggable="true">
-                                <span class="gate-symbol">⇄</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--single">⇄</span></span>
                                 <span class="gate-name">SWAP</span>
                                 <button class="gate-info-icon" data-gate="SWAP" title="Gate Information">ℹ</button>
+                            </div>
+                            <div class="gate-item" data-gate="CSWAP" draggable="true">
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--double">CS</span></span>
+                                <span class="gate-name">Fredkin (CSWAP)</span>
+                                <button class="gate-info-icon" data-gate="CSWAP" title="Gate Information">ℹ</button>
                             </div>
                         </div>
                     </div>
@@ -146,7 +150,7 @@
                         <h3 class="category-title">Measurement</h3>
                         <div class="gate-list">
                             <div class="gate-item" data-gate="MEASURE" draggable="true">
-                                <span class="gate-symbol">M</span>
+                                <span class="gate-symbol"><span class="gate-symbol-label gate-label--single">M</span></span>
                                 <span class="gate-name">Measure</span>
                                 <button class="gate-info-icon" data-gate="MEASURE" title="Gate Information">ℹ</button>
                             </div>
@@ -156,16 +160,24 @@
                         <h3 class="category-title">Control Flow</h3>
                         <div class="gate-list">
                             <div class="gate-item" data-gate="REPEAT" draggable="true">
-                                <span class="gate-symbol gate-control-flow">↻</span>
+                                <span class="gate-symbol gate-control-flow"><span class="gate-symbol-label gate-label--single">↻</span></span>
                                 <span class="gate-name">Repeat</span>
+                                <button class="gate-info-icon" data-gate="REPEAT" type="button" title="Gate Information">ℹ</button>
                             </div>
                             <div class="gate-item" data-gate="END" draggable="true">
-                                <span class="gate-symbol gate-control-flow">⊣</span>
+                                <span class="gate-symbol gate-control-flow"><span class="gate-symbol-label gate-label--single">⊣</span></span>
                                 <span class="gate-name">End</span>
+                                <button class="gate-info-icon" data-gate="END" type="button" title="Gate Information">ℹ</button>
                             </div>
                         </div>
                     </div>
                 </div>
+                </div>
+                <div class="sidebar-examples-panel">
+                    <h2 class="sidebar-panel-title">Examples</h2>
+                    <div id="sidebarExamplesList" class="sidebar-examples-list" aria-label="Example circuits"></div>
+                </div>
+                <button type="button" id="mobileSeeExamplesBtn" class="btn btn-small sidebar-see-examples-btn">See Examples</button>
             </aside>
 
             <div class="panel-resize-handle" id="leftPanelResize" role="separator" aria-orientation="vertical"
@@ -185,7 +197,6 @@
                             <button id="zoomOutBtn" class="btn btn-small" title="Zoom Out">−</button>
                             <span id="zoomLevel">100%</span>
                             <button id="zoomInBtn" class="btn btn-small" title="Zoom In">+</button>
-                            <button id="resetZoomBtn" class="btn btn-small" title="Reset Zoom">Reset</button>
                         </div>
                         <div class="circuit-info">
                             <span id="circuitDepth">Depth: 0</span>
@@ -196,7 +207,8 @@
                     <div class="editor-tabs">
                         <button class="tab-btn active" data-tab="circuit">Circuit Builder</button>
                         <button class="tab-btn" data-tab="gateCreator">Gate Creator</button>
-                        <button class="tab-btn" data-tab="nmr">NMR Simulator</button>
+                        <button class="tab-btn" data-tab="analysis">Data Analysis</button>
+                        <button class="tab-btn" data-tab="nmr">NMR Analysis</button>
                         <button class="tab-btn" data-tab="resources">Other Resources</button>
                     </div>
                     <div id="circuitEditor" class="editor-panel active">
@@ -210,24 +222,27 @@
                             <!-- Gate Creator UI will be dynamically rendered here -->
                         </div>
                     </div>
+                    <div id="analysisEditor" class="editor-panel">
+                        <div id="analysisContainer" class="analysis-wrapper"></div>
+                    </div>
                     <div id="nmrEditor" class="editor-panel">
                         <div id="nmrSimulatorContainer" class="nmr-simulator-wrapper">
-                            <!-- NMR Simulator UI will be dynamically rendered here -->
+                            <!-- NMR Analysis UI will be dynamically rendered here -->
                         </div>
                     </div>
                     <div id="resourcesEditor" class="editor-panel">
                         <div id="resourcesContainer" class="resources-wrapper">
-                            <!-- Resources content will be dynamically rendered here -->
+                            <!-- Other Resources content rendered dynamically -->
                         </div>
                     </div>
                 </div>
 
                 <!-- Bottom Section: Visualization Content -->
                 <div class="visualization-section" id="visualizationSection">
-                    <!-- Region 1: Measurement Results / State Vector (Tabs) -->
+                    <!-- Region 1: Probabilities / State Vector (Tabs) -->
                     <div class="viz-region viz-region-1">
                         <div class="viz-tabs">
-                            <button class="viz-tab-btn active" data-viz-tab="measurement">Measurement Results</button>
+                            <button class="viz-tab-btn active" data-viz-tab="measurement">Probabilities</button>
                             <button class="viz-tab-btn" data-viz-tab="state">State Vector</button>
                         </div>
                         <div id="measurementPanel" class="viz-panel active">
@@ -295,10 +310,6 @@
                         <input type="file" id="qubiFileInput" accept=".qubi" style="display: none;">
                         <input type="file" id="qubiFolderInput" accept=".qubi" webkitdirectory directory multiple style="display: none;">
                         <input type="file" id="qubiZipInput" accept=".zip" style="display: none;">
-                        <span class="toolbar-separator"></span>
-                        <button id="fixWithQubiAiBtn" class="btn btn-small btn-success qubi-fix-btn" title="Prefill QubiAI to fix the current error" style="display:none" disabled>
-                            Fix with QubiAI
-                        </button>
                     </div>
                     <div class="code-editor-container">
                         <div class="line-numbers" id="lineNumbers"></div>
@@ -314,7 +325,12 @@
                 <div class="qubi-ai-panel" id="qubiAiPanel">
                     <div class="qubi-ai-header">
                         <span class="qubi-ai-label">QubiAI</span>
-                        <span class="qubi-ai-status" id="qubiAiStatus"></span>
+                        <div class="qubi-ai-header-actions">
+                            <button id="fixWithQubiAiBtn" class="btn btn-small btn-success qubi-fix-btn" title="Prefill QubiAI to fix the current error" style="display:none" disabled>
+                                Fix with QubiAI
+                            </button>
+                            <span class="qubi-ai-status" id="qubiAiStatus"></span>
+                        </div>
                     </div>
                     <div class="qubi-ai-body">
                         <div class="qubi-ai-input-row">
@@ -496,6 +512,7 @@
 
     <script src="js/quantum.js"></script>
     <script src="js/circuit.js"></script>
+    <script src="js/gate-display.js"></script>
     <script src="js/visualization.js"></script>
     <script src="js/qubi.js"></script>
     <script src="js/gateInfo.js"></script>
