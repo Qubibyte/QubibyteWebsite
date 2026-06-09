@@ -1825,6 +1825,25 @@
     background: rgba(239, 68, 68, 0.2);
 }
 
+/* Touch-friendly Data Analysis tabs on short viewports (e.g. 1280×648, Raspberry Pi) */
+@media (max-height: 780px) {
+    .analysis-root .analysis-viz-tabs button {
+        min-height: 48px;
+        padding: 12px 14px;
+        font-size: 0.8125rem;
+        line-height: 1.2;
+    }
+
+    .analysis-root .nmr-density-view-toggle button,
+    .analysis-root .nmr-density-heatmap-toggle button {
+        min-height: 42px;
+        min-width: 52px;
+        padding: 10px 16px;
+        font-size: 0.8125rem;
+        line-height: 1.2;
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .nmr-container {
@@ -1912,10 +1931,18 @@
         flex: 1;
     }
 
-    .analysis-viz-tabs button {
+    .analysis-root .analysis-viz-tabs button {
         min-width: 72px;
-        font-size: 10px;
-        padding: 4px 8px;
+        min-height: 48px;
+        font-size: 0.8125rem;
+        padding: 12px 10px;
+    }
+
+    .analysis-root .nmr-density-view-toggle button,
+    .analysis-root .nmr-density-heatmap-toggle button {
+        min-height: 42px;
+        padding: 10px 14px;
+        font-size: 0.8125rem;
     }
 
     .analysis-stepper .nmr-density-stepper-toolbar {

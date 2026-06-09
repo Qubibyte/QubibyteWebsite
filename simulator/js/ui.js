@@ -52,6 +52,57 @@ function buildPaletteDragGhost(item) {
     return wrap;
 }
 
+/** Lightweight drag image for placed circuit gates (same strategy as palette). */
+function buildPlacedGateDragGhost(gateEl) {
+    if (!gateEl) return null;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'placed-gate-drag-ghost-wrap';
+    wrap.style.cssText =
+        'position:absolute;left:-9999px;top:0;width:50px;height:50px;padding:0;margin:0;border:none;background:none;box-shadow:none;pointer-events:none;';
+
+    const classCopy = [...gateEl.classList].filter(
+        (c) => c !== 'gate-drag-source-faded' && c !== 'placed-gate-drag-ghost'
+    ).join(' ');
+
+    const ghost = document.createElement('div');
+    ghost.className = `gate-on-wire palette-drag-ghost placed-gate-drag-ghost ${classCopy}`;
+    ghost.style.cssText =
+        'width:50px;height:50px;display:flex;align-items:center;justify-content:center;transform:none;filter:none;animation:none;opacity:0.95;box-shadow:0 4px 14px rgba(0,0,0,0.28);position:relative;margin:0;';
+
+    if (gateEl.style.background) ghost.style.background = gateEl.style.background;
+    if (gateEl.style.borderColor) ghost.style.borderColor = gateEl.style.borderColor;
+    if (gateEl.style.boxShadow) ghost.style.boxShadow = gateEl.style.boxShadow;
+
+    if (gateEl.classList.contains('swap-block')) {
+        const symSpan = document.createElement('span');
+        symSpan.className = 'swap-symbol';
+        symSpan.textContent = gateEl.querySelector('.swap-symbol')?.textContent || '⇄';
+        ghost.appendChild(symSpan);
+    } else {
+        const label = gateEl.querySelector('.gate-on-wire-label')?.textContent
+            || gateEl.textContent?.replace(/\s×\s*$/, '').trim()
+            || gateEl.dataset.gateType
+            || '';
+        const textSpan = document.createElement('span');
+        textSpan.className = 'gate-on-wire-label';
+        textSpan.textContent = label;
+        ghost.appendChild(textSpan);
+    }
+
+    wrap.appendChild(ghost);
+    document.body.appendChild(wrap);
+    return wrap;
+}
+
+const DRAG_GHOST_STRIP_CLASSES = new Set([
+    'gate-drag-source-faded',
+    'placed-gate-drag-ghost',
+    'shift-preview',
+    'circuit-selected',
+    'executing'
+]);
+
 /** Display label for qubit count input (e.g. "1 Qubit", "3 Qubits"). */
 function formatQubitCountLabel(n) {
     const num = Math.max(0, Math.floor(Number(n)) || 0);
@@ -87,9 +138,30 @@ class CircuitUI {
         this._qubitRowHeight = 68;
         this._pointerTouchMoved = false;
         this._pointerStart = null;
+        this._palettePointerDrag = null;
+        this._suppressPaletteClick = false;
+        this._placedGateDrag = null;
+        this._placedGateDragBound = false;
+        this._suppressPlacedGateClick = false;
+        this._dragOverSlot = null;
+        this._shiftPreviewKey = '';
+        this._shiftPreviewEls = new Set();
+        this._circuitSelection = new Set();
+        this._circuitSelectionCF = new Set();
+        this._marqueeSelect = null;
+        this._groupGateDrag = null;
+        this._circuitSelectionBound = false;
+        this._selectionLayerEl = null;
+        this._marqueeBoxEl = null;
+        this._suppressCircuitSelectionClick = false;
+        this._palettePointerDragBound = false;
+        this._paletteDragModeMqBound = false;
+        this._gateEditSyncRaf = 0;
+        this._anglePicker = null;
         this.customGateMeta = {}; // gateType -> { label, colorBg, colorGlow, displayName }
         /** @returns {number} 0 if not a custom gate matrix; else log2(dim) */
         this.getCustomGateWireCount = (gateType) => {
+            if (!this.customGateMeta[gateType]) return 0;
             if (typeof GateMatrices === 'undefined' || !GateMatrices[gateType]) return 0;
             const mat = GateMatrices[gateType];
             const nCells = mat.length;
@@ -137,12 +209,20 @@ class CircuitUI {
         // Bidirectional sync state
         this.isUpdatingFromCircuit = false;
         this.isUpdatingFromCode = false;
+        this._skipDebouncedCodeToCircuitSync = false;
+        this._historyApplying = false;
+        this._undoApplying = false;
         this.codeChangeDebounceTimer = null;
         this.codeChangeDebounceDelay = 500; // ms to wait before syncing code changes to circuit
 
         this.initializeEventListeners();
         this._initPaletteDismissListeners();
         this._initPaletteGateItems();
+        this._syncPaletteDraggableState();
+        this._syncPlacedGateDraggableState();
+        this._initPalettePointerDrag();
+        this._initPlacedGateDrag();
+        this._initCircuitSelection();
         this._initSidebarExamplesList();
         this.initDesktopPanelResize();
         this.updateQubitInputMax();
@@ -155,6 +235,10 @@ class CircuitUI {
         this.applyPendingSessionQubiLoad();
 
         this.initializeQubiTabs();
+        this._initQubiHistory();
+        this._initQubiUndo();
+        this._ensureSchedulingDirectiveInEditor();
+        this.syncCodeToCircuit({ suppressAutoRun: true });
     }
 
     initializeQubiTabs() {
@@ -318,9 +402,13 @@ class CircuitUI {
                         e.stopPropagation();
                         const idx = this.qubiFiles.findIndex(x => x.id === f.id);
                         if (idx >= 0) {
+                            if (this.qubiHistory) this.qubiHistory.archiveFile(f.id, f.name, 'tab_closed');
+                            this.qubiUndo?.removeFile(f.id);
                             this.qubiFiles.splice(idx, 1);
                             if (this.activeQubiFileId === f.id) {
+                                const prevMain = this.activeQubiFileId;
                                 this.activeQubiFileId = 'main';
+                                this.qubiUndo?.onTabSwitch(prevMain, 'main');
                                 this._loadActiveQubiFileIntoEditor({ preserveUndo: false });
                                 // Refresh circuit to match main tab
                                 this.syncCodeToCircuit();
@@ -333,8 +421,11 @@ class CircuitUI {
 
                 tab.addEventListener('click', () => {
                     if (this.activeQubiFileId === f.id) return;
+                    const fromFileId = this.activeQubiFileId;
+                    this._snapshotQubiHistoryForFile(fromFileId);
                     this._persistActiveQubiEditorToFile();
                     this.activeQubiFileId = f.id;
+                    this.qubiUndo?.onTabSwitch(fromFileId, f.id);
                     this._loadActiveQubiFileIntoEditor({ preserveUndo: false });
                     // Ensure circuit builder reflects this tab immediately
                     this.syncCodeToCircuit();
@@ -361,9 +452,16 @@ class CircuitUI {
             this.qubiFiles.push({ id, name, code: '' });
             this.activeQubiFileId = id;
             this._loadActiveQubiFileIntoEditor({ preserveUndo: false });
+            this._applySchedulingSettingToEditor(this.getSettings().codeGateParallelism || 'default');
             // Initialize circuit to match new (empty) file deterministically
             this.syncCodeToCircuit();
             render();
+            const ed = document.getElementById('qubiCode');
+            this.qubiUndo?.reset(id, ed?.value || '');
+            this.qubiHistory?.ensureFile(id, ed?.value || '');
+            if (typeof this._persistActiveQubiEditorToFile === 'function') {
+                this._persistActiveQubiEditorToFile();
+            }
             // Immediately allow editing the stem (like typical editors)
             startRename(id);
         };
@@ -386,6 +484,54 @@ class CircuitUI {
         };
 
         render();
+    }
+
+    _initQubiUndo() {
+        if (typeof QubiUndoManager === 'undefined') return;
+        this.qubiUndo = new QubiUndoManager({ ui: this });
+        this.qubiUndo.bindUi();
+        for (const f of this.qubiFiles) {
+            this.qubiUndo.reset(f.id, f.code);
+        }
+    }
+
+    _initQubiHistory() {
+        if (typeof QubiFileHistory === 'undefined') return;
+        this.qubiHistory = new QubiFileHistory({ ui: this });
+        this.qubiHistory.bindUi();
+        this.qubiHistory.reconcileOrphanedHistories(this.qubiFiles.map((f) => f.id));
+        const editor = document.getElementById('qubiCode');
+        for (const f of this.qubiFiles) {
+            const code = f.id === this.activeQubiFileId && editor
+                ? String(editor.value || f.code || '')
+                : String(f.code || '');
+            this.qubiHistory.ensureFile(f.id, code);
+        }
+    }
+
+    _snapshotQubiHistoryForFile(fileId) {
+        if (!this.qubiHistory || !fileId) return;
+        const editor = document.getElementById('qubiCode');
+        const code = editor ? String(editor.value || '') : '';
+        this.qubiHistory.flushPending(fileId, code);
+    }
+
+    /** Save a version-history snapshot for the active Qubi file. */
+    _recordQubiVersionSnapshot(meta = {}) {
+        if (this._undoApplying || this._historyApplying) return;
+        const fileId = this.activeQubiFileId;
+        const editor = document.getElementById('qubiCode');
+        if (!this.qubiHistory || !fileId || !editor) return;
+
+        if (typeof this._persistActiveQubiEditorToFile === 'function') {
+            this._persistActiveQubiEditorToFile();
+        }
+
+        this.qubiHistory.recordImmediate(fileId, editor.value, {
+            kind: meta.kind || 'edit',
+            label: meta.label || 'Edit',
+            force: Boolean(meta.force)
+        });
     }
 
     inferRequiredQubitsFromCode(code) {
@@ -491,35 +637,44 @@ class CircuitUI {
         }
     }
 
-    setEditorCode(code, { preserveUndo = false, adjustQubits = false } = {}) {
+    setEditorCode(code, { preserveUndo = false, adjustQubits = false, focus = true } = {}) {
         const text = code == null ? '' : String(code);
         this.isUpdatingFromCircuit = true;
         if (this.syntaxHighlighter) {
-            this.syntaxHighlighter.setCode(text, { preserveUndo });
+            this.syntaxHighlighter.setCode(text, { preserveUndo, focus });
         } else {
+            this._skipDebouncedCodeToCircuitSync = true;
             const editor = document.getElementById('qubiCode');
             if (editor) {
                 if (preserveUndo) {
-                    editor.focus({ preventScroll: true });
+                    if (focus) {
+                        editor.focus({ preventScroll: true });
+                    }
                     try {
                         editor.setSelectionRange(0, editor.value.length);
                     } catch {
                         /* ignore */
                     }
-                    let usedUndoablePath = false;
-                    try {
-                        if (typeof document !== 'undefined' && typeof document.execCommand === 'function') {
-                            usedUndoablePath = document.execCommand('insertText', false, text);
+                    if (focus) {
+                        let usedUndoablePath = false;
+                        try {
+                            if (typeof document !== 'undefined' && typeof document.execCommand === 'function') {
+                                usedUndoablePath = document.execCommand('insertText', false, text);
+                            }
+                        } catch {
+                            usedUndoablePath = false;
                         }
-                    } catch {
-                        usedUndoablePath = false;
-                    }
-                    if (!usedUndoablePath) {
-                        if (typeof editor.setRangeText === 'function') {
-                            editor.setRangeText(text, 0, editor.value.length, 'end');
-                        } else {
-                            editor.value = text;
+                        if (!usedUndoablePath) {
+                            if (typeof editor.setRangeText === 'function') {
+                                editor.setRangeText(text, 0, editor.value.length, 'end');
+                            } else {
+                                editor.value = text;
+                            }
                         }
+                    } else if (typeof editor.setRangeText === 'function') {
+                        editor.setRangeText(text, 0, editor.value.length, 'end');
+                    } else {
+                        editor.value = text;
                     }
                 } else {
                     editor.value = text;
@@ -560,12 +715,2011 @@ class CircuitUI {
         // The validation happens in setQubitCount
     }
 
+    _prefersPointerPaletteDrag() {
+        if (typeof window === 'undefined' || !window.matchMedia) return false;
+        return window.matchMedia('(pointer: coarse)').matches
+            || window.matchMedia('(hover: none)').matches;
+    }
+
+    _setGateItemDraggable(item) {
+        if (!item) return;
+        item.draggable = !this._prefersPointerPaletteDrag();
+    }
+
+    _syncPaletteDraggableState() {
+        document.querySelectorAll('.gate-palette .gate-item').forEach((item) => {
+            this._setGateItemDraggable(item);
+        });
+        if (typeof window !== 'undefined' && window.matchMedia && !this._paletteDragModeMqBound) {
+            this._paletteDragModeMqBound = true;
+            const sync = () => {
+                this._syncPaletteDraggableState();
+                this._syncPlacedGateDraggableState();
+            };
+            window.matchMedia('(pointer: coarse)').addEventListener('change', sync);
+            window.matchMedia('(hover: none)').addEventListener('change', sync);
+        }
+    }
+
+    _setGateOnWireDraggable(gateEl) {
+        if (!gateEl) return;
+        // Placed gates always use pointer drag — native HTML5 drag conflicts with it.
+        gateEl.draggable = false;
+    }
+
+    _syncPlacedGateDraggableState() {
+        document.querySelectorAll('#circuitCanvas .gate-on-wire').forEach((el) => {
+            this._setGateOnWireDraggable(el);
+        });
+    }
+
+    _positionPaletteDragGhost(ghost, clientX, clientY) {
+        if (!ghost) return;
+        const half = PALETTE_DRAG_GHOST_SIZE / 2;
+        ghost.style.position = 'fixed';
+        ghost.style.left = '0';
+        ghost.style.top = '0';
+        ghost.style.pointerEvents = 'none';
+        ghost.style.zIndex = '10000';
+        ghost.style.transform = `translate(${clientX - half}px, ${clientY - half}px)`;
+    }
+
+    _updatePlacedGateDragTarget(clientX, clientY) {
+        const drag = this._placedGateDrag;
+        if (!drag?.active) return;
+
+        const canvas = document.getElementById('circuitCanvas');
+        const deleteZone = this._isPlacedGateDeleteZone(clientX, clientY, drag.slotCache);
+
+        if (deleteZone) {
+            if (drag.lastTargetKey !== '__delete__' || !drag.lastDeleteTarget) {
+                drag.lastTargetKey = '__delete__';
+                drag.lastDeleteTarget = true;
+                this._hidePhantomQubitLine();
+                this._setDragOverSlot(null);
+                this._clearShiftPreview();
+                canvas?.classList.add('is-placed-gate-delete-target');
+            }
+            return;
+        }
+        canvas?.classList.remove('is-placed-gate-delete-target');
+
+        // Drag below the last wire to spawn a new qubit line for this gate.
+        if (this._canAddQubit() && this._isInAddQubitZone(clientX, clientY)) {
+            const col = this._getColumnFromClientX(clientX);
+            const slotKey = `phantom:${col}`;
+            if (drag.lastTargetKey !== slotKey || drag.lastDeleteTarget) {
+                drag.lastTargetKey = slotKey;
+                drag.lastDeleteTarget = false;
+                this._showPhantomQubitLine(col);
+                this._setDragOverSlot(null);
+                this._clearShiftPreview();
+            }
+            return;
+        }
+
+        const slot = this._resolveGateSlotFast(clientX, clientY, drag.slotCache)
+            || this._resolveGateSlotFromPointer(clientX, clientY);
+        const onValidSlot = slot && !slot.closest('.qubit-line-phantom');
+        const slotKey = onValidSlot ? `${slot.dataset.qubit}:${slot.dataset.column}` : '';
+
+        if (drag.lastTargetKey === slotKey && !drag.lastDeleteTarget) return;
+        drag.lastTargetKey = slotKey;
+        drag.lastDeleteTarget = false;
+
+        if (onValidSlot) {
+            this._hidePhantomQubitLine();
+            this._setDragOverSlot(slot);
+            const anchorQubit = this._anchorQubitFromPointerSlot(parseInt(slot.dataset.qubit, 10), drag);
+            const hoverColumn = parseInt(slot.dataset.column, 10);
+            this._updatePlacedGateShiftPreview(drag, anchorQubit, hoverColumn);
+            return;
+        }
+
+        this._hidePhantomQubitLine();
+        this._setDragOverSlot(null);
+        this._clearShiftPreview();
+    }
+
+    /** Cascade-accurate shift preview for a single placed gate being dragged. */
+    _updatePlacedGateShiftPreview(drag, anchorQubit, hoverColumn) {
+        const gate = drag.gate;
+        const deltaQ = anchorQubit - gate.qubit;
+        const deltaCol = hoverColumn - gate.column;
+        const sim = this.circuit.simulateGroupPlacement(
+            [gate],
+            deltaQ,
+            deltaCol,
+            [],
+            new Set([gate])
+        );
+        this._clearShiftPreview();
+        if (sim.valid && sim.needsShift) {
+            this._applyGroupMovesPreview(sim);
+        }
+    }
+
+    _updateGroupGateDragTarget(clientX, clientY) {
+        const drag = this._groupGateDrag;
+        if (!drag?.active) return;
+
+        const canvas = document.getElementById('circuitCanvas');
+        const canDelete = Boolean(drag.gates?.length || drag.controlFlow?.length);
+        const deleteZone = Boolean(canDelete && this._isPlacedGateDeleteZone(clientX, clientY, drag.slotCache));
+
+        if (deleteZone && canDelete) {
+            if (drag.lastTargetKey !== '__delete__' || !drag.lastDeleteTarget) {
+                drag.lastTargetKey = '__delete__';
+                drag.lastDeleteTarget = true;
+                this._hidePhantomQubitLine();
+                this._setDragOverSlot(null);
+                this._clearShiftPreview();
+                canvas?.classList.add('is-placed-gate-delete-target');
+            }
+            return;
+        }
+        canvas?.classList.remove('is-placed-gate-delete-target');
+
+        if (!deleteZone && drag.gates?.length && this._canAddQubit() &&
+            this._isInAddQubitZone(clientX, clientY)) {
+            const col = this._getColumnFromClientX(clientX);
+            const slotKey = `phantom:${col}`;
+            if (drag.lastTargetKey !== slotKey || drag.lastDeleteTarget) {
+                drag.lastTargetKey = slotKey;
+                drag.lastDeleteTarget = false;
+                this._showPhantomQubitLine(col);
+                this._setDragOverSlot(null);
+                this._updateGroupShiftPreview(drag, clientX, clientY);
+            }
+            return;
+        }
+
+        const slot = this._resolveGroupDragSlot(drag, clientX, clientY);
+        const slotKey = slot ? `${slot.dataset.qubit}:${slot.dataset.column}` : '';
+
+        if (drag.lastTargetKey === slotKey && !drag.lastDeleteTarget) return;
+        drag.lastTargetKey = slotKey;
+        drag.lastDeleteTarget = false;
+
+        if (slot) {
+            this._hidePhantomQubitLine();
+            this._setDragOverSlot(slot);
+            this._updateGroupShiftPreview(drag, clientX, clientY);
+            return;
+        }
+
+        this._hidePhantomQubitLine();
+        this._setDragOverSlot(null);
+        this._clearShiftPreview();
+    }
+
+    _updateCircuitDragTarget(clientX, clientY, {
+        excludeGate = null,
+        excludeGates = null,
+        allowPhantomQubit = true,
+        fastSlot = false,
+        slotCache = null,
+        skipShiftPreview = false,
+        dragState = null
+    } = {}) {
+        const excludeSet = excludeGates || (excludeGate ? new Set([excludeGate]) : null);
+        const canvas = document.getElementById('circuitCanvas');
+        const groupDrag = dragState === this._groupGateDrag ? dragState : null;
+        const canDelete = Boolean(
+            excludeSet?.size ||
+            (groupDrag && (groupDrag.gates?.length || groupDrag.controlFlow?.length))
+        );
+        const deleteZone = Boolean(canDelete && this._isPlacedGateDeleteZone(clientX, clientY, slotCache));
+        const cacheDrag = dragState || (excludeGate && this._placedGateDrag?.active ? this._placedGateDrag : null);
+
+        if (cacheDrag?.active) {
+            let slotKey = '';
+            if (!deleteZone) {
+                const slot = fastSlot
+                    ? this._resolveGateSlotFast(clientX, clientY, slotCache)
+                    : this._resolveGateSlotFromPointer(clientX, clientY);
+                if (slot && !slot.closest('.qubit-line-phantom')) {
+                    slotKey = `${slot.dataset.qubit}:${slot.dataset.column}`;
+                }
+            } else {
+                slotKey = '__delete__';
+            }
+            if (cacheDrag.lastTargetKey === slotKey && cacheDrag.lastDeleteTarget === deleteZone) return;
+            cacheDrag.lastTargetKey = slotKey;
+            cacheDrag.lastDeleteTarget = deleteZone;
+        }
+
+        if (deleteZone && canDelete) {
+            this._hidePhantomQubitLine();
+            this._setDragOverSlot(null);
+            this._clearShiftPreview();
+            canvas?.classList.add('is-placed-gate-delete-target');
+            return;
+        }
+        canvas?.classList.remove('is-placed-gate-delete-target');
+
+        const slot = fastSlot
+            ? this._resolveGateSlotFast(clientX, clientY, slotCache)
+            : this._resolveGateSlotFromPointer(clientX, clientY);
+        const onPhantom = slot && slot.closest('.qubit-line-phantom');
+
+        if (slot && !onPhantom) {
+            this._hidePhantomQubitLine();
+            this._setDragOverSlot(slot);
+            if (!skipShiftPreview) {
+                this._updateShiftPreviewFromSlot(slot, excludeGate, excludeSet);
+            }
+            return;
+        }
+
+        if (allowPhantomQubit && this._canAddQubit() && this._isInAddQubitZone(clientX, clientY)) {
+            const col = this._getColumnFromClientX(clientX);
+            this._showPhantomQubitLine(col);
+            this._clearShiftPreview();
+        } else {
+            this._hidePhantomQubitLine();
+            this._setDragOverSlot(null);
+            this._clearShiftPreview();
+        }
+    }
+
+    _updatePaletteDragTarget(clientX, clientY) {
+        this._updateCircuitDragTarget(clientX, clientY, { allowPhantomQubit: true });
+    }
+
+    _completePaletteGateDrop(gate, clientX, clientY) {
+        if (!gate) return;
+
+        if (this._phantomQubitActive && this._phantomDropColumn !== null) {
+            const column = this._phantomDropColumn;
+            this._hidePhantomQubitLine();
+            this._clearDragOverHighlights();
+            if (this._canAddQubit()) {
+                this.addQubit();
+                const qubit = this.circuit.numQubits - 1;
+                const slot = document.querySelector(
+                    `.gate-slot[data-qubit="${qubit}"][data-column="${column}"]`
+                );
+                if (slot) this.placeGateOnSlot(slot, gate);
+            }
+            return;
+        }
+
+        this._hidePhantomQubitLine();
+        this._clearDragOverHighlights();
+        this._clearShiftPreview();
+
+        const slot = this._resolveGateSlotFromPointer(clientX, clientY);
+        if (slot && !slot.closest('.qubit-line-phantom')) {
+            this.placeGateOnSlot(slot, gate);
+        }
+    }
+
+    _cleanupPalettePointerDrag() {
+        const drag = this._palettePointerDrag;
+        if (!drag) return;
+
+        if (drag.ghost) drag.ghost.remove();
+        drag.item?.classList.remove('dragging');
+        document.body.classList.remove('is-palette-pointer-drag');
+
+        if (drag.active) {
+            this.draggedGate = null;
+            this._setCircuitDragActive(false);
+            this._hidePhantomQubitLine();
+            this._clearDragOverHighlights();
+            this._clearShiftPreview();
+        }
+
+        this._palettePointerDrag = null;
+    }
+
+    _initPalettePointerDrag() {
+        if (this._palettePointerDragBound) return;
+        this._palettePointerDragBound = true;
+
+        const gatePalette = document.querySelector('.gate-palette');
+        if (!gatePalette) return;
+
+        const DRAG_THRESHOLD_SQ = 64;
+
+        gatePalette.addEventListener('pointerdown', (e) => {
+            if (e.pointerType === 'mouse' && !this._prefersPointerPaletteDrag()) return;
+            const item = e.target.closest('.gate-item');
+            if (!item || e.button !== 0) return;
+            if (e.target.closest('.gate-info-icon')) return;
+
+            this._palettePointerDrag = {
+                item,
+                gate: item.dataset.gate,
+                pointerId: e.pointerId,
+                startX: e.clientX,
+                startY: e.clientY,
+                active: false,
+                ghost: null
+            };
+        });
+
+        document.addEventListener('pointermove', (e) => {
+            const drag = this._palettePointerDrag;
+            if (!drag || e.pointerId !== drag.pointerId) return;
+
+            const dx = e.clientX - drag.startX;
+            const dy = e.clientY - drag.startY;
+
+            if (!drag.active) {
+                if (dx * dx + dy * dy < DRAG_THRESHOLD_SQ) return;
+                drag.active = true;
+                e.preventDefault();
+                drag.item.setPointerCapture(e.pointerId);
+                this.draggedGate = drag.gate;
+                this._setCircuitDragActive(true);
+                drag.item.classList.add('dragging');
+                document.body.classList.add('is-palette-pointer-drag');
+                drag.ghost = buildPaletteDragGhost(drag.item);
+                if (drag.ghost) {
+                    drag.ghost.classList.add('touch-drag-ghost');
+                }
+            } else {
+                e.preventDefault();
+            }
+
+            this._positionPaletteDragGhost(drag.ghost, e.clientX, e.clientY);
+            this._updatePaletteDragTarget(e.clientX, e.clientY);
+        }, { passive: false });
+
+        const finishPointerDrag = (e) => {
+            const drag = this._palettePointerDrag;
+            if (!drag || e.pointerId !== drag.pointerId) return;
+
+            if (drag.active) {
+                e.preventDefault();
+                const gate = drag.gate;
+                this._completePaletteGateDrop(gate, e.clientX, e.clientY);
+                this._suppressPaletteClick = true;
+                requestAnimationFrame(() => {
+                    this._suppressPaletteClick = false;
+                });
+            }
+
+            try {
+                drag.item?.releasePointerCapture(e.pointerId);
+            } catch {
+                /* ignore */
+            }
+            this._cleanupPalettePointerDrag();
+        };
+
+        document.addEventListener('pointerup', finishPointerDrag);
+        document.addEventListener('pointercancel', finishPointerDrag);
+    }
+
+    _buildPlacedGateSlotCache() {
+        const canvas = document.getElementById('circuitCanvas');
+        if (!canvas) return null;
+
+        const wrapper = canvas.parentElement;
+        const canvasRect = (wrapper || canvas).getBoundingClientRect();
+        const lines = canvas.querySelectorAll('.qubit-line:not(.qubit-line-phantom)');
+        const lineRects = Array.from(lines, (line) => {
+            const rect = line.getBoundingClientRect();
+            return {
+                qubit: parseInt(line.dataset.qubit, 10),
+                top: rect.top,
+                bottom: rect.bottom
+            };
+        });
+
+        return {
+            canvasRect,
+            lineRects,
+            firstWireLeft: lines[0]?.querySelector('.qubit-wire')?.getBoundingClientRect().left ?? null
+        };
+    }
+
+    _isPlacedGateDeleteZone(clientX, clientY, slotCache = null) {
+        const canvas = document.getElementById('circuitCanvas');
+        if (!canvas) return true;
+
+        const rect = slotCache?.canvasRect ?? (canvas.parentElement || canvas).getBoundingClientRect();
+        const activeDrag = Boolean(this._placedGateDrag?.active || this._groupGateDrag?.active);
+
+        // While dragging, only delete when clearly outside the circuit canvas — not over
+        // qubit labels, row gaps, or control blocks where slot lookup can miss.
+        if (activeDrag) {
+            if (clientX >= rect.left - 28 && clientX <= rect.right + 36 &&
+                clientY >= rect.top - 28 && clientY <= rect.bottom + 48) {
+                return false;
+            }
+        }
+
+        const slot = this._resolveGateSlotFast(clientX, clientY, slotCache)
+            || this._resolveGateSlotFromPointer(clientX, clientY);
+        if (slot && !slot.closest('.qubit-line-phantom')) return false;
+
+        if (clientX < rect.left - 36 || clientX > rect.right + 36) return true;
+        if (clientY < rect.top - 36) return true;
+        if (clientY > rect.bottom + 48) return true;
+
+        const lineRects = slotCache?.lineRects;
+        if (lineRects?.length) {
+            const lastRect = lineRects[lineRects.length - 1];
+            if (clientY > lastRect.bottom + 20) return true;
+            if (!activeDrag && slotCache.firstWireLeft !== null && clientX < slotCache.firstWireLeft - 12) {
+                return true;
+            }
+        } else {
+            const lines = canvas.querySelectorAll('.qubit-line:not(.qubit-line-phantom)');
+            if (lines.length) {
+                const lastRect = lines[lines.length - 1].getBoundingClientRect();
+                if (clientY > lastRect.bottom + 20) return true;
+
+                if (!activeDrag) {
+                    const wire = lines[0].querySelector('.qubit-wire');
+                    if (wire && clientX < wire.getBoundingClientRect().left - 12) return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    _getGrabQubitFromEl(gateEl, fallbackQubit = 0) {
+        const q = parseInt(gateEl?.dataset?.qubit, 10);
+        return Number.isFinite(q) ? q : fallbackQubit;
+    }
+
+    /** Map pointer wire to gate anchor wire when drag started on a control/partner block. */
+    _anchorQubitFromPointerSlot(slotQubit, drag) {
+        if (!Number.isFinite(slotQubit)) {
+            return drag?.originQubit ?? drag?.gate?.qubit ?? 0;
+        }
+        if (drag?.grabQubit !== undefined && drag?.grabQubit !== null && Number.isFinite(drag.grabQubit)) {
+            const base = drag.originQubit ?? drag.gate?.qubit ?? 0;
+            return base + (slotQubit - drag.grabQubit);
+        }
+        if (drag?.grabWireOffset !== undefined && drag?.grabWireOffset !== null && Number.isFinite(drag.grabWireOffset)) {
+            return slotQubit - drag.grabWireOffset;
+        }
+        return slotQubit;
+    }
+
+    _resolvePointerSlot(clientX, clientY, slotCache = null) {
+        return this._resolveGateSlotFast(clientX, clientY, slotCache)
+            || this._resolveGateSlotFromPointer(clientX, clientY);
+    }
+
+    /** Group move deltas from pointer travel only — independent of grab point within the selection. */
+    _resolveGroupDragDeltas(drag, clientX, clientY, { allowPhantom = false } = {}) {
+        const zoom = this.zoomLevel || 1;
+        const dragDx = ((drag?.pendingX ?? clientX) - drag.startX) / zoom;
+        const dragDy = ((drag?.pendingY ?? clientY) - drag.startY) / zoom;
+        const deltaCol = Math.round(dragDx / this.columnSpacing);
+        let deltaQ = drag.gates?.length ? Math.round(dragDy / this._qubitRowHeight) : 0;
+        const baseQubit = drag.originQubit ?? drag.gate?.qubit ?? 0;
+
+        if (allowPhantom && drag.gates?.length && this._canAddQubit() &&
+            this._isInAddQubitZone(clientX, clientY)) {
+            deltaQ = this.circuit.numQubits - baseQubit;
+        }
+
+        const targetColumn = Math.max(0, drag.originColumn + deltaCol);
+        const targetQubit = baseQubit + deltaQ;
+
+        return {
+            targetColumn,
+            targetQubit,
+            deltaCol,
+            deltaQ
+        };
+    }
+
+    _groupDragMinQubit(drag, deltaQ) {
+        let minQ = Infinity;
+        for (const gate of drag?.gates || []) {
+            for (const q of this.circuit.getQubitsInvolvedInGate(gate)) {
+                minQ = Math.min(minQ, q + deltaQ);
+            }
+        }
+        return Number.isFinite(minQ) ? minQ : 0;
+    }
+
+    _groupRequiredQubitCount(drag, deltaQ) {
+        let maxQ = -1;
+        for (const gate of drag?.gates || []) {
+            for (const q of this.circuit.getQubitsInvolvedInGate(gate)) {
+                maxQ = Math.max(maxQ, q + deltaQ);
+            }
+        }
+        return maxQ + 1;
+    }
+
+    _maxAllowedQubits() {
+        const settings = this.getSettings();
+        return settings.maxQubits || 12;
+    }
+
+    /** Grow the circuit for a group drop without re-rendering mid-move. */
+    _ensureGroupDragQubits(required) {
+        const cap = this._maxAllowedQubits();
+        const target = Math.min(required, cap);
+        while (this.circuit.numQubits < target && this._canAddQubit()) {
+            this.circuit.addQubit();
+        }
+        return this.circuit.numQubits >= required;
+    }
+
+    _groupDragDeltasValid(drag, deltas) {
+        if (drag.gates?.length) {
+            if (this._groupDragMinQubit(drag, deltas.deltaQ) < 0) return false;
+            const required = this._groupRequiredQubitCount(drag, deltas.deltaQ);
+            if (required > this._maxAllowedQubits()) return false;
+        }
+
+        const qubitLimit = drag.gates?.length
+            ? Math.max(this.circuit.numQubits, this._groupRequiredQubitCount(drag, deltas.deltaQ))
+            : this.circuit.numQubits;
+
+        const sim = this.circuit.simulateGroupPlacement(
+            drag.gates,
+            deltas.deltaQ,
+            deltas.deltaCol,
+            drag.controlFlow,
+            drag.excludeGates,
+            qubitLimit
+        );
+        return sim.valid;
+    }
+
+    _resolvePlacedGateDropTarget(drag, clientX, clientY) {
+        const slot = this._resolvePointerSlot(clientX, clientY, drag.slotCache);
+        if (!slot || slot.closest('.qubit-line-phantom')) return null;
+        return {
+            anchorQubit: this._anchorQubitFromPointerSlot(parseInt(slot.dataset.qubit, 10), drag),
+            hoverColumn: parseInt(slot.dataset.column, 10)
+        };
+    }
+
+    _resolveCircuitGateFromEl(gateEl) {
+        if (!gateEl) return null;
+        const column = parseInt(gateEl.dataset.column, 10);
+        const gateType = gateEl.dataset.gateType;
+        if (!Number.isFinite(column) || !gateType) return null;
+
+        if (gateType === 'CONTROL') {
+            const targetQubit = parseInt(gateEl.dataset.targetQubit, 10);
+            const parentGateType = gateEl.dataset.parentGateType || null;
+            if (parentGateType) {
+                return this.circuit.gates.find(
+                    (g) => g.type === parentGateType && g.qubit === targetQubit && g.column === column
+                ) || null;
+            }
+            return this.circuit.gates.find((g) => g.qubit === targetQubit && g.column === column) || null;
+        }
+
+        if (gateType === 'SWAP_PARTNER') {
+            const partnerQubit = parseInt(gateEl.dataset.partnerQubit, 10);
+            return this.circuit.gates.find(
+                (g) => g.type === 'SWAP' && g.qubit === partnerQubit && g.column === column
+            ) || null;
+        }
+
+        if (gateType === 'CSWAP_PARTNER') {
+            const partnerQubit = parseInt(gateEl.dataset.partnerQubit, 10);
+            return this.circuit.gates.find(
+                (g) => g.type === 'CSWAP' && g.qubit === partnerQubit && g.column === column
+            ) || null;
+        }
+
+        if (gateType === 'JOINT_PARTNER') {
+            const anchorQubit = parseInt(gateEl.dataset.anchorQubit, 10);
+            const partnerType = gateEl.dataset.partnerGateType || '';
+            return this.circuit.gates.find(
+                (g) => g.type === partnerType && g.qubit === anchorQubit && g.column === column
+            ) || null;
+        }
+
+        const qubit = parseInt(gateEl.dataset.qubit, 10);
+        return this.circuit.gates.find(
+            (g) => g.qubit === qubit && g.column === column && g.type === gateType
+        ) || null;
+    }
+
+    _forEachGateVisual(gate, fn) {
+        if (!gate || typeof fn !== 'function') return;
+        const col = gate.column;
+        const mark = (el) => { if (el) fn(el); };
+
+        const anchorSlot = document.querySelector(
+            `.gate-slot[data-qubit="${gate.qubit}"][data-column="${col}"]`
+        );
+        if (anchorSlot) {
+            anchorSlot.querySelectorAll('.gate-on-wire:not(.control-block)').forEach((el) => mark(el));
+        }
+
+        this._shiftPreviewControlQubits(gate).forEach((cq) => {
+            mark(this._queryGateVisual(cq, col, '.control-block'));
+        });
+
+        if (gate.type === 'SWAP' && gate.target !== null && gate.target !== undefined) {
+            mark(this._queryGateVisual(gate.target, col, '[data-gate-type="SWAP_PARTNER"]'));
+        }
+
+        if (gate.type === 'CSWAP') {
+            const joint = gate.params && gate.params.jointQubits;
+            if (Array.isArray(joint) && joint.length === 3) {
+                mark(this._queryGateVisual(joint[1], col, '[data-gate-type="CSWAP_PARTNER"]'));
+            }
+        }
+
+        const joint = gate.params && gate.params.jointQubits;
+        if (Array.isArray(joint) && joint.length > 1 && gate.type !== 'CSWAP') {
+            joint.forEach((qq) => {
+                if (qq === gate.qubit) return;
+                mark(this._queryGateVisual(qq, col, '.joint-block'));
+            });
+        }
+
+        const busKey = this._controlConnectorBusKey(gate);
+        if (busKey) {
+            document.querySelectorAll('.circuit-control-bus').forEach((el) => {
+                if (el.dataset.busKey === busKey) mark(el);
+            });
+        }
+    }
+
+    _collectSelectionVisualElements() {
+        const seen = new Set();
+        const out = [];
+        const add = (el) => {
+            if (!el || seen.has(el)) return;
+            seen.add(el);
+            out.push(el);
+        };
+
+        for (const gate of this._circuitSelection) {
+            this._forEachGateVisual(gate, add);
+        }
+        for (const cf of this._circuitSelectionCF) {
+            add(document.querySelector(
+                `.control-flow-block[data-column="${cf.column}"][data-type="${cf.type}"]`
+            ));
+        }
+        return out;
+    }
+
+    _getSelectionOriginPlacement(gates = [], controlFlow = []) {
+        const gateList = gates.filter(Boolean);
+        const cfList = controlFlow.filter(Boolean);
+        const columns = [
+            ...gateList.map((g) => g.column),
+            ...cfList.map((cf) => cf.column)
+        ];
+        const originColumn = columns.length ? Math.min(...columns) : 0;
+
+        let originGate = null;
+        for (const gate of gateList) {
+            if (gate.column !== originColumn) continue;
+            if (!originGate || gate.qubit < originGate.qubit) originGate = gate;
+        }
+
+        return {
+            originColumn,
+            originQubit: originGate?.qubit ?? 0,
+            originGate
+        };
+    }
+
+    _ensureSelectionMirrorLayer(box) {
+        let layer = box.querySelector('.circuit-selection-mirror-layer');
+        if (!layer) {
+            layer = document.createElement('div');
+            layer.className = 'circuit-selection-mirror-layer';
+            layer.setAttribute('aria-hidden', 'true');
+            box.insertBefore(layer, box.firstChild);
+        }
+        return layer;
+    }
+
+    _syncSelectionBoxMirrors(clientBounds) {
+        const box = this._selectionLayerEl?.querySelector('.circuit-selection-box');
+        if (!box || !clientBounds) return;
+
+        const layer = this._ensureSelectionMirrorLayer(box);
+        layer.replaceChildren();
+
+        const zoom = this.zoomLevel || 1;
+        for (const el of this._collectSelectionVisualElements()) {
+            const r = el.getBoundingClientRect();
+            if (!r.width && !r.height) continue;
+
+            const mirror = el.cloneNode(true);
+            mirror.classList.add('circuit-selection-mirror');
+            mirror.classList.remove('circuit-selected', 'gate-drag-source-faded', 'shift-preview');
+            mirror.removeAttribute('id');
+
+            const relLeft = (r.left - clientBounds.left) / zoom;
+            const relTop = (r.top - clientBounds.top) / zoom;
+            const w = r.width / zoom;
+            const h = r.height / zoom;
+
+            mirror.style.position = 'absolute';
+            mirror.style.left = `${relLeft}px`;
+            mirror.style.top = `${relTop}px`;
+            mirror.style.width = `${w}px`;
+            mirror.style.height = `${h}px`;
+            mirror.style.margin = '0';
+            mirror.style.pointerEvents = 'none';
+            mirror.style.transform = 'none';
+            layer.appendChild(mirror);
+        }
+    }
+
+    _clearSelectionBoxMirrors() {
+        this._selectionLayerEl?.querySelector('.circuit-selection-mirror-layer')?.replaceChildren();
+    }
+
+    /** Drop target from selection drag delta (left edge), not pointer slot under cursor. */
+    _resolveGroupDropTarget(drag, clientX, clientY) {
+        const deltas = this._resolveGroupDragDeltas(drag, clientX, clientY);
+        return { column: deltas.targetColumn, qubit: deltas.targetQubit };
+    }
+
+    _resolveGroupDragSlot(drag, clientX, clientY) {
+        const target = this._resolveGroupDropTarget(drag, clientX, clientY);
+        const canvas = document.getElementById('circuitCanvas');
+        if (!canvas) return null;
+        return canvas.querySelector(
+            `.gate-slot[data-qubit="${target.qubit}"][data-column="${target.column}"]`
+        );
+    }
+
+    _getGroupPlacementSimulation(drag, clientX, clientY, excludeGates = null) {
+        if (!drag?.active) return { valid: true, needsShift: false, gateMoves: [], cfMoves: [] };
+        const deltas = this._resolveGroupDragDeltas(drag, clientX, clientY, { allowPhantom: true });
+        const qubitLimit = drag.gates?.length
+            ? Math.max(this.circuit.numQubits, this._groupRequiredQubitCount(drag, deltas.deltaQ))
+            : this.circuit.numQubits;
+        return this.circuit.simulateGroupPlacement(
+            drag.gates,
+            deltas.deltaQ,
+            deltas.deltaCol,
+            drag.controlFlow,
+            excludeGates,
+            qubitLimit
+        );
+    }
+
+    _updateGroupShiftPreview(drag, clientX, clientY) {
+        const simulation = this._getGroupPlacementSimulation(drag, clientX, clientY, drag.excludeGates);
+
+        if (!simulation.valid || !simulation.needsShift) {
+            this._clearShiftPreview();
+            return;
+        }
+
+        const previewKey = this._groupMovesPreviewKey(simulation);
+        if (this._shiftPreviewKey === previewKey) return;
+
+        this._clearShiftPreview();
+        this._shiftPreviewKey = previewKey;
+        this._applyGroupMovesPreview(simulation);
+    }
+
+    /** Stable key describing every obstacle move so identical previews skip a rebuild. */
+    _groupMovesPreviewKey(simulation) {
+        const g = (simulation.gateMoves || [])
+            .map((m) => `${m.gate.column}:${m.gate.qubit}:${m.gate.type}>${m.toCol}`)
+            .sort()
+            .join(',');
+        const c = (simulation.cfMoves || [])
+            .map((m) => `${m.cf.column}:${m.cf.type}>${m.toCol}`)
+            .sort()
+            .join(',');
+        return `gm[${g}]cm[${c}]`;
+    }
+
+    /** Highlight each obstacle by exactly the distance the cascade will move it. */
+    _applyGroupMovesPreview(simulation) {
+        for (const move of simulation.gateMoves || []) {
+            const dx = `${this.columnSpacing * (move.toCol - move.fromCol)}px`;
+            this._markShiftPreviewForGate(move.gate, (el) => {
+                if (!el || el.classList.contains('gate-drag-source-faded')) return;
+                el.classList.add('shift-preview');
+                el.style.setProperty('--shift-preview-dx', dx);
+                this._shiftPreviewEls.add(el);
+            });
+        }
+
+        for (const move of simulation.cfMoves || []) {
+            const dx = `${this.columnSpacing * (move.toCol - move.fromCol)}px`;
+            const el = document.querySelector(
+                `.control-flow-block[data-column="${move.cf.column}"][data-type="${move.cf.type}"]`
+            );
+            if (!el || el.classList.contains('gate-drag-source-faded')) continue;
+            el.classList.add('shift-preview');
+            el.style.setProperty('--shift-preview-dx', dx);
+            this._shiftPreviewEls.add(el);
+        }
+    }
+
+    _setPlacedGateVisualFaded(gate, faded) {
+        this._forEachGateVisual(gate, (el) => {
+            el.classList.toggle('gate-drag-source-faded', faded);
+        });
+    }
+
+    _countGateVisuals(gate) {
+        let count = 0;
+        this._forEachGateVisual(gate, () => { count++; });
+        return count;
+    }
+
+    _gateUsesCompositeDragGhost(gate) {
+        return this._countGateVisuals(gate) > 1;
+    }
+
+    _cloneDragGhostVisual(el) {
+        const piece = document.createElement('div');
+        piece.className = 'gate-composite-drag-ghost-piece';
+
+        if (el.classList.contains('circuit-control-bus')) {
+            const bus = document.createElement('div');
+            bus.className = [...el.classList]
+                .filter((c) => !DRAG_GHOST_STRIP_CLASSES.has(c))
+                .join(' ');
+            const cs = getComputedStyle(el);
+            bus.style.cssText =
+                'position:absolute;inset:0;width:100%;height:100%;margin:0;transform:none;pointer-events:none;' +
+                `background-color:${el.style.backgroundColor || cs.backgroundColor};opacity:0.95;`;
+            piece.appendChild(bus);
+            return piece;
+        }
+
+        const clone = el.cloneNode(true);
+        for (const cls of DRAG_GHOST_STRIP_CLASSES) clone.classList.remove(cls);
+        clone.querySelectorAll('.gate-delete-btn').forEach((btn) => btn.remove());
+        clone.style.cssText =
+            'position:absolute;inset:0;width:100%;height:100%;margin:0;transform:none;pointer-events:none;';
+        clone.style.left = '';
+        clone.style.top = '';
+        clone.style.right = '';
+        clone.style.bottom = '';
+        piece.appendChild(clone);
+        return piece;
+    }
+
+    _buildCompositeGateDragGhost(gate, clientX, clientY) {
+        const visuals = [];
+        this._forEachGateVisual(gate, (el) => visuals.push(el));
+        if (visuals.length < 2) return null;
+
+        let left = Infinity;
+        let top = Infinity;
+        let right = -Infinity;
+        let bottom = -Infinity;
+
+        for (const el of visuals) {
+            const r = el.getBoundingClientRect();
+            if (!r.width && !r.height) continue;
+            left = Math.min(left, r.left);
+            top = Math.min(top, r.top);
+            right = Math.max(right, r.right);
+            bottom = Math.max(bottom, r.bottom);
+        }
+
+        if (!Number.isFinite(left)) return null;
+
+        const width = Math.max(right - left, 1);
+        const height = Math.max(bottom - top, 1);
+
+        const ghost = document.createElement('div');
+        ghost.className = 'gate-composite-drag-ghost placed-gate-pointer-ghost';
+        ghost.style.width = `${width}px`;
+        ghost.style.height = `${height}px`;
+
+        for (const el of visuals) {
+            const r = el.getBoundingClientRect();
+            if (!r.width && !r.height) continue;
+
+            const piece = this._cloneDragGhostVisual(el);
+            piece.style.left = `${r.left - left}px`;
+            piece.style.top = `${r.top - top}px`;
+            piece.style.width = `${r.width}px`;
+            piece.style.height = `${r.height}px`;
+            ghost.appendChild(piece);
+        }
+
+        document.body.appendChild(ghost);
+        return {
+            ghost,
+            offsetX: clientX - left,
+            offsetY: clientY - top
+        };
+    }
+
+    _buildPlacedGatePointerGhost(gate, gateEl, clientX, clientY) {
+        if (gate && this._gateUsesCompositeDragGhost(gate)) {
+            const composite = this._buildCompositeGateDragGhost(gate, clientX, clientY);
+            if (composite) return composite;
+        }
+
+        const wrap = buildPlacedGateDragGhost(gateEl);
+        if (!wrap) return null;
+        const ghost = wrap.querySelector('.placed-gate-drag-ghost');
+        if (!ghost) {
+            wrap.remove();
+            return null;
+        }
+        wrap.replaceWith(ghost);
+        ghost.classList.add('touch-drag-ghost', 'placed-gate-pointer-ghost');
+        ghost.style.position = 'fixed';
+        ghost.style.left = '0';
+        ghost.style.top = '0';
+
+        const rect = gateEl.getBoundingClientRect();
+        return {
+            ghost,
+            offsetX: clientX - rect.left,
+            offsetY: clientY - rect.top
+        };
+    }
+
+    _positionPlacedGateGhost(ghost, clientX, clientY, offsetX = 0, offsetY = 0) {
+        this._positionSoloDragGhost(ghost, clientX, clientY, offsetX, offsetY);
+    }
+
+    _startPlacedGatePointerLoop() {
+        const drag = this._placedGateDrag;
+        if (!drag || drag.rafId) return;
+
+        const tick = () => {
+            const active = this._placedGateDrag;
+            if (!active?.active) {
+                if (active) active.rafId = 0;
+                return;
+            }
+            this._positionPlacedGateGhost(
+                active.ghost,
+                active.pendingX,
+                active.pendingY,
+                active.ghostOffsetX,
+                active.ghostOffsetY
+            );
+            this._updatePlacedGateDragTarget(active.pendingX, active.pendingY);
+            active.rafId = requestAnimationFrame(tick);
+        };
+        drag.rafId = requestAnimationFrame(tick);
+    }
+
+    _cleanupPlacedGateDrag() {
+        const drag = this._placedGateDrag;
+        if (!drag) return;
+
+        if (drag.rafId) {
+            cancelAnimationFrame(drag.rafId);
+            drag.rafId = 0;
+        }
+
+        if (drag.gate) this._setPlacedGateVisualFaded(drag.gate, false);
+        drag.ghost?.remove();
+        this._setSelectionDragPassthrough(false);
+        this._setCircuitDragSelectShield(false);
+        document.body.classList.remove('is-placed-gate-drag');
+        document.getElementById('circuitCanvas')?.classList.remove('is-placed-gate-delete-target');
+
+        if (drag.active) {
+            this._setCircuitDragActive(false);
+            this._hidePhantomQubitLine();
+            this._clearDragOverHighlights();
+            this._clearShiftPreview();
+        }
+
+        this._placedGateDrag = null;
+    }
+
+    _completePlacedGateDrop(clientX, clientY) {
+        const drag = this._placedGateDrag;
+        if (!drag?.active || !drag.gate) return false;
+
+        this._clearDragOverHighlights();
+        this._clearShiftPreview();
+        document.getElementById('circuitCanvas')?.classList.remove('is-placed-gate-delete-target');
+
+        const dropX = drag.pendingX ?? clientX;
+        const dropY = drag.pendingY ?? clientY;
+
+        // Dropped on a freshly spawned qubit line below the circuit.
+        if (this._phantomQubitActive && this._phantomDropColumn !== null) {
+            const column = this._phantomDropColumn;
+            this._hidePhantomQubitLine();
+            if (this._canAddQubit()) {
+                const newRow = this.circuit.numQubits;
+                const deltaQ = newRow - drag.gate.qubit;
+                const required = this._groupRequiredQubitCount({ gates: [drag.gate] }, deltaQ);
+                if (this._ensureGroupDragQubits(required)) {
+                    const moved = this.circuit.moveGate(drag.gate, newRow, column);
+                    if (moved) {
+                        this.circuit.state = null;
+                        document.getElementById('qubitCount').value = formatQubitCountLabel(this.circuit.numQubits);
+                        this._refreshCircuitAfterGateEdit();
+                    }
+                    return moved;
+                }
+            }
+            return false;
+        }
+
+        this._hidePhantomQubitLine();
+
+        const slotCache = drag.slotCache;
+        const dropTarget = this._resolvePlacedGateDropTarget(drag, dropX, dropY);
+
+        if (dropTarget) {
+            const moved = this.circuit.moveGate(
+                drag.gate,
+                dropTarget.anchorQubit,
+                dropTarget.hoverColumn
+            );
+
+            if (moved) {
+                this.circuit.state = null;
+                this._refreshCircuitAfterGateEdit();
+            }
+            return moved;
+        }
+
+        if (this._isPlacedGateDeleteZone(dropX, dropY, slotCache)) {
+            const gateRef = drag.gate;
+            this.circuit.removeGateByRef(gateRef);
+            this.circuit.state = null;
+            this._refreshCircuitAfterGateEdit();
+            return true;
+        }
+
+        return false;
+    }
+
+    _initPlacedGateDrag() {
+        if (this._placedGateDragBound) return;
+        this._placedGateDragBound = true;
+
+        const canvas = document.getElementById('circuitCanvas');
+        if (!canvas) return;
+
+        const DRAG_THRESHOLD_SQ = 64;
+
+        canvas.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0) return;
+            if (this._palettePointerDrag?.active) return;
+            if (e.target.closest('.gate-delete-btn')) return;
+
+            const cfEl = e.target.closest('.control-flow-block');
+            if (cfEl && canvas.contains(cfEl)) {
+                const cf = this._resolveControlFlowFromEl(cfEl);
+                if (cf) {
+                    const fromMultiSelect = this._circuitSelectionCF.has(cf) && this._circuitSelectionCount() > 1;
+                    if (!fromMultiSelect) {
+                        this._clearCircuitSelection();
+                    }
+                    this._beginCircuitGroupDrag(e, { controlFlow: cf, fromSelection: fromMultiSelect });
+                    return;
+                }
+            }
+
+            const gateEl = e.target.closest('.gate-on-wire');
+            if (!gateEl || !canvas.contains(gateEl)) return;
+
+            const gate = this._resolveCircuitGateFromEl(gateEl);
+            if (!gate) return;
+
+            if (this._circuitSelection.has(gate) && this._circuitSelectionCount() > 1) {
+                this._beginCircuitGroupDrag(e, { gate, fromSelection: true, grabEl: gateEl });
+                return;
+            }
+
+            if (!this._circuitSelection.has(gate)) {
+                this._clearCircuitSelection();
+            }
+
+            const grabQubit = this._getGrabQubitFromEl(gateEl, gate.qubit);
+
+            this._placedGateDrag = {
+                gateEl,
+                gate,
+                grabQubit,
+                grabWireOffset: grabQubit - gate.qubit,
+                pointerId: e.pointerId,
+                startX: e.clientX,
+                startY: e.clientY,
+                active: false,
+                moved: false,
+                ghost: null,
+                rafId: 0,
+                pendingX: e.clientX,
+                pendingY: e.clientY,
+                slotCache: null,
+                lastTargetKey: '',
+                lastDeleteTarget: false
+            };
+        }, true);
+
+        document.addEventListener('pointermove', (e) => {
+            const drag = this._placedGateDrag;
+            if (!drag || e.pointerId !== drag.pointerId) return;
+            if (this._groupGateDrag?.active) return;
+
+            const dx = e.clientX - drag.startX;
+            const dy = e.clientY - drag.startY;
+
+            if (!drag.active) {
+                if (dx * dx + dy * dy < DRAG_THRESHOLD_SQ) return;
+                drag.active = true;
+                drag.moved = true;
+                e.preventDefault();
+                try {
+                    drag.gateEl.setPointerCapture(e.pointerId);
+                } catch {
+                    /* ignore */
+                }
+                document.body.classList.add('is-placed-gate-drag');
+                this._setCircuitDragSelectShield(true);
+                this._setSelectionDragPassthrough(true);
+                this._setCircuitDragActive(true);
+                this._clearShiftPreview();
+                this._setPlacedGateVisualFaded(drag.gate, true);
+                drag.slotCache = this._buildPlacedGateSlotCache();
+                const ghostPack = this._buildPlacedGatePointerGhost(
+                    drag.gate,
+                    drag.gateEl,
+                    e.clientX,
+                    e.clientY
+                );
+                drag.ghost = ghostPack?.ghost || null;
+                drag.ghostOffsetX = ghostPack?.offsetX ?? (PALETTE_DRAG_GHOST_SIZE / 2);
+                drag.ghostOffsetY = ghostPack?.offsetY ?? (PALETTE_DRAG_GHOST_SIZE / 2);
+                if (drag.ghost) {
+                    this._positionPlacedGateGhost(
+                        drag.ghost,
+                        e.clientX,
+                        e.clientY,
+                        drag.ghostOffsetX,
+                        drag.ghostOffsetY
+                    );
+                }
+                drag.pendingX = e.clientX;
+                drag.pendingY = e.clientY;
+                this._startPlacedGatePointerLoop();
+            } else {
+                e.preventDefault();
+            }
+
+            drag.pendingX = e.clientX;
+            drag.pendingY = e.clientY;
+        }, { passive: false });
+
+        const finishPlacedDrag = (e) => {
+            const drag = this._placedGateDrag;
+            if (!drag || e.pointerId !== drag.pointerId) return;
+            if (this._groupGateDrag?.active) return;
+
+            if (drag.active) {
+                e.preventDefault();
+                this._completePlacedGateDrop(e.clientX, e.clientY);
+                this._suppressPlacedGateClick = true;
+                requestAnimationFrame(() => {
+                    this._suppressPlacedGateClick = false;
+                });
+            } else {
+                this._placedGateDrag = null;
+                return;
+            }
+
+            try {
+                drag.gateEl?.releasePointerCapture(e.pointerId);
+            } catch {
+                /* ignore */
+            }
+            this._cleanupPlacedGateDrag();
+        };
+
+        document.addEventListener('pointerup', finishPlacedDrag);
+        document.addEventListener('pointercancel', finishPlacedDrag);
+    }
+
+    _clientRectsIntersect(a, b) {
+        if (!a || !b) return false;
+        const aRight = a.right ?? a.left + a.width;
+        const aBottom = a.bottom ?? a.top + a.height;
+        const bRight = b.right ?? b.left + b.width;
+        const bBottom = b.bottom ?? b.top + b.height;
+        return a.left < bRight && aRight > b.left && a.top < bBottom && aBottom > b.top;
+    }
+
+    _getGatesClientBounds(gates) {
+        let left = Infinity;
+        let top = Infinity;
+        let right = -Infinity;
+        let bottom = -Infinity;
+        let any = false;
+
+        for (const gate of gates) {
+            this._forEachGateVisual(gate, (el) => {
+                const r = el.getBoundingClientRect();
+                if (!r.width && !r.height) return;
+                any = true;
+                left = Math.min(left, r.left);
+                top = Math.min(top, r.top);
+                right = Math.max(right, r.right);
+                bottom = Math.max(bottom, r.bottom);
+            });
+        }
+
+        if (!any) return null;
+        return { left, top, right, bottom, width: right - left, height: bottom - top };
+    }
+
+    _clientRectToCanvasLocal(clientRect, padding = 0) {
+        const canvas = document.getElementById('circuitCanvas');
+        if (!canvas || !clientRect) return null;
+        const cr = canvas.getBoundingClientRect();
+        const zoom = this.zoomLevel || 1;
+        const left = (clientRect.left - cr.left) / zoom - padding;
+        const top = (clientRect.top - cr.top) / zoom - padding;
+        const width = clientRect.width / zoom + padding * 2;
+        const height = clientRect.height / zoom + padding * 2;
+        return { left, top, width, height };
+    }
+
+    _ensureCircuitSelectionLayer() {
+        const canvas = document.getElementById('circuitCanvas');
+        if (!canvas) return null;
+
+        if (!this._selectionLayerEl) {
+            const layer = document.createElement('div');
+            layer.className = 'circuit-selection-layer';
+            layer.hidden = true;
+
+            const box = document.createElement('div');
+            box.className = 'circuit-selection-box';
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.className = 'circuit-selection-delete';
+            deleteBtn.title = 'Delete selected gates';
+            deleteBtn.setAttribute('aria-label', 'Delete selected gates');
+            deleteBtn.textContent = '×';
+            deleteBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this._deleteCircuitSelection();
+            });
+            deleteBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+            box.appendChild(deleteBtn);
+            box.addEventListener('pointerdown', (e) => {
+                if (e.button !== 0) return;
+                if (e.target.closest('.circuit-selection-delete')) return;
+                if (!this._circuitSelectionCount()) return;
+                const gates = [...this._circuitSelection];
+                const cfs = [...this._circuitSelectionCF];
+                const origin = this._getSelectionOriginPlacement(gates, cfs);
+                this._beginCircuitGroupDrag(e, {
+                    gate: origin.originGate || gates[0] || null,
+                    controlFlow: cfs[0] || null,
+                    fromSelection: true
+                });
+            });
+
+            layer.appendChild(box);
+            canvas.appendChild(layer);
+            this._selectionLayerEl = layer;
+        }
+
+        return this._selectionLayerEl;
+    }
+
+    _ensureMarqueeBox() {
+        const wrapper = document.querySelector('.circuit-canvas-wrapper');
+        if (!wrapper) return null;
+
+        if (!this._marqueeBoxEl) {
+            const box = document.createElement('div');
+            box.className = 'circuit-marquee-box';
+            box.hidden = true;
+            wrapper.appendChild(box);
+            this._marqueeBoxEl = box;
+        }
+
+        return this._marqueeBoxEl;
+    }
+
+    _circuitSelectionCount() {
+        return this._circuitSelection.size + this._circuitSelectionCF.size;
+    }
+
+    _resolveControlFlowFromEl(cfEl) {
+        if (!cfEl) return null;
+        const column = parseInt(cfEl.dataset.column, 10);
+        const type = cfEl.dataset.type;
+        if (!Number.isFinite(column) || !type) return null;
+        return this.circuit.controlFlow.find((cf) => cf.column === column && cf.type === type) || null;
+    }
+
+    _clearCircuitSelection() {
+        this._circuitSelection.clear();
+        this._circuitSelectionCF.clear();
+        document.querySelectorAll('.gate-on-wire.circuit-selected, .control-flow-block.circuit-selected').forEach((el) => {
+            el.classList.remove('circuit-selected');
+        });
+        this._clearSelectionBoxMirrors();
+        if (this._selectionLayerEl) {
+            this._selectionLayerEl.hidden = true;
+            this._selectionLayerEl.classList.remove('is-drag-passthrough');
+        }
+    }
+
+    _setCircuitSelection(gates = [], controlFlow = []) {
+        this._clearCircuitSelection();
+        for (const gate of gates) {
+            if (gate) this._circuitSelection.add(gate);
+        }
+        for (const cf of controlFlow) {
+            if (cf) this._circuitSelectionCF.add(cf);
+        }
+        this._applyCircuitSelectionVisuals();
+    }
+
+    _shouldShowSelectionChrome() {
+        return this._circuitSelectionCount() > 1;
+    }
+
+    _applyCircuitSelectionVisuals() {
+        document.querySelectorAll('.gate-on-wire.circuit-selected, .control-flow-block.circuit-selected').forEach((el) => {
+            el.classList.remove('circuit-selected');
+        });
+
+        if (!this._shouldShowSelectionChrome()) {
+            this._updateCircuitSelectionOverlay();
+            return;
+        }
+
+        for (const gate of this._circuitSelection) {
+            if (!this.circuit.gates.includes(gate)) {
+                this._circuitSelection.delete(gate);
+                continue;
+            }
+            this._forEachGateVisual(gate, (el) => el.classList.add('circuit-selected'));
+        }
+
+        for (const cf of this._circuitSelectionCF) {
+            if (!this.circuit.controlFlow.includes(cf)) {
+                this._circuitSelectionCF.delete(cf);
+                continue;
+            }
+            const block = document.querySelector(
+                `.control-flow-block[data-column="${cf.column}"][data-type="${cf.type}"]`
+            );
+            if (block) block.classList.add('circuit-selected');
+        }
+
+        this._updateCircuitSelectionOverlay();
+    }
+
+    _getSelectionClientBounds() {
+        let left = Infinity;
+        let top = Infinity;
+        let right = -Infinity;
+        let bottom = -Infinity;
+        let any = false;
+
+        for (const el of this._collectSelectionVisualElements()) {
+            const r = el.getBoundingClientRect();
+            if (!r.width && !r.height) continue;
+            any = true;
+            left = Math.min(left, r.left);
+            top = Math.min(top, r.top);
+            right = Math.max(right, r.right);
+            bottom = Math.max(bottom, r.bottom);
+        }
+
+        if (!any) return null;
+        return { left, top, right, bottom, width: right - left, height: bottom - top };
+    }
+
+    _updateCircuitSelectionOverlay() {
+        const layer = this._ensureCircuitSelectionLayer();
+        if (!layer) return;
+
+        if (!this._shouldShowSelectionChrome() && !this._groupGateDrag?.active) {
+            layer.hidden = true;
+            return;
+        }
+
+        if (this._groupGateDrag?.active && !this._groupGateDrag.useSelectionBox) {
+            layer.hidden = true;
+            return;
+        }
+
+        if (!this._shouldShowSelectionChrome()) {
+            layer.hidden = true;
+            return;
+        }
+
+        const groupDrag = this._groupGateDrag;
+        const pad = 8;
+        let bounds;
+        let local;
+
+        if (groupDrag?.active && groupDrag.frozenLocal && groupDrag.frozenClientBounds) {
+            bounds = groupDrag.frozenClientBounds;
+            local = groupDrag.frozenLocal;
+        } else {
+            bounds = this._getSelectionClientBounds();
+            if (!bounds) {
+                layer.hidden = true;
+                return;
+            }
+            local = this._clientRectToCanvasLocal(bounds, pad);
+            if (!local) {
+                layer.hidden = true;
+                return;
+            }
+        }
+
+        const box = layer.querySelector('.circuit-selection-box');
+        layer.hidden = false;
+        box.style.left = `${local.left}px`;
+        box.style.top = `${local.top}px`;
+        box.style.width = `${Math.max(local.width, 24)}px`;
+        box.style.height = `${Math.max(local.height, 24)}px`;
+
+        if (groupDrag?.active && groupDrag.useSelectionBox) {
+            const zoom = this.zoomLevel || 1;
+            const dragDx = (groupDrag.pendingX - groupDrag.startX) / zoom;
+            const dragDy = (groupDrag.pendingY - groupDrag.startY) / zoom;
+            box.style.transform = `translate3d(${dragDx}px, ${dragDy}px, 0)`;
+        } else {
+            this._clearSelectionBoxMirrors();
+            box.style.transform = '';
+        }
+        box.classList.toggle('is-dragging', Boolean(groupDrag?.active && groupDrag.useSelectionBox));
+    }
+
+    _collectSelectionInClientRect(selRect) {
+        const gates = new Set();
+        const controlFlow = new Set();
+        const canvas = document.getElementById('circuitCanvas');
+        if (!canvas || !selRect) return { gates, controlFlow };
+
+        canvas.querySelectorAll('.gate-on-wire').forEach((el) => {
+            const r = el.getBoundingClientRect();
+            if (!this._clientRectsIntersect(selRect, r)) return;
+            const gate = this._resolveCircuitGateFromEl(el);
+            if (gate) gates.add(gate);
+        });
+
+        canvas.querySelectorAll('.circuit-control-bus').forEach((el) => {
+            const r = el.getBoundingClientRect();
+            if (!this._clientRectsIntersect(selRect, r)) return;
+            const busKey = el.dataset.busKey;
+            if (!busKey) return;
+            for (const gate of this.circuit.gates) {
+                if (this._controlConnectorBusKey(gate) === busKey) {
+                    gates.add(gate);
+                    break;
+                }
+            }
+        });
+
+        canvas.querySelectorAll('.control-flow-block').forEach((el) => {
+            const r = el.getBoundingClientRect();
+            if (!this._clientRectsIntersect(selRect, r)) return;
+            const cf = this._resolveControlFlowFromEl(el);
+            if (cf) controlFlow.add(cf);
+        });
+
+        return { gates, controlFlow };
+    }
+
+    _deleteCircuitSelection() {
+        const gates = [...this._circuitSelection];
+        const cfs = [...this._circuitSelectionCF];
+        if (!gates.length && !cfs.length) return;
+
+        this.circuit.removeGatesByRef(gates);
+        for (const cf of cfs) {
+            this.circuit.removeControlFlow(cf.column);
+        }
+        this.circuit.state = null;
+        this._clearCircuitSelection();
+        this._refreshCircuitAfterGateEdit();
+    }
+
+    _setSelectionDragPassthrough(active) {
+        const layer = this._selectionLayerEl || this._ensureCircuitSelectionLayer();
+        if (!layer) return;
+        layer.classList.toggle('is-drag-passthrough', Boolean(active));
+    }
+
+    _setCircuitDragSelectShield(active) {
+        document.body.classList.toggle('is-circuit-drag-select', Boolean(active));
+    }
+
+    _setGroupSelectionVisualFaded(faded) {
+        const drag = this._groupGateDrag;
+        const gates = drag?.gates || [...this._circuitSelection];
+        const cfs = drag?.controlFlow || [...this._circuitSelectionCF];
+
+        for (const gate of gates) {
+            this._forEachGateVisual(gate, (el) => {
+                el.classList.toggle('gate-drag-source-faded', faded);
+            });
+        }
+        for (const cf of cfs) {
+            const block = document.querySelector(
+                `.control-flow-block[data-column="${cf.column}"][data-type="${cf.type}"]`
+            );
+            if (block) block.classList.toggle('gate-drag-source-faded', faded);
+        }
+    }
+
+    _captureCfDragGhostOffset(blockEl, clientX, clientY) {
+        if (!blockEl) return { x: 0, y: 0 };
+        const rect = blockEl.getBoundingClientRect();
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
+        };
+    }
+
+    _buildControlFlowDragGhost(blockEl) {
+        if (!blockEl) return null;
+
+        const rect = blockEl.getBoundingClientRect();
+        if (!rect.width || !rect.height) return null;
+
+        const ghost = document.createElement('div');
+        const typeClass = blockEl.classList.contains('control-flow-end')
+            ? 'control-flow-end'
+            : 'control-flow-repeat';
+        ghost.className = `cf-drag-ghost ${typeClass}`;
+        ghost.dataset.type = blockEl.dataset.type || '';
+        ghost.style.cssText =
+            'position:fixed;left:0;top:0;margin:0;padding:0;pointer-events:none;z-index:10001;' +
+            `width:${rect.width}px;height:${rect.height}px;box-sizing:border-box;will-change:transform;`;
+
+        const symbolSrc = blockEl.querySelector('.control-flow-symbol');
+        if (symbolSrc) {
+            const symbol = document.createElement('div');
+            symbol.className = 'control-flow-symbol';
+            symbol.textContent = symbolSrc.textContent;
+            ghost.appendChild(symbol);
+        }
+
+        const labelSrc = blockEl.querySelector('.control-flow-label');
+        if (labelSrc) {
+            const label = document.createElement('div');
+            label.className = 'control-flow-label';
+            label.textContent = labelSrc.textContent;
+            ghost.appendChild(label);
+        }
+
+        const endLabelSrc = blockEl.querySelector('.control-flow-end-label');
+        if (endLabelSrc) {
+            const endLabel = document.createElement('div');
+            endLabel.className = 'control-flow-end-label';
+            endLabel.textContent = endLabelSrc.textContent;
+            ghost.appendChild(endLabel);
+        }
+
+        document.body.appendChild(ghost);
+        return ghost;
+    }
+
+    _positionSoloDragGhost(ghost, clientX, clientY, offsetX = 0, offsetY = 0) {
+        if (!ghost) return;
+        ghost.style.transform = `translate3d(${clientX - offsetX}px, ${clientY - offsetY}px, 0)`;
+    }
+
+    _startGroupGateDragLoop() {
+        const drag = this._groupGateDrag;
+        if (!drag || drag.rafId) return;
+
+        const tick = () => {
+            const active = this._groupGateDrag;
+            if (!active?.active) {
+                if (active) active.rafId = 0;
+                return;
+            }
+            if (active.soloGhost) {
+                this._positionSoloDragGhost(
+                    active.soloGhost,
+                    active.pendingX,
+                    active.pendingY,
+                    active.ghostOffsetX,
+                    active.ghostOffsetY
+                );
+            }
+            this._updateGroupGateDragTarget(active.pendingX, active.pendingY);
+            if (active.useSelectionBox) {
+                this._updateCircuitSelectionOverlay();
+            }
+            active.rafId = requestAnimationFrame(tick);
+        };
+        drag.rafId = requestAnimationFrame(tick);
+    }
+
+    _beginCircuitGroupDrag(e, { gate = null, controlFlow = null, fromSelection = false, grabEl = null } = {}) {
+        if (!gate && !controlFlow) return;
+
+        let gates;
+        let cfs;
+
+        if (fromSelection) {
+            gates = [...this._circuitSelection];
+            cfs = [...this._circuitSelectionCF];
+        } else {
+            this._clearCircuitSelection();
+            gates = gate ? [gate] : [];
+            cfs = controlFlow ? [controlFlow] : [];
+        }
+
+        const anchorGate = gate || gates[0] || null;
+        const anchorCF = controlFlow || cfs[0] || null;
+        const origin = this._getSelectionOriginPlacement(gates, cfs);
+        const useSelectionBox = (gates.length + cfs.length) > 1;
+        const grabQubit = grabEl
+            ? this._getGrabQubitFromEl(grabEl, origin.originQubit)
+            : origin.originQubit;
+
+        this._placedGateDrag = null;
+
+        this._groupGateDrag = {
+            gates,
+            controlFlow: cfs,
+            excludeGates: new Set(gates),
+            anchorGate: origin.originGate || anchorGate,
+            anchorCF,
+            originQubit: origin.originQubit,
+            originColumn: origin.originColumn,
+            grabQubit,
+            useSelectionBox,
+            soloGhost: null,
+            ghostOffsetX: 0,
+            ghostOffsetY: 0,
+            pointerId: e.pointerId,
+            startX: e.clientX,
+            startY: e.clientY,
+            active: false,
+            moved: false,
+            mirrorsBuilt: false,
+            frozenClientBounds: null,
+            frozenLocal: null,
+            pendingX: e.clientX,
+            pendingY: e.clientY,
+            slotCache: null,
+            rafId: 0,
+            lastTargetKey: '',
+            lastDeleteTarget: false
+        };
+    }
+
+    _activateGroupGateDrag(e) {
+        const drag = this._groupGateDrag;
+        if (!drag || drag.active) return;
+
+        drag.active = true;
+        drag.moved = true;
+        e.preventDefault();
+        document.body.classList.add('is-placed-gate-drag');
+        this._setCircuitDragSelectShield(true);
+        this._setSelectionDragPassthrough(true);
+        this._setCircuitDragActive(true);
+        this._clearShiftPreview();
+        this._setGroupSelectionVisualFaded(true);
+        if (!drag.useSelectionBox) {
+            document.querySelectorAll('.gate-on-wire.circuit-selected, .control-flow-block.circuit-selected').forEach((el) => {
+                el.classList.remove('circuit-selected');
+            });
+            if (this._selectionLayerEl) this._selectionLayerEl.hidden = true;
+        }
+        drag.slotCache = this._buildPlacedGateSlotCache();
+        drag.pendingX = e.clientX;
+        drag.pendingY = e.clientY;
+
+        const pad = 8;
+        if (drag.useSelectionBox) {
+            drag.frozenClientBounds = this._getSelectionClientBounds();
+            drag.frozenLocal = drag.frozenClientBounds
+                ? this._clientRectToCanvasLocal(drag.frozenClientBounds, pad)
+                : null;
+            if (drag.frozenClientBounds) {
+                this._syncSelectionBoxMirrors(drag.frozenClientBounds);
+                drag.mirrorsBuilt = true;
+            }
+        } else if (drag.controlFlow.length === 1 && !drag.gates.length) {
+            const cf = drag.controlFlow[0];
+            const block = document.querySelector(
+                `.control-flow-block[data-column="${cf.column}"][data-type="${cf.type}"]`
+            );
+            if (block) {
+                const offset = this._captureCfDragGhostOffset(block, e.clientX, e.clientY);
+                drag.ghostOffsetX = offset.x;
+                drag.ghostOffsetY = offset.y;
+                drag.soloGhost = this._buildControlFlowDragGhost(block);
+                this._positionSoloDragGhost(
+                    drag.soloGhost,
+                    e.clientX,
+                    e.clientY,
+                    drag.ghostOffsetX,
+                    drag.ghostOffsetY
+                );
+            }
+        } else if (drag.gates.length === 1 && !drag.controlFlow.length) {
+            const gate = drag.gates[0];
+            if (this._gateUsesCompositeDragGhost(gate)) {
+                const ghostPack = this._buildCompositeGateDragGhost(gate, e.clientX, e.clientY);
+                if (ghostPack) {
+                    drag.ghostOffsetX = ghostPack.offsetX;
+                    drag.ghostOffsetY = ghostPack.offsetY;
+                    drag.soloGhost = ghostPack.ghost;
+                    this._positionSoloDragGhost(
+                        drag.soloGhost,
+                        e.clientX,
+                        e.clientY,
+                        drag.ghostOffsetX,
+                        drag.ghostOffsetY
+                    );
+                }
+            }
+        }
+
+        try {
+            document.getElementById('circuitCanvas')?.setPointerCapture(e.pointerId);
+        } catch {
+            /* ignore */
+        }
+        this._startGroupGateDragLoop();
+        this._updateCircuitSelectionOverlay();
+    }
+
+    _cleanupGroupGateDrag() {
+        const drag = this._groupGateDrag;
+        if (!drag) return;
+
+        if (drag.rafId) {
+            cancelAnimationFrame(drag.rafId);
+            drag.rafId = 0;
+        }
+
+        this._setGroupSelectionVisualFaded(false);
+        drag.soloGhost?.remove();
+        drag.soloGhost = null;
+        this._clearSelectionBoxMirrors();
+        this._setSelectionDragPassthrough(false);
+        this._setCircuitDragSelectShield(false);
+        document.body.classList.remove('is-placed-gate-drag');
+        document.getElementById('circuitCanvas')?.classList.remove('is-placed-gate-delete-target');
+
+        if (drag.active) {
+            this._setCircuitDragActive(false);
+            this._hidePhantomQubitLine();
+            this._clearDragOverHighlights();
+            this._clearShiftPreview();
+        }
+
+        this._groupGateDrag = null;
+        this._updateCircuitSelectionOverlay();
+    }
+
+    _completeGroupGateDrop(clientX, clientY) {
+        const drag = this._groupGateDrag;
+        if (!drag?.active) return false;
+
+        this._hidePhantomQubitLine();
+        this._clearDragOverHighlights();
+        this._clearShiftPreview();
+        document.getElementById('circuitCanvas')?.classList.remove('is-placed-gate-delete-target');
+
+        const dropX = drag.pendingX ?? clientX;
+        const dropY = drag.pendingY ?? clientY;
+
+        const deltas = this._resolveGroupDragDeltas(drag, dropX, dropY, { allowPhantom: true });
+
+        if (!this._isPlacedGateDeleteZone(dropX, dropY, drag.slotCache) &&
+            this._groupDragDeltasValid(drag, deltas)) {
+            if (drag.gates.length) {
+                const required = this._groupRequiredQubitCount(drag, deltas.deltaQ);
+                if (!this._ensureGroupDragQubits(required)) {
+                    return false;
+                }
+            }
+
+            const moved = this.circuit.moveCircuitGroup(
+                drag.gates,
+                drag.controlFlow,
+                deltas.deltaQ,
+                deltas.deltaCol
+            );
+
+            if (moved) {
+                this.circuit.state = null;
+                document.getElementById('qubitCount').value = formatQubitCountLabel(this.circuit.numQubits);
+                this._clearCircuitSelection();
+                this._refreshCircuitAfterGateEdit();
+            }
+            return moved;
+        }
+
+        if (this._isPlacedGateDeleteZone(dropX, dropY, drag.slotCache)) {
+            this.circuit.removeGatesByRef(drag.gates);
+            for (const cf of drag.controlFlow) {
+                this.circuit.removeControlFlow(cf.column);
+            }
+            this.circuit.state = null;
+            this._clearCircuitSelection();
+            this._refreshCircuitAfterGateEdit();
+            return true;
+        }
+
+        return false;
+    }
+
+    _initCircuitSelection() {
+        if (this._circuitSelectionBound) return;
+        this._circuitSelectionBound = true;
+
+        const canvas = document.getElementById('circuitCanvas');
+        const wrapper = document.querySelector('.circuit-canvas-wrapper');
+        if (!canvas || !wrapper) return;
+
+        this._ensureCircuitSelectionLayer();
+        this._ensureMarqueeBox();
+
+        const DRAG_THRESHOLD_SQ = 64;
+
+        canvas.addEventListener('pointerdown', (e) => {
+            if (e.button !== 0) return;
+            if (this._palettePointerDrag?.active) return;
+            if (this._placedGateDrag) return;
+            if (this._groupGateDrag) return;
+            if (e.target.closest('.gate-on-wire, .gate-delete-btn, .circuit-selection-layer')) {
+                return;
+            }
+
+            this._marqueeSelect = {
+                pointerId: e.pointerId,
+                startX: e.clientX,
+                startY: e.clientY,
+                active: false,
+                moved: false
+            };
+        });
+
+        document.addEventListener('pointermove', (e) => {
+            const marquee = this._marqueeSelect;
+            if (marquee && e.pointerId === marquee.pointerId) {
+                const dx = e.clientX - marquee.startX;
+                const dy = e.clientY - marquee.startY;
+                if (!marquee.active) {
+                    if (dx * dx + dy * dy < DRAG_THRESHOLD_SQ) return;
+                    marquee.active = true;
+                    marquee.moved = true;
+                    e.preventDefault();
+                    this._setCircuitDragSelectShield(true);
+                } else {
+                    e.preventDefault();
+                }
+
+                const box = this._ensureMarqueeBox();
+                if (!box) return;
+                const wr = wrapper.getBoundingClientRect();
+                const left = Math.min(marquee.startX, e.clientX) - wr.left + wrapper.scrollLeft;
+                const top = Math.min(marquee.startY, e.clientY) - wr.top + wrapper.scrollTop;
+                const width = Math.abs(e.clientX - marquee.startX);
+                const height = Math.abs(e.clientY - marquee.startY);
+                box.hidden = false;
+                box.style.left = `${left}px`;
+                box.style.top = `${top}px`;
+                box.style.width = `${width}px`;
+                box.style.height = `${height}px`;
+                return;
+            }
+
+            const groupDrag = this._groupGateDrag;
+            if (groupDrag && e.pointerId === groupDrag.pointerId) {
+                const dx = e.clientX - groupDrag.startX;
+                const dy = e.clientY - groupDrag.startY;
+                if (!groupDrag.active) {
+                    if (dx * dx + dy * dy < DRAG_THRESHOLD_SQ) return;
+                    this._activateGroupGateDrag(e);
+                } else {
+                    e.preventDefault();
+                }
+                groupDrag.pendingX = e.clientX;
+                groupDrag.pendingY = e.clientY;
+                if (groupDrag.active && groupDrag.soloGhost) {
+                    this._positionSoloDragGhost(
+                        groupDrag.soloGhost,
+                        groupDrag.pendingX,
+                        groupDrag.pendingY,
+                        groupDrag.ghostOffsetX,
+                        groupDrag.ghostOffsetY
+                    );
+                }
+            }
+        }, { passive: false });
+
+        const finishMarquee = (e) => {
+            const marquee = this._marqueeSelect;
+            if (marquee && e.pointerId === marquee.pointerId) {
+                const box = this._marqueeBoxEl;
+                if (marquee.active && box) {
+                    const selRect = {
+                        left: Math.min(marquee.startX, e.clientX),
+                        top: Math.min(marquee.startY, e.clientY),
+                        right: Math.max(marquee.startX, e.clientX),
+                        bottom: Math.max(marquee.startY, e.clientY)
+                    };
+                    selRect.width = selRect.right - selRect.left;
+                    selRect.height = selRect.bottom - selRect.top;
+                    const picked = this._collectSelectionInClientRect(selRect);
+                    const pickCount = picked.gates.size + picked.controlFlow.size;
+                    if (pickCount > 1) {
+                        this._setCircuitSelection([...picked.gates], [...picked.controlFlow]);
+                    } else {
+                        this._clearCircuitSelection();
+                    }
+                    this._suppressCircuitSelectionClick = true;
+                    requestAnimationFrame(() => {
+                        this._suppressCircuitSelectionClick = false;
+                    });
+                } else if (!marquee.moved) {
+                    this._clearCircuitSelection();
+                }
+
+                if (box) box.hidden = true;
+                this._setCircuitDragSelectShield(false);
+                this._marqueeSelect = null;
+            }
+
+            const groupDrag = this._groupGateDrag;
+            if (groupDrag && e.pointerId === groupDrag.pointerId) {
+                if (groupDrag.active) {
+                    e.preventDefault();
+                    this._completeGroupGateDrop(e.clientX, e.clientY);
+                    this._suppressPlacedGateClick = true;
+                    this._suppressCircuitSelectionClick = true;
+                    requestAnimationFrame(() => {
+                        this._suppressPlacedGateClick = false;
+                        this._suppressCircuitSelectionClick = false;
+                    });
+                } else {
+                    this._groupGateDrag = null;
+                }
+
+                try {
+                    document.getElementById('circuitCanvas')?.releasePointerCapture(e.pointerId);
+                } catch {
+                    /* ignore */
+                }
+                this._cleanupGroupGateDrag();
+            }
+        };
+
+        document.addEventListener('pointerup', finishMarquee);
+        document.addEventListener('pointercancel', finishMarquee);
+    }
+
     initDesktopPanelResize() {
+        const mobileMq = window.matchMedia('(max-width: 768px)');
         const desktopMq = window.matchMedia('(min-width: 769px)');
         const leftHandle = document.getElementById('leftPanelResize');
         const rightHandle = document.getElementById('rightPanelResize');
         const sidebar = document.querySelector('.main-content > aside.sidebar');
         const codeSidebar = document.querySelector('.main-content > aside.code-sidebar');
+        const circuitCanvasWrapper = document.querySelector('.circuit-canvas-wrapper');
         if (!leftHandle || !rightHandle || !sidebar || !codeSidebar) return;
 
         try {
@@ -588,6 +2742,11 @@ class CircuitUI {
             return Number.isFinite(r) && r > 0 ? r : 0;
         };
 
+        const readH = (el) => {
+            const r = el.getBoundingClientRect().height;
+            return Number.isFinite(r) && r > 0 ? r : 0;
+        };
+
         const jointClamp = (sw, cw) => {
             let s = sw;
             let c = cw;
@@ -601,7 +2760,7 @@ class CircuitUI {
         };
 
         window.addEventListener('resize', () => {
-            if (!desktopMq.matches) return;
+            if (mobileMq.matches) return;
             if (!sidebar.style.width && !codeSidebar.style.width) return;
             const sw = readW(sidebar) || 260;
             const cw = readW(codeSidebar) || defaultCodeWidth;
@@ -611,12 +2770,10 @@ class CircuitUI {
         });
 
         const attach = (handle, which) => {
-            handle.addEventListener('mousedown', (e) => {
-                if (e.button !== 0 || !desktopMq.matches) return;
+            handle.addEventListener('pointerdown', (e) => {
+                if (e.button !== 0) return;
                 e.preventDefault();
-                const startX = e.clientX;
-                const startSidebar = readW(sidebar) || 260;
-                const startCode = readW(codeSidebar) || defaultCodeWidth;
+                handle.setPointerCapture(e.pointerId);
                 handle.classList.add('is-dragging');
 
                 let resizeRaf = 0;
@@ -628,7 +2785,60 @@ class CircuitUI {
                     });
                 };
 
+                const finish = (ev) => {
+                    handle.releasePointerCapture(ev.pointerId);
+                    handle.removeEventListener('pointermove', onMove);
+                    handle.removeEventListener('pointerup', finish);
+                    handle.removeEventListener('pointercancel', finish);
+                    handle.classList.remove('is-dragging');
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    document.body.classList.remove('is-panel-resize-drag');
+
+                    if (!mobileMq.matches) {
+                        const { s, c } = jointClamp(readW(sidebar) || 260, readW(codeSidebar) || defaultCodeWidth);
+                        sidebar.style.width = `${Math.round(s)}px`;
+                        codeSidebar.style.width = `${Math.round(c)}px`;
+                    }
+                    window.dispatchEvent(new Event('resize'));
+                };
+
+                let startX = e.clientX;
+                let startY = e.clientY;
+                let startSidebar = readW(sidebar) || 260;
+                let startCode = readW(codeSidebar) || defaultCodeWidth;
+                let startCodeHeight = readH(codeSidebar) || 350;
+                let startCanvasMax = circuitCanvasWrapper
+                    ? circuitCanvasWrapper.getBoundingClientRect().height
+                    : Math.round(window.innerHeight * 0.5);
+
+                document.body.classList.add('is-panel-resize-drag');
+                document.body.style.userSelect = 'none';
+
                 const onMove = (ev) => {
+                    ev.preventDefault();
+                    if (mobileMq.matches) {
+                        const dy = ev.clientY - startY;
+                        if (which === 'left' && circuitCanvasWrapper) {
+                            const nh = clamp(
+                                startCanvasMax + dy,
+                                200,
+                                Math.round(window.innerHeight * 0.65)
+                            );
+                            circuitCanvasWrapper.style.maxHeight = `${Math.round(nh)}px`;
+                        } else if (which === 'code') {
+                            const nh = clamp(
+                                startCodeHeight + dy,
+                                200,
+                                Math.round(window.innerHeight * 0.75)
+                            );
+                            codeSidebar.style.height = `${Math.round(nh)}px`;
+                            codeSidebar.style.minHeight = `${Math.round(nh)}px`;
+                        }
+                        scheduleLayoutRefresh();
+                        return;
+                    }
+
                     if (!desktopMq.matches) return;
                     const dx = ev.clientX - startX;
                     if (which === 'left') {
@@ -643,22 +2853,10 @@ class CircuitUI {
                     scheduleLayoutRefresh();
                 };
 
-                const onUp = () => {
-                    document.removeEventListener('mousemove', onMove);
-                    document.removeEventListener('mouseup', onUp);
-                    handle.classList.remove('is-dragging');
-                    document.body.style.cursor = '';
-                    document.body.style.userSelect = '';
-                    const { s, c } = jointClamp(readW(sidebar) || startSidebar, readW(codeSidebar) || startCode);
-                    sidebar.style.width = `${Math.round(s)}px`;
-                    codeSidebar.style.width = `${Math.round(c)}px`;
-                    window.dispatchEvent(new Event('resize'));
-                };
-
-                document.body.style.cursor = 'col-resize';
-                document.body.style.userSelect = 'none';
-                document.addEventListener('mousemove', onMove);
-                document.addEventListener('mouseup', onUp);
+                document.body.style.cursor = mobileMq.matches ? 'row-resize' : 'col-resize';
+                handle.addEventListener('pointermove', onMove);
+                handle.addEventListener('pointerup', finish);
+                handle.addEventListener('pointercancel', finish);
             });
         };
 
@@ -666,10 +2864,15 @@ class CircuitUI {
         attach(rightHandle, 'code');
 
         const resetPanelWidthsToDefault = (e) => {
-            if (!desktopMq.matches) return;
             e.preventDefault();
-            sidebar.style.width = '';
-            codeSidebar.style.width = '';
+            if (mobileMq.matches) {
+                if (circuitCanvasWrapper) circuitCanvasWrapper.style.maxHeight = '';
+                codeSidebar.style.height = '';
+                codeSidebar.style.minHeight = '';
+            } else if (desktopMq.matches) {
+                sidebar.style.width = '';
+                codeSidebar.style.width = '';
+            }
             window.dispatchEvent(new Event('resize'));
         };
         leftHandle.addEventListener('dblclick', resetPanelWidthsToDefault);
@@ -707,6 +2910,8 @@ class CircuitUI {
             });
 
             gatePalette.addEventListener('click', (e) => {
+                if (this._suppressPaletteClick) return;
+
                 const infoBtn = e.target.closest('.gate-info-icon');
                 if (infoBtn) {
                     e.stopPropagation();
@@ -981,8 +3186,12 @@ class CircuitUI {
         document.getElementById('circuitCanvas').addEventListener('click', (e) => {
             // Skip if delete button was clicked (has its own handler)
             if (e.target.closest('.gate-delete-btn')) return;
+            if (e.target.closest('.circuit-selection-delete')) return;
+            if (this._suppressPlacedGateClick || this._suppressCircuitSelectionClick) return;
             if (e.target.classList.contains('gate-on-wire') || e.target.closest('.gate-on-wire')) {
                 const gateEl = e.target.classList.contains('gate-on-wire') ? e.target : e.target.closest('.gate-on-wire');
+                const gate = this._resolveCircuitGateFromEl(gateEl);
+                if (gate && this._circuitSelectionCount() > 1 && this._circuitSelection.has(gate)) return;
                 this.editGate(gateEl);
             } else if (this.selectedGate) {
                 const slot = this._resolveGateSlotFromPointer(e.clientX, e.clientY)
@@ -1008,34 +3217,24 @@ class CircuitUI {
         circuitCanvas.addEventListener('dragover', (e) => {
             e.preventDefault();
             if (!this.draggedGate) return;
-
-            const slot = this._resolveGateSlotFromPointer(e.clientX, e.clientY);
-            const onPhantom = slot && slot.closest('.qubit-line-phantom');
-
-            if (slot && !onPhantom) {
-                this._hidePhantomQubitLine();
-                this._clearDragOverHighlights();
-                slot.classList.add('drag-over');
-                this._updateShiftPreviewFromSlot(slot);
-                return;
-            }
-
-            if (this._canAddQubit() && this._isInAddQubitZone(e.clientX, e.clientY)) {
-                const col = this._getColumnFromClientX(e.clientX);
-                this._showPhantomQubitLine(col);
-                this._clearShiftPreview();
-            } else {
-                this._hidePhantomQubitLine();
-                this._clearDragOverHighlights();
-                this._clearShiftPreview();
-            }
+            this._updatePaletteDragTarget(e.clientX, e.clientY);
         });
 
         circuitCanvas.addEventListener('mousemove', (e) => {
+            if (this._placedGateDrag?.active) return;
             if (!this.draggedGate && !this.selectedGate) return;
             const slot = this._resolveGateSlotFromPointer(e.clientX, e.clientY);
             if (slot && !slot.closest('.qubit-line-phantom')) {
-                this._updateShiftPreviewFromSlot(slot);
+                this._updateShiftPreviewFromSlot(slot, null);
+            }
+        });
+
+        circuitCanvas.addEventListener('pointermove', (e) => {
+            if (this._placedGateDrag?.active) return;
+            if (!this.draggedGate && !this.selectedGate) return;
+            const slot = this._resolveGateSlotFromPointer(e.clientX, e.clientY);
+            if (slot && !slot.closest('.qubit-line-phantom')) {
+                this._updateShiftPreviewFromSlot(slot, null);
             }
         });
 
@@ -1060,31 +3259,9 @@ class CircuitUI {
             e.preventDefault();
             const gate = this.draggedGate;
             this.draggedGate = null;
-
-            if (this._phantomQubitActive && this._phantomDropColumn !== null && gate) {
-                const column = this._phantomDropColumn;
-                this._hidePhantomQubitLine();
-                this._clearDragOverHighlights();
-                if (this._canAddQubit()) {
-                    this.addQubit();
-                    const qubit = this.circuit.numQubits - 1;
-                    const slot = document.querySelector(
-                        `.gate-slot[data-qubit="${qubit}"][data-column="${column}"]`
-                    );
-                    if (slot) this.placeGateOnSlot(slot, gate);
-                }
-                return;
-            }
-
-            this._hidePhantomQubitLine();
-            this._clearDragOverHighlights();
-            this._clearShiftPreview();
+            this._completePaletteGateDrop(gate, e.clientX, e.clientY);
             this._setCircuitDragActive(false);
-
-            const slot = this._resolveGateSlotFromPointer(e.clientX, e.clientY);
-            if (slot && gate && !slot.closest('.qubit-line-phantom')) {
-                this.placeGateOnSlot(slot, gate);
-            }
+            document.querySelectorAll('.gate-item.dragging').forEach((el) => el.classList.remove('dragging'));
         });
     }
 
@@ -1261,6 +3438,58 @@ class CircuitUI {
         return null;
     }
 
+    /** Coordinate-based slot lookup — avoids elementsFromPoint during drag. */
+    _resolveGateSlotFast(clientX, clientY, slotCache = null) {
+        const canvas = document.getElementById('circuitCanvas');
+        if (!canvas) return null;
+
+        const lineRects = slotCache?.lineRects;
+        let qubit = -1;
+
+        if (lineRects?.length) {
+            const top = lineRects[0].top;
+            const bottom = lineRects[lineRects.length - 1].bottom;
+            if (clientY < top - 12 || clientY > bottom + 12) return null;
+            for (let i = 0; i < lineRects.length; i++) {
+                const line = lineRects[i];
+                if (clientY >= line.top && clientY <= line.bottom) {
+                    qubit = line.qubit;
+                    break;
+                }
+            }
+            if (qubit < 0) {
+                let bestDist = Infinity;
+                for (const line of lineRects) {
+                    const mid = (line.top + line.bottom) * 0.5;
+                    const dist = Math.abs(clientY - mid);
+                    if (dist < bestDist) {
+                        bestDist = dist;
+                        qubit = line.qubit;
+                    }
+                }
+                if (bestDist > 36) qubit = -1;
+            }
+        } else {
+            const rect = canvas.getBoundingClientRect();
+            if (clientY < rect.top || clientY > rect.bottom) return null;
+            const lines = canvas.querySelectorAll('.qubit-line:not(.qubit-line-phantom)');
+            for (const line of lines) {
+                const lr = line.getBoundingClientRect();
+                if (clientY >= lr.top && clientY <= lr.bottom) {
+                    qubit = parseInt(line.dataset.qubit, 10);
+                    break;
+                }
+            }
+        }
+
+        if (qubit < 0) return null;
+
+        const col = this._getColumnFromClientX(clientX);
+        return canvas.querySelector(
+            `.gate-slot[data-qubit="${qubit}"][data-column="${col}"]`
+        );
+    }
+
     _setCircuitDragActive(active) {
         document.getElementById('circuitCanvas')?.classList.toggle('is-gate-drag', Boolean(active));
     }
@@ -1345,12 +3574,28 @@ class CircuitUI {
         this._phantomQubitEl.querySelectorAll('.drag-over').forEach((s) => s.classList.remove('drag-over'));
     }
 
-    _clearDragOverHighlights() {
-        document.querySelectorAll('.gate-slot.drag-over').forEach((el) => el.classList.remove('drag-over'));
+    _setDragOverSlot(slot) {
+        if (this._dragOverSlot === slot) return;
+        if (this._dragOverSlot) this._dragOverSlot.classList.remove('drag-over');
+        this._dragOverSlot = slot || null;
+        if (this._dragOverSlot) this._dragOverSlot.classList.add('drag-over');
     }
 
-    _getInsertPlan(qubit, hoverColumn) {
-        return this.circuit.getInsertPlan(qubit, hoverColumn);
+    _clearDragOverHighlights() {
+        this._setDragOverSlot(null);
+        document.querySelectorAll('.qubit-line-phantom .gate-slot.drag-over').forEach((el) => {
+            el.classList.remove('drag-over');
+        });
+    }
+
+    _getInsertPlan(qubit, hoverColumn, excludeGate = null, excludeGates = null, virtualObstacles = null) {
+        return this.circuit.getInsertPlan(qubit, hoverColumn, excludeGate, excludeGates, virtualObstacles);
+    }
+
+    _applyControlFlowInsertShift(plan) {
+        if (plan.shouldShift) {
+            this.circuit.shiftForControlFlowInsert(plan.insertColumn);
+        }
     }
 
     _applyInsertShift(qubit, plan) {
@@ -1359,17 +3604,32 @@ class CircuitUI {
         }
     }
 
-    _clearShiftPreview() {
-        document.querySelectorAll(
-            '.gate-on-wire.shift-preview, .control-flow-block.shift-preview, .circuit-control-bus.shift-preview'
-        ).forEach((el) => {
-            el.classList.remove('shift-preview');
-            el.style.removeProperty('--shift-preview-dx');
-        });
+    _isActiveCircuitDrag() {
+        return Boolean(
+            document.body.classList.contains('is-placed-gate-drag') ||
+            document.body.classList.contains('is-palette-pointer-drag') ||
+            document.getElementById('circuitCanvas')?.classList.contains('is-gate-drag')
+        );
     }
 
-    _updateShiftPreviewFromSlot(slot) {
-        if (!this.draggedGate && !this.selectedGate) {
+    _clearShiftPreview() {
+        const snap = this._isActiveCircuitDrag();
+
+        this._shiftPreviewEls.forEach((el) => {
+            if (snap) el.style.transition = 'none';
+            el.classList.remove('shift-preview');
+            el.style.removeProperty('--shift-preview-dx');
+            if (snap) {
+                void el.offsetWidth;
+                el.style.removeProperty('transition');
+            }
+        });
+        this._shiftPreviewEls.clear();
+        this._shiftPreviewKey = '';
+    }
+
+    _updateShiftPreviewFromSlot(slot, excludeGate = null, excludeGates = null) {
+        if (!this.draggedGate && !this.selectedGate && !this._placedGateDrag?.active && !this._groupGateDrag?.active) {
             this._clearShiftPreview();
             return;
         }
@@ -1377,30 +3637,68 @@ class CircuitUI {
             this._clearShiftPreview();
             return;
         }
-        const qubit = parseInt(slot.dataset.qubit, 10);
-        const column = parseInt(slot.dataset.column, 10);
-        const plan = this._getInsertPlan(qubit, column);
+        const groupDrag = this._groupGateDrag;
+        const placedDrag = this._placedGateDrag;
+
+        let qubit = parseInt(slot.dataset.qubit, 10);
+        let column = parseInt(slot.dataset.column, 10);
+
+        if (placedDrag?.active) {
+            qubit = this._anchorQubitFromPointerSlot(qubit, placedDrag);
+        }
+
+        const excludeKey = excludeGate
+            ? `${excludeGate.column}:${excludeGate.qubit}:${excludeGate.type}`
+            : (excludeGates
+                ? [...excludeGates].map((g) => `${g.column}:${g.qubit}:${g.type}`).sort().join('|')
+                : '');
+
+        if (groupDrag?.active) {
+            this._updateGroupShiftPreview(groupDrag, groupDrag.pendingX, groupDrag.pendingY);
+            return;
+        }
+
+        const plan = this.draggedGate === 'REPEAT' || this.draggedGate === 'END'
+            ? this.circuit.getControlFlowInsertPlan(column)
+            : this._getInsertPlan(qubit, column, excludeGate, excludeGates);
         if (!plan.shouldShift) {
             this._clearShiftPreview();
             return;
         }
-        this._clearShiftPreview();
-        const dx = `${this.columnSpacing}px`;
-        const fromCol = plan.insertColumn;
 
+        const previewKey = `${qubit}:${column}:${excludeKey}:1:${plan.insertColumn}`;
+        if (this._shiftPreviewKey === previewKey) return;
+
+        this._clearShiftPreview();
+        this._shiftPreviewKey = previewKey;
+
+        const dx = `${this.columnSpacing}px`;
         const markPreview = (el) => {
             if (!el) return;
+            if (el.classList.contains('gate-drag-source-faded')) return;
             el.classList.add('shift-preview');
             el.style.setProperty('--shift-preview-dx', dx);
+            this._shiftPreviewEls.add(el);
         };
 
-        this.circuit.getGatesToShiftForInsert(qubit, fromCol).forEach((gate) => {
-            this._markShiftPreviewForGate(gate, markPreview);
-        });
+        if (this.draggedGate === 'REPEAT' || this.draggedGate === 'END') {
+            for (const gate of this.circuit.gates) {
+                if (excludeGates?.has(gate)) continue;
+                if (gate.column >= plan.insertColumn) {
+                    this._markShiftPreviewForGate(gate, markPreview);
+                }
+            }
+        } else {
+            this.circuit.getGatesToShiftForInsert(qubit, plan.insertColumn, excludeGate, excludeGates).forEach((gate) => {
+                this._markShiftPreviewForGate(gate, markPreview);
+            });
+        }
 
         document.querySelectorAll('.control-flow-block').forEach((el) => {
             const col = parseInt(el.dataset.column, 10);
-            if (col >= fromCol) markPreview(el);
+            const cf = this._resolveControlFlowFromEl(el);
+            if (cf && this._circuitSelectionCF.has(cf)) return;
+            if (col >= plan.insertColumn) markPreview(el);
         });
     }
 
@@ -1523,6 +3821,9 @@ class CircuitUI {
         }, true);
 
         document.addEventListener('pointerup', (e) => {
+            if (this._palettePointerDrag?.active) return;
+            if (this._placedGateDrag?.active) return;
+            if (this._groupGateDrag?.active) return;
             if (this._pointerTouchMoved) {
                 this._pointerStart = null;
                 return;
@@ -1538,6 +3839,7 @@ class CircuitUI {
     renderCircuit() {
         const canvas = document.getElementById('circuitCanvas');
         const canvasWrapper = canvas.parentElement;
+        this._selectionLayerEl = null;
         canvas.innerHTML = '';
 
         // Calculate minimum columns needed - always extend beyond current depth
@@ -1601,19 +3903,38 @@ class CircuitUI {
         this._scheduleControlConnectorRefresh();
         this.updateCircuitInfo();
         this._updateSlotReadyState();
+        this._applyCircuitSelectionVisuals();
     }
 
     /** Re-sync code ↔ circuit after palette/modal edits; fixes control-bus layout for CX/CY/CZ. */
     _refreshCircuitAfterGateEdit() {
         this.circuit.state = null;
+        this._clearShiftPreview();
+        this.renderCircuit();
+
+        if (this._gateEditSyncRaf) cancelAnimationFrame(this._gateEditSyncRaf);
+        this._gateEditSyncRaf = requestAnimationFrame(() => {
+            this._gateEditSyncRaf = 0;
+            this._syncAfterCircuitGateEdit();
+        });
+    }
+
+    _syncAfterCircuitGateEdit() {
         this.syncCircuitToCode();
         if (this.hasCodeErrors()) {
             this.renderCircuit();
-        } else {
-            this.syncCodeToCircuit();
+            this.updateVisualization();
+            return;
         }
-        this.updateVisualization();
-        this._clearShiftPreview();
+
+        // Circuit-builder edits keep visual column placement; scheduling runs only
+        // when Qubi code is edited or Run Circuit is pressed.
+        const autoRun = this.getSettings().autoRun;
+        if (autoRun) {
+            this._runCircuitCore();
+        } else {
+            this.resetExecution();
+        }
     }
 
     _scheduleControlConnectorRefresh() {
@@ -1873,8 +4194,11 @@ class CircuitUI {
         // Add click handlers
         block.addEventListener('click', (e) => {
             e.stopPropagation();
-            // Ignore click if delete btn was clicked (though propagation stopped above, safety)
+            if (this._suppressCircuitSelectionClick) return;
             if (e.target.closest('.gate-delete-btn')) return;
+
+            const cfRef = this._resolveControlFlowFromEl(block);
+            if (cfRef && this._circuitSelectionCount() > 1 && this._circuitSelectionCF.has(cfRef)) return;
 
             if (type === 'REPEAT') {
                 this.showRepeatModal(column, params.count, true);
@@ -1930,7 +4254,7 @@ class CircuitUI {
         const meta = this.customGateMeta[type];
         const symbolText = meta?.label || symbols[type] || type;
         gateEl.textContent = symbolText;
-        gateEl.title = `Click to edit, right-click to delete`;
+        gateEl.title = `Drag to move, click to edit, right-click to delete`;
         gateEl.style.position = 'relative';
 
         // Add gate family class for coloring
@@ -1979,6 +4303,7 @@ class CircuitUI {
 
         // Add gate to slot first
         slot.appendChild(gateEl);
+        this._setGateOnWireDraggable(gateEl);
 
         // Handle controlled gates - render control blocks AFTER placing target gate
         let controlQubits = [];
@@ -2030,6 +4355,7 @@ class CircuitUI {
         block.title = `Multi-qubit ${gateType} (anchor q[${anchorQubit}])`;
         block.textContent = '·';
         partnerSlot.appendChild(block);
+        this._setGateOnWireDraggable(block);
     }
 
     /** Symbol + ↔qN label inside the gate (SWAP / CSWAP swap wires). */
@@ -2056,6 +4382,7 @@ class CircuitUI {
         swapBlock.dataset.partnerQubit = anchorQubit;
         swapBlock.title = `${gateType === 'SWAP_PARTNER' ? 'SWAP' : 'CSWAP'} with q[${anchorQubit}]`;
         this._fillSwapWireGate(swapBlock, symbol, anchorQubit);
+        this._setGateOnWireDraggable(swapBlock);
         return swapBlock;
     }
 
@@ -2129,6 +4456,7 @@ class CircuitUI {
             controlBlock.dataset.column = column;
             controlBlock.dataset.targetQubit = targetQubit;
             controlBlock.dataset.parentGateType = gateType;
+            controlBlock.draggable = false;
             const targetLabel = gateType === 'CSWAP' && Array.isArray(swapQubits) && swapQubits.length === 2
                 ? swapQubits.map((q) => `q${q}`).join(', ')
                 : `q${targetQubit}`;
@@ -2171,26 +4499,20 @@ class CircuitUI {
 
         // Check if control flow (REPEAT/END)
         if (type === 'REPEAT') {
-            const gatesAtColumn = this.circuit.getGatesAtColumn(insertColumn);
-            if (gatesAtColumn.length > 0) {
+            const cfPlan = this.circuit.getControlFlowInsertPlan(column);
+            if (!cfPlan.shouldShift && this.circuit.getControlFlowAtColumn(column)) {
                 return;
             }
-            if (!plan.shouldShift && this.circuit.getControlFlowAtColumn(insertColumn)) {
-                return;
-            }
-            this.showRepeatModal(insertColumn, 2, false, plan, qubit);
+            this.showRepeatModal(column, 2, false, cfPlan, qubit);
             return;
         }
 
         if (type === 'END') {
-            const gatesAtColumn = this.circuit.getGatesAtColumn(insertColumn);
-            if (gatesAtColumn.length > 0) {
+            const cfPlan = this.circuit.getControlFlowInsertPlan(column);
+            if (!cfPlan.shouldShift && this.circuit.getControlFlowAtColumn(column)) {
                 return;
             }
-            if (!plan.shouldShift && this.circuit.getControlFlowAtColumn(insertColumn)) {
-                return;
-            }
-            this.placeEndBlock(insertColumn, qubit, plan);
+            this.placeEndBlock(column, qubit, cfPlan);
             return;
         }
 
@@ -2263,7 +4585,7 @@ class CircuitUI {
             }
         } else {
             if (shouldShift) {
-                this._applyInsertShift(shiftQubit, { shouldShift: true, insertColumn });
+                this._applyControlFlowInsertShift({ shouldShift: true, insertColumn });
             }
             this.circuit.addControlFlow('REPEAT', insertColumn, { count });
         }
@@ -2281,7 +4603,7 @@ class CircuitUI {
     placeEndBlock(column, shiftQubit = 0, insertPlan = null) {
         const plan = insertPlan || { shouldShift: false, insertColumn: column };
         if (plan.shouldShift) {
-            this._applyInsertShift(shiftQubit, plan);
+            this._applyControlFlowInsertShift(plan);
             column = plan.insertColumn;
         }
 
@@ -2715,25 +5037,69 @@ class CircuitUI {
         const title = document.getElementById('modalTitle');
         const inputs = document.getElementById('parameterInputs');
 
+        this._anglePicker?.destroy();
+        this._anglePicker = null;
+
         title.textContent = isEdit ? `Edit ${gateType} Parameters` : `Set ${gateType} Parameters`;
         inputs.innerHTML = '';
 
+        const pickerWrap = document.createElement('div');
+        pickerWrap.className = 'angle-picker-wrap';
+        inputs.appendChild(pickerWrap);
+
         const angleGroup = document.createElement('div');
-        angleGroup.className = 'parameter-group';
+        angleGroup.className = 'parameter-group parameter-group--numeric-row';
         angleGroup.innerHTML = `
-            <label for="angleInput">Angle (radians):</label>
-            <input type="number" id="angleInput" value="${currentAngle}" step="0.1" min="0" max="${2 * Math.PI}">
-            <label for="angleDegInput" style="margin-top: 0.5rem;">Angle (degrees):</label>
-            <input type="number" id="angleDegInput" value="${currentAngle * 180 / Math.PI}" step="1" min="0" max="360">
+            <div>
+                <label for="angleInput">Angle (radians)</label>
+                <input type="number" id="angleInput" value="${currentAngle}" step="0.01" min="0" max="${2 * Math.PI}">
+            </div>
+            <div>
+                <label for="angleDegInput">Angle (degrees)</label>
+                <input type="number" id="angleDegInput" value="${(currentAngle * 180 / Math.PI).toFixed(1)}" step="0.1" min="0" max="360">
+            </div>
         `;
         inputs.appendChild(angleGroup);
 
-        // Sync degree and radian inputs
-        document.getElementById('angleInput').addEventListener('input', (e) => {
-            document.getElementById('angleDegInput').value = (parseFloat(e.target.value) * 180 / Math.PI).toFixed(1);
+        const angleInput = document.getElementById('angleInput');
+        const angleDegInput = document.getElementById('angleDegInput');
+        let syncingFields = false;
+
+        const syncFieldsFromRad = (rad) => {
+            syncingFields = true;
+            angleInput.value = String(parseFloat(normalizeRotationAngle(rad).toFixed(4)));
+            angleDegInput.value = String(parseFloat((normalizeRotationAngle(rad) * 180 / Math.PI).toFixed(1)));
+            syncingFields = false;
+        };
+
+        if (typeof mountAnglePicker === 'function') {
+            this._anglePicker = mountAnglePicker(pickerWrap, {
+                angleRad: currentAngle,
+                gateType,
+                onChange: (rad) => syncFieldsFromRad(rad)
+            });
+        }
+
+        angleInput.addEventListener('input', () => {
+            if (syncingFields) return;
+            const rad = parseFloat(angleInput.value);
+            if (!Number.isFinite(rad)) return;
+            const norm = normalizeRotationAngle(rad);
+            this._anglePicker?.setAngle(norm, { silent: true });
+            syncingFields = true;
+            angleDegInput.value = String(parseFloat((norm * 180 / Math.PI).toFixed(1)));
+            syncingFields = false;
         });
-        document.getElementById('angleDegInput').addEventListener('input', (e) => {
-            document.getElementById('angleInput').value = (parseFloat(e.target.value) * Math.PI / 180).toFixed(4);
+
+        angleDegInput.addEventListener('input', () => {
+            if (syncingFields) return;
+            const deg = parseFloat(angleDegInput.value);
+            if (!Number.isFinite(deg)) return;
+            const rad = normalizeRotationAngle((deg * Math.PI) / 180);
+            this._anglePicker?.setAngle(rad, { silent: true });
+            syncingFields = true;
+            angleInput.value = String(parseFloat(rad.toFixed(4)));
+            syncingFields = false;
         });
 
         modal.classList.add('active');
@@ -2752,7 +5118,9 @@ class CircuitUI {
         const column = parseInt(modal.dataset.column);
         const isEdit = modal.dataset.isEdit === 'true';
         const shouldShift = modal.dataset.shouldShift === '1';
-        const angle = parseFloat(document.getElementById('angleInput').value);
+        const angle = this._anglePicker
+            ? this._anglePicker.getAngle()
+            : parseFloat(document.getElementById('angleInput').value);
 
         if (isEdit) {
             // Update existing gate
@@ -2771,6 +5139,8 @@ class CircuitUI {
 
         // Invalidate state so it gets recomputed
         this.circuit.state = null;
+        this._anglePicker?.destroy();
+        this._anglePicker = null;
         modal.classList.remove('active');
         this.renderCircuit();
         this.updateVisualization();
@@ -2780,6 +5150,8 @@ class CircuitUI {
 
     cancelGateParameters() {
         const modal = document.getElementById('parameterModal');
+        this._anglePicker?.destroy();
+        this._anglePicker = null;
         modal.classList.remove('active');
     }
 
@@ -2840,6 +5212,21 @@ class CircuitUI {
             return; // Don't run if there are errors
         }
 
+        if (this._runningCircuit) return;
+
+        // Apply code scheduling to the visual circuit before execution
+        this.syncCodeToCircuit({ suppressAutoRun: true });
+        if (this.hasCodeErrors()) return;
+
+        this._runningCircuit = true;
+        try {
+            this._runCircuitCore();
+        } finally {
+            this._runningCircuit = false;
+        }
+    }
+
+    _runCircuitCore() {
         this.stopPlayback();
         this.circuit.state = new QuantumState(this.circuit.numQubits);
 
@@ -3176,6 +5563,7 @@ class CircuitUI {
         this.currentColumn = 0;
         this.currentStepIndex = -1;
         this.selectedGate = null;
+        this._clearCircuitSelection();
         this.executionHistory = [];
         this.historyIndex = -1;
         this.renderCircuit();
@@ -4337,6 +6725,7 @@ class CircuitUI {
             item.className = 'gate-item custom-gate';
             item.dataset.gate = gateKey;
             item.draggable = true;
+            this._setGateItemDraggable(item);
             item.style.setProperty('--gate-custom-bg', color.bg);
             item.style.setProperty('--gate-custom-glow', color.glow);
             item.innerHTML = `<span class="gate-symbol"><span class="gate-symbol-label">${label}</span></span><span class="gate-name" aria-hidden="true">${displayName}</span><button class="gate-info-icon" data-gate="${gateKey}" type="button" title="Gate Information">ℹ</button>`;
@@ -4624,22 +7013,130 @@ class CircuitUI {
             this._persistActiveQubiEditorToFile();
         }
 
+        const editor = document.getElementById('qubiCode');
+        if (editor) {
+            this._syncSchedulingSettingFromCode(editor.value);
+        }
+
+        if (this.qubiHistory && this.activeQubiFileId && editor) {
+            this.qubiHistory.scheduleRecord(this.activeQubiFileId, editor.value);
+        }
+
+        this.qubiUndo?.scheduleCodeSnapshot();
+
+        const skipSync = this._skipDebouncedCodeToCircuitSync;
+        this._skipDebouncedCodeToCircuitSync = false;
+
         // Debounce code changes to avoid too frequent updates
         clearTimeout(this.codeChangeDebounceTimer);
         this.codeChangeDebounceTimer = setTimeout(() => {
+            if (skipSync) return;
             this.syncCodeToCircuit();
         }, this.codeChangeDebounceDelay);
 
         // Errors and Fix-with-QubiAI UI update via debounced syntax validation (qubiErrorStateChanged)
     }
 
-    syncCodeToCircuit() {
+    _readSchedulingFromCode(code) {
+        if (typeof qubiExtractCodeSettings === 'function') {
+            return qubiExtractCodeSettings(code).scheduling;
+        }
+        return null;
+    }
+
+    _syncSchedulingSettingFromCode(code, { persist = true } = {}) {
+        const fromCode = this._readSchedulingFromCode(code);
+        const effective = fromCode ?? 'default';
+
+        const settings = this.getSettings();
+        if (settings.codeGateParallelism === effective) return effective;
+
+        settings.codeGateParallelism = effective;
+        if (persist) {
+            localStorage.setItem('quantumSimulatorSettings', JSON.stringify(settings));
+        }
+        return effective;
+    }
+
+    _schedulingExecutionMode(settingOrFromCode) {
+        if (typeof qubiSchedulingExecutionMode === 'function') {
+            return qubiSchedulingExecutionMode(settingOrFromCode);
+        }
+        if (settingOrFromCode === 'default' || settingOrFromCode == null) return 'always';
+        return settingOrFromCode;
+    }
+
+    _focusQubiEditorAfterSchedulingLine(text) {
+        const editor = document.getElementById('qubiCode');
+        if (!editor) return;
+        const value = String(text ?? editor.value ?? '');
+        if (!/^#settings\s+Scheduling\s+"[^"]+"\n$/i.test(value)) return;
+
+        const pos = value.length;
+        editor.focus({ preventScroll: true });
+        try {
+            editor.setSelectionRange(pos, pos);
+        } catch {
+            /* ignore */
+        }
+        if (this.syntaxHighlighter) {
+            this.syntaxHighlighter.updateHighlight();
+            this.syntaxHighlighter.updateLineNumbers();
+            this.syntaxHighlighter.syncScroll?.();
+        }
+    }
+
+    /** On load / save: sync #settings Scheduling line with stored settings (omit when default). */
+    _ensureSchedulingDirectiveInEditor() {
+        const editor = document.getElementById('qubiCode');
+        if (!editor || typeof qubiApplySchedulingToCode !== 'function') return;
+
+        const { scheduling } = typeof qubiExtractCodeSettings === 'function'
+            ? qubiExtractCodeSettings(editor.value)
+            : { scheduling: null };
+
+        const setting = this.getSettings().codeGateParallelism || 'default';
+
+        if (setting !== 'default' && scheduling != null) {
+            this._syncSchedulingSettingFromCode(editor.value);
+        }
+
+        const updated = qubiApplySchedulingToCode(editor.value, setting);
+        if (updated === editor.value) return;
+
+        this.setEditorCode(updated, { preserveUndo: false, adjustQubits: false });
+        this._focusQubiEditorAfterSchedulingLine(updated);
+        if (typeof this._persistActiveQubiEditorToFile === 'function') {
+            this._persistActiveQubiEditorToFile();
+        }
+    }
+
+    _applySchedulingSettingToEditor(mode) {
+        const editor = document.getElementById('qubiCode');
+        if (!editor || typeof qubiApplySchedulingToCode !== 'function') return;
+
+        const updated = qubiApplySchedulingToCode(editor.value, mode);
+        if (updated === editor.value) return;
+
+        this.setEditorCode(updated, { preserveUndo: false, adjustQubits: false });
+        this._focusQubiEditorAfterSchedulingLine(updated);
+        if (typeof this._persistActiveQubiEditorToFile === 'function') {
+            this._persistActiveQubiEditorToFile();
+        }
+    }
+
+    syncCodeToCircuit(opts = {}) {
         if (this.isUpdatingFromCircuit) return; // Prevent circular updates
 
-        const code = document.getElementById('qubiCode').value;
+        const rawCode = document.getElementById('qubiCode').value;
+        this._syncSchedulingSettingFromCode(rawCode);
+        const extracted = typeof qubiExtractCodeSettings === 'function'
+            ? qubiExtractCodeSettings(rawCode)
+            : { scheduling: null, code: rawCode };
+        const code = extracted.code;
         const errorEl = document.getElementById('qubiErrors');
 
-        if (this.syntaxHighlighter) {
+        if (this.syntaxHighlighter && !opts.skipValidation) {
             this.syntaxHighlighter.validateLines();
         }
 
@@ -4658,93 +7155,102 @@ class CircuitUI {
                 return hit ? String(hit.code || '') : null;
             };
 
-            // Clear the custom gates palette before re-parsing defines
+            const hasDefineDirective = /^\s*#define\b/im.test(rawCode);
             const customList = document.querySelector('.gate-list[data-gate-list="custom"]');
-            if (customList) customList.innerHTML = '';
+            if (hasDefineDirective && customList) {
+                customList.innerHTML = '';
+            }
 
             const activeDefines = new Set();
 
-            this.qubiExecutor.execute(code, {
+            const onDefineGate = hasDefineDirective ? (gateName, displayName, colorId) => {
+                try {
+                    const t = String(gateName).toUpperCase();
+                    activeDefines.add(t);
+
+                    if (this.syntaxHighlighter && this.syntaxHighlighter.validGates) {
+                        this.syntaxHighlighter.validGates.add(t);
+                    }
+
+                    const resolvedColor = (colorId && this.defineColorMap[colorId])
+                        ? this.defineColorMap[colorId]
+                        : (this.customGateMeta[t]?.colorBg ? { bg: this.customGateMeta[t].colorBg, glow: this.customGateMeta[t].colorGlow } : this.defaultCustomColor);
+
+                    const existingMeta = this.customGateMeta[t];
+                    const finalDisplayName = displayName || existingMeta?.displayName || t;
+
+                    this.customGateMeta[t] = {
+                        label: t,
+                        colorBg: resolvedColor.bg,
+                        colorGlow: resolvedColor.glow,
+                        displayName: finalDisplayName
+                    };
+
+                    const palette = document.querySelector('.gate-palette');
+                    if (palette) {
+                        let category = palette.querySelector('.gate-category[data-category="custom"]');
+                        if (!category) {
+                            category = document.createElement('div');
+                            category.className = 'gate-category';
+                            category.dataset.category = 'custom';
+                            category.innerHTML = `<h3 class="category-title">Custom Gates</h3><div class="gate-list" data-gate-list="custom"></div>`;
+                            palette.insertBefore(category, palette.firstChild);
+                        }
+                        const list = category.querySelector('.gate-list[data-gate-list="custom"]');
+                        if (list) {
+                            const prev = list.querySelector(`.gate-item[data-gate="${t}"]`);
+                            if (prev) prev.remove();
+                            const item = document.createElement('div');
+                            item.className = 'gate-item custom-gate';
+                            item.dataset.gate = t;
+                            item.draggable = true;
+                            this._setGateItemDraggable(item);
+                            item.style.setProperty('--gate-custom-bg', resolvedColor.bg);
+                            item.style.setProperty('--gate-custom-glow', resolvedColor.glow);
+                            const symLabelText = t.slice(0, 4);
+                            item.innerHTML = `<span class="gate-symbol"><span class="gate-symbol-label">${symLabelText}</span></span><span class="gate-name" aria-hidden="true">${finalDisplayName}</span><button class="gate-info-icon" data-gate="${t}" type="button" title="Gate Information">ℹ</button>`;
+                            item.setAttribute('aria-label', finalDisplayName);
+                            const symLabel = item.querySelector('.gate-symbol-label');
+                            if (symLabel) fitGateLabel(symLabel, symLabelText);
+                            list.appendChild(item);
+                        }
+                    }
+                } catch { /* ignore */ }
+            } : undefined;
+
+            this.qubiExecutor.execute(rawCode, {
                 maxQubits: this.getSettings().maxQubits || 12,
+                codeGateParallelism: extracted.scheduling
+                    ?? this._schedulingExecutionMode(this.getSettings().codeGateParallelism),
                 resolveImport,
-                onDefineGate: (gateName, displayName, colorId) => {
-                    try {
-                        const t = String(gateName).toUpperCase();
-                        activeDefines.add(t);
-
-                        if (this.syntaxHighlighter && this.syntaxHighlighter.validGates) {
-                            this.syntaxHighlighter.validGates.add(t);
-                        }
-
-                        const resolvedColor = (colorId && this.defineColorMap[colorId])
-                            ? this.defineColorMap[colorId]
-                            : (this.customGateMeta[t]?.colorBg ? { bg: this.customGateMeta[t].colorBg, glow: this.customGateMeta[t].colorGlow } : this.defaultCustomColor);
-
-                        const existingMeta = this.customGateMeta[t];
-                        const finalDisplayName = displayName || existingMeta?.displayName || t;
-
-                        this.customGateMeta[t] = {
-                            label: t,
-                            colorBg: resolvedColor.bg,
-                            colorGlow: resolvedColor.glow,
-                            displayName: finalDisplayName
-                        };
-
-                        // Add to palette
-                        const palette = document.querySelector('.gate-palette');
-                        if (palette) {
-                            let category = palette.querySelector('.gate-category[data-category="custom"]');
-                            if (!category) {
-                                category = document.createElement('div');
-                                category.className = 'gate-category';
-                                category.dataset.category = 'custom';
-                                category.innerHTML = `<h3 class="category-title">Custom Gates</h3><div class="gate-list" data-gate-list="custom"></div>`;
-                                palette.insertBefore(category, palette.firstChild);
-                            }
-                            const list = category.querySelector('.gate-list[data-gate-list="custom"]');
-                            if (list) {
-                                const prev = list.querySelector(`.gate-item[data-gate="${t}"]`);
-                                if (prev) prev.remove();
-                                const item = document.createElement('div');
-                                item.className = 'gate-item custom-gate';
-                                item.dataset.gate = t;
-                                item.draggable = true;
-                                item.style.setProperty('--gate-custom-bg', resolvedColor.bg);
-                                item.style.setProperty('--gate-custom-glow', resolvedColor.glow);
-                                const symLabelText = t.slice(0, 4);
-                                item.innerHTML = `<span class="gate-symbol"><span class="gate-symbol-label">${symLabelText}</span></span><span class="gate-name" aria-hidden="true">${finalDisplayName}</span><button class="gate-info-icon" data-gate="${t}" type="button" title="Gate Information">ℹ</button>`;
-                                item.setAttribute('aria-label', finalDisplayName);
-                                const symLabel = item.querySelector('.gate-symbol-label');
-                                if (symLabel) fitGateLabel(symLabel, symLabelText);
-                                list.appendChild(item);
-                            }
-                        }
-                    } catch { /* ignore */ }
-                }
+                onDefineGate,
             });
 
-            // Remove the custom category entirely if no defines were found
-            if (activeDefines.size === 0) {
+            if (hasDefineDirective && activeDefines.size === 0) {
                 const cat = document.querySelector('.gate-category[data-category="custom"]');
                 if (cat) cat.remove();
             }
 
-            // Trigger re-validation now that new gates are registered
-            if (this.syntaxHighlighter) this.syntaxHighlighter.debouncedValidation?.();
+            if (this.syntaxHighlighter && hasDefineDirective) {
+                this.syntaxHighlighter.debouncedValidation?.();
+            }
 
-            // Update qubit count display to match circuit
             document.getElementById('qubitCount').value = formatQubitCountLabel(this.circuit.numQubits);
 
             this.renderCircuit();
-            this.updateVisualization();
-            this.resetExecution();
             errorEl.textContent = '';
             errorEl.classList.remove('has-error');
 
-            // Auto-run if enabled
+            if (opts.layoutOnly) {
+                return;
+            }
+
+            this.updateVisualization();
+            this.resetExecution();
+
             const settings = this.getSettings();
-            if (settings.autoRun) {
-                this.runCircuit();
+            if (settings.autoRun && !opts.suppressAutoRun) {
+                this._runCircuitCore();
             }
         } catch (error) {
             // Route runtime/preprocess errors through the line-number hover system
@@ -4804,7 +7310,7 @@ class CircuitUI {
         const preprocessorLines = [];
         const codeWithoutPreprocessor = [];
         for (const line of existingLines) {
-            if (/^\s*#(define|import|include)\b/i.test(line)) {
+            if (/^\s*#(define|import|include|settings)\b/i.test(line)) {
                 preprocessorLines.push(line);
             } else {
                 codeWithoutPreprocessor.push(line);
@@ -4817,9 +7323,11 @@ class CircuitUI {
             ? preprocessorLines.join('\n') + '\n' + generated
             : generated;
 
-        this.setEditorCode(finalCode, { preserveUndo: false, adjustQubits: false });
+        this.setEditorCode(finalCode, { preserveUndo: false, adjustQubits: false, focus: false });
 
         this.updateErrorState();
+        this.qubiUndo?.recordSnapshot();
+        this._recordQubiVersionSnapshot({ kind: 'edit', label: 'Circuit edit' });
     }
 
     hasCodeErrors() {
@@ -4957,39 +7465,49 @@ class CircuitUI {
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            // Persist current editor into its tab before overwriting/adding.
             if (typeof this._persistActiveQubiEditorToFile === 'function') {
                 this._persistActiveQubiEditorToFile();
             }
 
-            const code = e.target.result;
+            const loadedCode = String(e.target.result || '');
             const fileName = file.name ? String(file.name) : 'imported.qubi';
-            // Load into a new tab (or replace existing tab with same name)
+            const prevActiveId = this.activeQubiFileId;
+            this.qubiUndo?.flushPending(prevActiveId);
+
             const existing = this.qubiFiles.find(f => f.name.toLowerCase() === fileName.toLowerCase());
+            let targetFile;
             if (existing) {
-                existing.code = String(code || '');
-                this.activeQubiFileId = existing.id;
+                targetFile = existing;
             } else {
                 const id = `file_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
-                this.qubiFiles.push({ id, name: fileName, code: String(code || '') });
-                this.activeQubiFileId = id;
+                targetFile = { id, name: fileName, code: '' };
+                this.qubiFiles.push(targetFile);
             }
 
-            // Refresh tab strip immediately so the new/activated name shows right away.
+            this.activeQubiFileId = targetFile.id;
+
             if (typeof this._renderQubiTabs === 'function') {
                 this._renderQubiTabs();
             }
 
-            if (typeof this._loadActiveQubiFileIntoEditor === 'function') {
-                this._loadActiveQubiFileIntoEditor({ preserveUndo: true });
-            } else {
-                this.setEditorCode(code, { preserveUndo: true, adjustQubits: true });
-            }
+            // Show the tab's pre-load content first so undo captures the right "before" state.
+            this.setEditorCode(targetFile.code, { preserveUndo: false, adjustQubits: false, focus: false });
+            this.qubiUndo?.beginExternalChange();
 
-            // Sync code to circuit
+            targetFile.code = loadedCode;
+            this.setEditorCode(loadedCode, { preserveUndo: false, adjustQubits: true, focus: false });
             this.syncCodeToCircuit();
+            if (typeof this._persistActiveQubiEditorToFile === 'function') {
+                this._persistActiveQubiEditorToFile();
+            }
+            this.qubiUndo?.finishExternalChange();
 
-            // Clear any previous errors
+            this._recordQubiVersionSnapshot({
+                kind: 'load',
+                label: 'Loaded from file',
+                force: true
+            });
+
             const errorEl = document.getElementById('qubiErrors');
             errorEl.textContent = '';
             errorEl.classList.remove('has-error');
@@ -5006,28 +7524,40 @@ class CircuitUI {
     _mergeLoadedQubiFiles(loadedFiles, { activateName = null } = {}) {
         if (!Array.isArray(loadedFiles) || loadedFiles.length === 0) return;
 
-        // Persist current tab before applying.
         if (typeof this._persistActiveQubiEditorToFile === 'function') {
             this._persistActiveQubiEditorToFile();
         }
 
-        // Keep main around always.
+        const prevActiveId = this.activeQubiFileId;
+        this.qubiUndo?.flushPending(prevActiveId);
+
         const byNameLower = new Map((this.qubiFiles || []).map(f => [String(f.name || '').toLowerCase(), f]));
+        const merged = [];
+
         for (const lf of loadedFiles) {
             const name = String(lf.name || '').trim() || 'imported.qubi';
             const code = String(lf.code || '');
             const key = name.toLowerCase();
             const existing = byNameLower.get(key);
             if (existing) {
+                const beforeCode = String(existing.code || '');
                 existing.code = code;
+                merged.push({ file: existing, beforeCode, afterCode: code });
+                this.qubiHistory?.recordImmediate(existing.id, code, {
+                    kind: 'load',
+                    label: 'Loaded from archive',
+                    force: true
+                });
                 continue;
             }
             const id = `file_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
-            this.qubiFiles.push({ id, name, code });
-            byNameLower.set(key, this.qubiFiles[this.qubiFiles.length - 1]);
+            const created = { id, name, code };
+            this.qubiFiles.push(created);
+            merged.push({ file: created, beforeCode: '', afterCode: code });
+            this.qubiHistory?.ensureFile(id, code);
+            byNameLower.set(key, created);
         }
 
-        // Decide active file.
         let activate = null;
         if (activateName) {
             activate = (this.qubiFiles || []).find(f => String(f.name || '').toLowerCase() === String(activateName).toLowerCase());
@@ -5039,10 +7569,27 @@ class CircuitUI {
 
         if (typeof this._renderQubiTabs === 'function') this._renderQubiTabs();
 
-        if (typeof this._loadActiveQubiFileIntoEditor === 'function') {
-            this._loadActiveQubiFileIntoEditor({ preserveUndo: true });
+        const activeMerge = merged.find((m) => m.file.id === this.activeQubiFileId);
+        if (activeMerge) {
+            this.setEditorCode(activeMerge.beforeCode, { preserveUndo: false, adjustQubits: false, focus: false });
+            this.qubiUndo?.beginExternalChange();
+            this.setEditorCode(activeMerge.afterCode, { preserveUndo: false, adjustQubits: true, focus: false });
+            this.syncCodeToCircuit();
+            if (typeof this._persistActiveQubiEditorToFile === 'function') {
+                this._persistActiveQubiEditorToFile();
+            }
+            this.qubiUndo?.finishExternalChange();
+        } else if (typeof this._loadActiveQubiFileIntoEditor === 'function') {
+            this._loadActiveQubiFileIntoEditor({ preserveUndo: false });
+            this.syncCodeToCircuit();
         }
-        this.syncCodeToCircuit();
+
+        for (const { file, beforeCode, afterCode } of merged) {
+            if (file.id === this.activeQubiFileId) continue;
+            this.qubiUndo?.recordExternalChangeForFile(file.id, beforeCode, afterCode);
+        }
+
+        this.qubiUndo?.updateControls();
     }
 
     async saveQubiZip() {
@@ -5289,9 +7836,6 @@ class CircuitUI {
 
         this._buildAlgorithmsList('');
         modal.classList.add('active');
-
-        // Focus search after modal opens
-        if (searchInput) setTimeout(() => searchInput.focus(), 100);
     }
 
     _buildAlgorithmsList(filter) {
@@ -5315,9 +7859,17 @@ class CircuitUI {
 
         const categoryOrder = ['Entanglement', 'Algorithm', 'Communication', 'Concept', 'Error Correction'];
         const categoryIcons = {
-            'Entanglement': '🔗', 'Communication': '📡', 'Algorithm': '⚙️',
-            'Concept': '💡', 'Error Correction': '🛡️'
+            'Entanglement': 'link',
+            'Communication': 'satellite_dish',
+            'Algorithm': 'gear',
+            'Concept': 'lightbulb',
+            'Error Correction': 'shield'
         };
+        const iconHtml = (key, wrapClass) => (
+            typeof simIconHtml === 'function'
+                ? simIconHtml(key, { wrapClass })
+                : ''
+        );
 
         let totalResults = 0;
         categoryOrder.forEach(catName => {
@@ -5325,7 +7877,7 @@ class CircuitUI {
             totalResults += categories[catName].length;
             const section = document.createElement('div');
             section.className = 'algo-category-section';
-            section.innerHTML = `<div class="algo-category-header"><span class="algo-category-icon">${categoryIcons[catName] || '📦'}</span><span>${catName}</span></div>`;
+            section.innerHTML = `<div class="algo-category-header">${iconHtml(categoryIcons[catName] || 'box', 'sim-icon-wrap sim-icon-wrap--algo-cat algo-category-icon')}<span>${catName}</span></div>`;
             const grid = document.createElement('div');
             grid.className = 'algo-category-grid';
 
@@ -5335,7 +7887,7 @@ class CircuitUI {
                 item.className = 'algorithm-item';
                 item.dataset.algoKey = key;
                 item.innerHTML = `
-                    <div class="algo-item-icon">${algo.icon || '⚛️'}</div>
+                    <div class="algo-item-icon">${iconHtml(algo.icon || 'atom', 'sim-icon-wrap sim-icon-wrap--algo-item')}</div>
                     <div class="algo-item-content">
                         <h4>${algo.name}</h4>
                         <p>${algo.description}</p>
@@ -5357,7 +7909,10 @@ class CircuitUI {
         });
 
         if (totalResults === 0 && filterLower) {
-            list.innerHTML = `<div class="algo-no-results"><span>🔍</span><p>No algorithms match "${filter}"</p></div>`;
+            const emptyIcon = typeof simIconHtml === 'function'
+                ? simIconHtml('magnifying_glass', { wrapClass: 'sim-icon-wrap sim-icon-wrap--algo-empty' })
+                : '';
+            list.innerHTML = `<div class="algo-no-results">${emptyIcon}<p>No algorithms match "${filter}"</p></div>`;
         }
     }
 
@@ -5417,9 +7972,13 @@ class CircuitUI {
             paramsHtml += '</div>';
         }
 
+        const detailIcon = typeof simIconHtml === 'function'
+            ? simIconHtml(algo.icon || 'atom', { wrapClass: 'sim-icon-wrap sim-icon-wrap--algo-detail' })
+            : '';
+
         detailDiv.innerHTML = `
             <div class="algo-detail-header">
-                <span class="algo-detail-icon">${algo.icon || '⚛️'}</span>
+                <span class="algo-detail-icon">${detailIcon}</span>
                 <div>
                     <h4>${algo.name}</h4>
                     <span class="algo-detail-category">${algo.category || 'General'}</span>
@@ -5602,13 +8161,17 @@ class CircuitUI {
             return;
         }
 
-        this.loadAlgorithm({ code: result.code, qubits: result.qubits }, false);
+        this.loadAlgorithm(
+            { code: result.code, qubits: result.qubits },
+            false,
+            { label: `Loaded ${algo.name}` }
+        );
 
         document.getElementById('algorithmsModal').classList.remove('active');
         if (detailDiv) detailDiv.style.display = 'none';
     }
 
-    loadAlgorithm(algo, checkComments = true) {
+    loadAlgorithm(algo, checkComments = true, historyMeta = {}) {
         // Determine which code to load
         let codeToLoad = algo.code;
         if (checkComments) {
@@ -5619,11 +8182,21 @@ class CircuitUI {
             }
         }
 
-        // Load into Qubi editor; preserve undo and infer required qubits from code.
-        this.setEditorCode(codeToLoad, { preserveUndo: true, adjustQubits: true });
+        this.qubiUndo?.beginExternalChange();
+
+        this.setEditorCode(codeToLoad, { preserveUndo: false, adjustQubits: true, focus: false });
 
         // Sync code to circuit (this will execute the code)
         this.syncCodeToCircuit();
+        if (typeof this._persistActiveQubiEditorToFile === 'function') {
+            this._persistActiveQubiEditorToFile();
+        }
+        this.qubiUndo?.finishExternalChange();
+        this._recordQubiVersionSnapshot({
+            kind: 'load',
+            label: historyMeta.label || 'Loaded example',
+            force: true
+        });
     }
 
     showAlert(messages) {
@@ -5701,6 +8274,21 @@ class CircuitUI {
                         <span class="toggle-label">Show gate parameters on circuit</span>
                     </label>
                 </div>
+                <div class="settings-grid" style="margin-top: 1rem;">
+                    <div class="setting-item">
+                        <label for="setting_codeGateParallelism">Code gate scheduling</label>
+                        <select id="setting_codeGateParallelism" class="input-select">
+                            <option value="default" ${settings.codeGateParallelism === 'default' ? 'selected' : ''}>Default (always, no #settings line)</option>
+                            <option value="always" ${settings.codeGateParallelism === 'always' ? 'selected' : ''}>Always (maximum parallelism)</option>
+                            <option value="compressed" ${settings.codeGateParallelism === 'compressed' ? 'selected' : ''}>Compressed (per-wire backfill)</option>
+                            <option value="same_gate" ${settings.codeGateParallelism === 'same_gate' ? 'selected' : ''}>Same gate type</option>
+                            <option value="same_gate_continuous" ${settings.codeGateParallelism === 'same_gate_continuous' ? 'selected' : ''}>Same gate type (continuous only)</option>
+                            <option value="same_line" ${settings.codeGateParallelism === 'same_line' ? 'selected' : ''}>Same line only</option>
+                            <option value="never" ${settings.codeGateParallelism === 'never' ? 'selected' : ''}>Never (sequential)</option>
+                        </select>
+                        <span class="setting-hint">Default uses always scheduling without a <code>#settings</code> line. Other modes add <code>#settings Scheduling "…"</code> to your Qubi file.</span>
+                    </div>
+                </div>
             </div>
             
             <div class="settings-section">
@@ -5721,6 +8309,13 @@ class CircuitUI {
         modal.classList.add('active');
     }
 
+    _normalizeSchedulingSetting(value) {
+        if (typeof qubiNormalizeSchedulingSetting === 'function') {
+            return qubiNormalizeSchedulingSetting(value);
+        }
+        return 'default';
+    }
+
     getSettings() {
         const stored = localStorage.getItem('quantumSimulatorSettings');
         if (stored) {
@@ -5734,7 +8329,8 @@ class CircuitUI {
                 hideNegligibles: parsed.hideNegligibles ?? true,
                 sortBy: parsed.sortBy ?? 'probability',
                 sortOrder: parsed.sortOrder ?? 'desc',
-                useOptimizedGates: parsed.useOptimizedGates ?? true
+                useOptimizedGates: parsed.useOptimizedGates ?? true,
+                codeGateParallelism: this._normalizeSchedulingSetting(parsed.codeGateParallelism)
             };
         }
         return {
@@ -5745,7 +8341,8 @@ class CircuitUI {
             hideNegligibles: true,
             sortBy: 'probability',
             sortOrder: 'desc',
-            useOptimizedGates: true
+            useOptimizedGates: true,
+            codeGateParallelism: 'default'
         };
     }
 
@@ -5758,11 +8355,18 @@ class CircuitUI {
             hideNegligibles: document.getElementById('setting_hideNegligibles').checked,
             sortBy: document.getElementById('setting_sortBy').value,
             sortOrder: document.getElementById('setting_sortOrder').value,
-            useOptimizedGates: document.getElementById('setting_useOptimizedGates').checked
+            useOptimizedGates: document.getElementById('setting_useOptimizedGates').checked,
+            codeGateParallelism: this._normalizeSchedulingSetting(
+                document.getElementById('setting_codeGateParallelism').value
+            )
         };
 
         localStorage.setItem('quantumSimulatorSettings', JSON.stringify(settings));
         document.getElementById('settingsModal').classList.remove('active');
+
+        if (document.getElementById('qubiCode')) {
+            this._applySchedulingSettingToEditor(settings.codeGateParallelism);
+        }
 
         // Apply max qubits limit
         if (this.circuit.numQubits > settings.maxQubits) {
@@ -5775,8 +8379,12 @@ class CircuitUI {
         // Apply optimization setting to circuit
         this.circuit.setOptimization(settings.useOptimizedGates);
 
-        // Update visualization with new settings
-        this.updateVisualization();
+        // Re-layout circuit from Qubi code when scheduling preference changed
+        if (document.getElementById('qubiCode')) {
+            this.syncCodeToCircuit({ suppressAutoRun: false });
+        } else {
+            this.updateVisualization();
+        }
     }
 
     showGateInfo(gateType) {

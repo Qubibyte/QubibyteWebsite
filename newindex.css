@@ -335,7 +335,7 @@ section {
     background: rgba(85, 74, 158, 0.12);
     top: -100px;
     right: -100px;
-    animation: orbFloat1 15s ease-in-out infinite;
+    animation: orbFloat1 32s ease-in-out infinite;
 }
 
 .hero-orb--2 {
@@ -344,7 +344,7 @@ section {
     background: rgba(6, 135, 201, 0.10);
     bottom: -50px;
     left: -50px;
-    animation: orbFloat2 18s ease-in-out infinite;
+    animation: orbFloat2 38s ease-in-out infinite;
 }
 
 .hero-orb--3 {
@@ -353,7 +353,7 @@ section {
     background: rgba(171, 111, 175, 0.08);
     top: 40%;
     left: 30%;
-    animation: orbFloat3 12s ease-in-out infinite;
+    animation: orbFloat3 28s ease-in-out infinite;
 }
 
 @keyframes orbFloat1 {
@@ -364,7 +364,7 @@ section {
     }
 
     50% {
-        transform: translate(-40px, 40px) scale(1.15);
+        transform: translate(-16px, 18px) scale(1.04);
     }
 }
 
@@ -376,7 +376,7 @@ section {
     }
 
     50% {
-        transform: translate(30px, -50px) scale(1.1);
+        transform: translate(14px, -20px) scale(1.03);
     }
 }
 
@@ -387,12 +387,8 @@ section {
         transform: translate(0, 0) scale(1);
     }
 
-    33% {
-        transform: translate(25px, -30px) scale(1.05);
-    }
-
-    66% {
-        transform: translate(-15px, 20px) scale(0.95);
+    50% {
+        transform: translate(12px, -14px) scale(1.03);
     }
 }
 
@@ -405,6 +401,94 @@ section {
     height: 100%;
     z-index: 0;
     pointer-events: none;
+}
+
+/* Flying meteor accents — welcome section, desktop / Pi only */
+.hero-meteor-field {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .hero-meteor-field {
+        display: block;
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
+    .hero-meteor-wrap {
+        position: absolute;
+        will-change: transform, opacity;
+        animation-timing-function: linear;
+        animation-fill-mode: forwards;
+    }
+
+    .hero-meteor-wrap.is-se {
+        animation-name: heroMeteorDriftSE;
+        animation-duration: var(--meteor-duration, 14s);
+    }
+
+    .hero-meteor-wrap.is-sw {
+        animation-name: heroMeteorDriftSW;
+        animation-duration: var(--meteor-duration, 14s);
+    }
+
+    .hero-meteor-wrap {
+        --meteor-size: 36px;
+    }
+
+    .hero-meteor {
+        display: block;
+        width: var(--meteor-size);
+        height: var(--meteor-size);
+        opacity: 1;
+    }
+
+    .hero-meteor.is-flipped {
+        transform: scaleX(-1);
+    }
+
+    @keyframes heroMeteorDriftSE {
+        0% {
+            transform: translate3d(0, 0, 0);
+            opacity: 0;
+        }
+
+        6% {
+            opacity: var(--meteor-peak-opacity, 0.42);
+        }
+
+        88% {
+            opacity: var(--meteor-peak-opacity, 0.42);
+        }
+
+        100% {
+            transform: translate3d(var(--meteor-travel-x, 85vw), var(--meteor-travel-y, 72vh), 0);
+            opacity: 0;
+        }
+    }
+
+    @keyframes heroMeteorDriftSW {
+        0% {
+            transform: translate3d(0, 0, 0);
+            opacity: 0;
+        }
+
+        6% {
+            opacity: var(--meteor-peak-opacity, 0.42);
+        }
+
+        88% {
+            opacity: var(--meteor-peak-opacity, 0.42);
+        }
+
+        100% {
+            transform: translate3d(calc(var(--meteor-travel-x, 85vw) * -1), var(--meteor-travel-y, 72vh), 0);
+            opacity: 0;
+        }
+    }
 }
 
 /* Hero Content Layout */
@@ -1979,6 +2063,12 @@ html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.s
 }
 
 /* ======================== MEDIA MODE TOGGLE (Carousel <-> Categories) ======================== */
+/* Hidden from Media section listings; direct /blog/N/ URLs remain available */
+#mediaExplorer .media-item-hidden,
+#mediaExplorer [data-item="blog-4"] {
+    display: none !important;
+}
+
 .media-section-wrapper {
     position: relative;
     display: flex;
@@ -3363,6 +3453,9 @@ html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.s
         gap: 12px;
         margin-top: 30px;
         margin-bottom: 20px;
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
     }
 
     .mission-card {
@@ -3619,7 +3712,8 @@ html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.s
 
     /* Hide orbs on mobile for performance */
     .hero-orb,
-    #quantumCanvas {
+    #quantumCanvas,
+    .hero-meteor-field {
         display: none;
     }
 
@@ -3998,11 +4092,21 @@ html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.s
     #Home .home-content > .social-icons {
         position: absolute;
         top: 4px;
+        left: auto;
+        right: 10px;
         display: flex;
         gap: 12px;
         z-index: 11;
         margin: 0;
-        /* right: set by alignHomeSocialIcons() */
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    #Home .home-content > .social-icons.is-aligned {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
     }
 
     .social-icons a img {
@@ -4092,7 +4196,8 @@ html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.s
         animation: none;
     }
 
-    #quantumCanvas {
+    #quantumCanvas,
+    .hero-meteor-field {
         display: none;
     }
 
@@ -4108,6 +4213,7 @@ html:not([data-theme="light"]) .career-highlight-item:hover .site-icon-colored.s
     .navbar,
     .social-icons,
     .hero-orb,
+    .hero-meteor-field,
     .career-cta,
     .audio-wrapper,
     #quantumCanvas {

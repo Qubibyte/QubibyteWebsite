@@ -99,16 +99,20 @@ body.department-page {
 }
 
 .department-hero-title {
+    font-family: var(--font-display);
     font-size: 3.5em;
+    font-weight: 700;
     margin-bottom: 20px;
     color: #fff;
+    letter-spacing: -0.02em;
 }
 
 .department-hero-lead {
     font-size: 1.5em;
     max-width: 800px;
     margin: 0 auto;
-    font-family: 'Khand', Arial, sans-serif;
+    font-family: var(--font-display);
+    font-weight: 500;
     color: rgba(255, 255, 255, 0.92);
 }
 

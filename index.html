@@ -92,6 +92,9 @@
         <div class="hero-orb hero-orb--2"></div>
         <div class="hero-orb hero-orb--3"></div>
 
+        <!-- Flying meteor accents (desktop / Pi only) -->
+        <div class="hero-meteor-field" id="heroMeteorField" aria-hidden="true"></div>
+
         <div class="home-content">
             <div class="container-fluid">
                 <div class="row align-items-start hero-home-row">
@@ -141,7 +144,7 @@
                     </div>
                 </div>
             </div>
-            <div class="social-icons">
+            <div class="social-icons" id="homeSocialIcons">
                 <a href="https://www.linkedin.com/company/qubibyte" target="_blank" aria-label="LinkedIn">
                     <img src="images/linkedin.png" alt="LinkedIn">
                 </a>
@@ -154,6 +157,41 @@
             </div>
         </div>
     </section>
+    <script>
+        (function () {
+            function alignHomeSocialIcons() {
+                var home = document.getElementById('Home');
+                if (!home) return;
+                var icons = home.querySelector('.home-content > .social-icons');
+                var card = home.querySelector('.mission-card');
+                var content = home.querySelector('.home-content');
+                if (!icons || !card || !content) return;
+
+                if (window.innerWidth < 768) {
+                    icons.classList.remove('is-aligned');
+                    icons.style.position = '';
+                    icons.style.top = '';
+                    icons.style.right = '';
+                    icons.style.left = '';
+                    return;
+                }
+
+                var cardRect = card.getBoundingClientRect();
+                var contentRect = content.getBoundingClientRect();
+                icons.style.position = 'absolute';
+                icons.style.top = '';
+                icons.style.left = 'auto';
+                icons.style.right = (Math.max(0, Math.round(contentRect.right - cardRect.right)) + 10) + 'px';
+                icons.classList.add('is-aligned');
+            }
+
+            window.alignHomeSocialIcons = alignHomeSocialIcons;
+            alignHomeSocialIcons();
+            document.addEventListener('DOMContentLoaded', alignHomeSocialIcons);
+            window.addEventListener('resize', alignHomeSocialIcons);
+            window.addEventListener('load', alignHomeSocialIcons);
+        })();
+    </script>
 
     <!-- Products Section -->
     <section id="Tech" class="text-center py-5">
@@ -608,7 +646,7 @@
                                     </span>
                                     <span class="tech-row-info" aria-label="More info" title="More info">&#9432;</span>
                                 </button>
-                                <button type="button" class="tech-row tech-row-item" data-cat="blogs" data-item="blog-4" data-href="/blog/4/">
+                                <button type="button" class="tech-row tech-row-item media-item-hidden" data-cat="blogs" data-item="blog-4" data-href="/blog/4/" hidden>
                                     <span class="tech-row-icon tech-row-icon-img" aria-hidden="true">
                                         <img src="images/blog3thumb.png" alt="" class="tech-row-img">
                                     </span>
@@ -761,7 +799,7 @@
                                     <a href="/blog/3/" class="tech-tile-launch">Read article &rarr;</a>
                                 </div>
 
-                                <div class="tech-detail-panel" data-item="blog-4">
+                                <div class="tech-detail-panel media-item-hidden" data-item="blog-4" hidden>
                                     <div class="tech-detail-header">
                                         <div class="tech-detail-icon tech-detail-icon-img">
                                             <img src="images/blog3thumb.png" alt="Qubibyte Blog #4">
@@ -1583,35 +1621,10 @@
 
     <!-- Hero entrance animation -->
     <script>
-        function alignHomeSocialIcons() {
-            var home = document.getElementById('Home');
-            if (!home) return;
-            var icons = home.querySelector('.home-content > .social-icons');
-            var card = home.querySelector('.mission-card');
-            var content = home.querySelector('.home-content');
-            if (!icons || !card || !content) return;
-
-            if (window.innerWidth < 768) {
-                icons.style.position = '';
-                icons.style.top = '';
-                icons.style.right = '';
-                icons.style.left = '';
-                return;
-            }
-
-            var cardRect = card.getBoundingClientRect();
-            var contentRect = content.getBoundingClientRect();
-            icons.style.position = 'absolute';
-            icons.style.top = '';
-            icons.style.left = 'auto';
-            icons.style.right = (Math.max(0, Math.round(contentRect.right - cardRect.right)) + 10) + 'px';
-        }
-
-        window.addEventListener('resize', alignHomeSocialIcons);
-        window.addEventListener('load', alignHomeSocialIcons);
-
         document.addEventListener("DOMContentLoaded", function () {
-            alignHomeSocialIcons();
+            if (typeof window.alignHomeSocialIcons === 'function') {
+                window.alignHomeSocialIcons();
+            }
             const text1 = "EVERYWHERE,";
             const text2 = "ALL AT ONCE.";
             const element1 = document.getElementById("introeverywhere");
@@ -1718,8 +1731,10 @@
                 if (missionCard) {
                     missionCard.style.opacity = "1";
                 }
-                alignHomeSocialIcons();
-                requestAnimationFrame(alignHomeSocialIcons);
+                if (typeof window.alignHomeSocialIcons === 'function') {
+                    window.alignHomeSocialIcons();
+                    requestAnimationFrame(window.alignHomeSocialIcons);
+                }
 
                 // Mission text content fades in right away
                 missionElement.style.transition = "opacity 0.7s ease-out";
@@ -1745,7 +1760,9 @@
                     heroSubtitle.style.opacity = "1";
                 }
 
-                alignHomeSocialIcons();
+                if (typeof window.alignHomeSocialIcons === 'function') {
+                    window.alignHomeSocialIcons();
+                }
             }
 
             animateEntrance();
@@ -2040,6 +2057,7 @@
             });
         })();
     </script>
+    <script src="/js/hero-meteors.js"></script>
 </body>
 
 </html>

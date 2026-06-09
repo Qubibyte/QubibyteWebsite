@@ -58,6 +58,12 @@
     cursor: grabbing;
 }
 
+@media (pointer: coarse), (hover: none) {
+    .gate-palette .gate-item {
+        touch-action: pan-x;
+    }
+}
+
 .gate-item:active .gate-symbol {
     transform: scale(0.96);
 }
@@ -495,9 +501,16 @@
 .circuit-control-bus.shift-preview {
     opacity: 0.42;
     transform: translateX(var(--shift-preview-dx, 60px));
-    transition: none;
+    transition: none !important;
     z-index: 0;
     pointer-events: none;
+}
+
+/* Keep gate symbols and connector lines in sync when preview ends (not dragging). */
+.gate-on-wire:not(.shift-preview),
+.control-flow-block:not(.shift-preview),
+.circuit-control-bus:not(.shift-preview) {
+    transition: transform 0.2s ease, opacity 0.2s ease;
 }
 
 .control-flow-block.shift-preview:hover {
@@ -507,6 +520,200 @@
 /* Let drag hit-tests reach gate slots under REPEAT/END columns */
 .circuit-canvas.is-gate-drag .control-flow-block {
     pointer-events: none;
+}
+
+.gate-on-wire.gate-drag-source-faded {
+    opacity: 0.28;
+    pointer-events: none;
+}
+
+.placed-gate-drag-ghost {
+    opacity: 0.92;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+    transform-origin: center center;
+    will-change: transform;
+}
+
+.placed-gate-pointer-ghost {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 10001;
+    pointer-events: none;
+    will-change: transform;
+}
+
+.gate-composite-drag-ghost {
+    opacity: 0.95;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    transition: none !important;
+    overflow: visible;
+}
+
+.gate-composite-drag-ghost-piece {
+    position: absolute;
+    pointer-events: none;
+    overflow: visible;
+    box-sizing: border-box;
+}
+
+.circuit-selection-box.is-dragging {
+    transition: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+.circuit-canvas.is-placed-gate-delete-target {
+    outline: 2px dashed color-mix(in srgb, var(--danger) 65%, transparent);
+    outline-offset: -3px;
+    background: color-mix(in srgb, var(--danger) 6%, transparent);
+}
+
+body.is-placed-gate-drag {
+    cursor: grabbing;
+    user-select: none;
+    touch-action: none;
+}
+
+body.is-circuit-drag-select,
+body.is-circuit-drag-select * {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+.circuit-selection-layer.is-drag-passthrough,
+.circuit-selection-layer.is-drag-passthrough .circuit-selection-box {
+    pointer-events: none !important;
+}
+
+.control-flow-block.circuit-selected {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.control-flow-block.gate-drag-source-faded {
+    opacity: 0.28;
+    pointer-events: none;
+}
+
+body.is-placed-gate-drag .gate-on-wire,
+body.is-placed-gate-drag .circuit-control-bus,
+body.is-placed-gate-drag .control-flow-block,
+.circuit-canvas.is-gate-drag .gate-on-wire,
+.circuit-canvas.is-gate-drag .circuit-control-bus,
+.circuit-canvas.is-gate-drag .control-flow-block {
+    transition: none !important;
+}
+
+body.is-placed-gate-drag .gate-on-wire:not(.gate-drag-source-faded):not(.placed-gate-drag-ghost) {
+    cursor: grab;
+}
+
+.circuit-marquee-box {
+    position: absolute;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 85%, white);
+    background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 60;
+    box-sizing: border-box;
+}
+
+.circuit-selection-layer {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 45;
+    overflow: visible;
+}
+
+.circuit-selection-box {
+    position: absolute;
+    border: 2px solid var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    border-radius: 0.375rem;
+    pointer-events: auto;
+    cursor: grab;
+    box-sizing: border-box;
+    min-width: 24px;
+    min-height: 24px;
+    overflow: visible;
+}
+
+.circuit-selection-box.is-dragging {
+    cursor: grabbing;
+}
+
+.circuit-selection-mirror-layer {
+    position: absolute;
+    inset: 0;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.circuit-selection-mirror {
+    box-sizing: border-box;
+    transition: none;
+}
+
+body.is-placed-gate-drag .gate-on-wire.gate-drag-source-faded,
+body.is-placed-gate-drag .control-flow-block.gate-drag-source-faded,
+body.is-placed-gate-drag .circuit-control-bus.gate-drag-source-faded {
+    opacity: 0.06;
+}
+
+.cf-drag-ghost {
+    position: fixed;
+    left: 0;
+    top: 0;
+    z-index: 10001;
+    pointer-events: none;
+    opacity: 0.95;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    will-change: transform;
+    transition: none !important;
+    transform: translate3d(0, 0, 0);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border-radius: 0.5rem;
+    overflow: visible;
+}
+
+
+.circuit-selection-delete {
+    position: absolute;
+    top: -11px;
+    right: -11px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
+    border-radius: 999px;
+    background: var(--danger, #ef4444);
+    color: #fff;
+    font-size: 15px;
+    line-height: 1;
+    font-weight: 700;
+    cursor: pointer;
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    z-index: 2;
+}
+
+.circuit-selection-delete:hover {
+    filter: brightness(1.08);
+}
+
+.gate-on-wire.circuit-selected {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    z-index: 4;
 }
 
 .gate-on-wire {
@@ -704,6 +911,7 @@
     justify-content: center;
     gap: 2px;
     z-index: 2;
+    cursor: grab;
 }
 
 /* Controls are circles; targets stay square (.gate-on-wire) */
@@ -1075,6 +1283,180 @@
     border-color: var(--primary-color);
 }
 
+/* Rotation angle unit-circle picker (RX / RY / RZ modal) */
+.angle-picker-wrap {
+    margin-bottom: 1rem;
+}
+
+.angle-picker {
+    --angle-accent: var(--primary-color);
+    --angle-accent-soft: color-mix(in srgb, var(--angle-accent) 22%, transparent);
+    --angle-surface: color-mix(in srgb, var(--surface-light) 88%, var(--background));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+    width: 100%;
+}
+
+.angle-picker--rx { --angle-accent: var(--gate-x-color); }
+.angle-picker--ry { --angle-accent: var(--gate-y-color); }
+.angle-picker--rz { --angle-accent: var(--gate-z-color); }
+
+.angle-picker__dial {
+    position: relative;
+    width: min(240px, 100%);
+    max-width: 280px;
+    aspect-ratio: 1;
+    touch-action: none;
+    cursor: grab;
+    border-radius: 50%;
+    outline: none;
+}
+
+.angle-picker__dial:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--angle-accent) 35%, transparent);
+}
+
+.angle-picker__dial.is-dragging {
+    cursor: grabbing;
+}
+
+.angle-picker__svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    filter: drop-shadow(0 8px 22px color-mix(in srgb, var(--angle-accent) 18%, transparent));
+}
+
+.angle-picker__glow {
+    fill: url(#anglePickerGlow);
+}
+
+.angle-picker__ring {
+    fill: var(--angle-surface);
+    stroke: color-mix(in srgb, var(--angle-accent) 45%, var(--border-color));
+    stroke-width: 2;
+}
+
+.angle-picker__tick {
+    stroke: color-mix(in srgb, var(--text-secondary) 55%, transparent);
+    stroke-width: 1.5;
+    stroke-linecap: round;
+}
+
+.angle-picker__tick--major {
+    stroke: color-mix(in srgb, var(--angle-accent) 70%, var(--text-secondary));
+    stroke-width: 2.25;
+}
+
+.angle-picker__axis {
+    stroke: color-mix(in srgb, var(--text-secondary) 35%, transparent);
+    stroke-width: 1;
+    stroke-dasharray: 4 5;
+}
+
+.angle-picker__arm {
+    stroke: var(--angle-accent);
+    stroke-width: 3;
+    stroke-linecap: round;
+    transition: stroke-width 0.15s ease;
+}
+
+.angle-picker__dial.is-dragging .angle-picker__arm {
+    stroke-width: 3.5;
+}
+
+.angle-picker__hub {
+    fill: var(--surface);
+    stroke: var(--angle-accent);
+    stroke-width: 2;
+}
+
+.angle-picker__handle {
+    fill: var(--angle-accent);
+    stroke: color-mix(in srgb, var(--surface) 70%, white);
+    stroke-width: 2.5;
+    cursor: grab;
+    transition: r 0.12s ease, filter 0.12s ease;
+}
+
+.angle-picker__label {
+    fill: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    pointer-events: none;
+    user-select: none;
+}
+
+.angle-picker__label--zero {
+    text-anchor: start;
+}
+
+.angle-picker__dial.is-dragging .angle-picker__handle {
+    r: 13;
+    filter: drop-shadow(0 0 8px color-mix(in srgb, var(--angle-accent) 55%, transparent));
+}
+
+.angle-picker.is-snapped .angle-picker__handle,
+.angle-picker__dial.is-snapped .angle-picker__handle {
+    stroke-width: 3;
+}
+
+.angle-picker__readout {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: 0.35rem 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.angle-picker__value-deg {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.angle-picker__value-rad {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.angle-picker__hint {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.35;
+    max-width: 22rem;
+    opacity: 0.88;
+}
+
+.parameter-group--numeric-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+@media (max-width: 480px) {
+    .parameter-group--numeric-row {
+        grid-template-columns: 1fr;
+    }
+
+    .angle-picker__dial {
+        width: min(220px, 88vw);
+    }
+}
+
+#parameterModal .modal-content {
+    width: min(420px, 94vw);
+}
+
 /* Animations */
 @keyframes gatePlace {
     0% {
@@ -1259,8 +1641,11 @@
 }
 
 .export-icon {
-    font-size: 2rem;
-    line-height: 1;
+    font-size: 0;
+    line-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .export-label {
@@ -1450,7 +1835,8 @@
     }
 
     .export-icon {
-        font-size: 1.5rem;
+        font-size: 0;
+        line-height: 0;
     }
 
     .export-label {

@@ -117,6 +117,323 @@ class QuantumCircuit {
         this.updateMaxColumn();
     }
 
+    removeGateByRef(gate) {
+        if (!gate) return;
+        this.gates = this.gates.filter((g) => g !== gate);
+        this.updateMaxColumn();
+    }
+
+    removeGatesByRef(gates) {
+        if (!gates || !gates.length) return;
+        const drop = new Set(gates.filter(Boolean));
+        if (!drop.size) return;
+        this.gates = this.gates.filter((g) => !drop.has(g));
+        this.updateMaxColumn();
+    }
+
+    _isExcludedGate(gate, excludeGate = null, excludeGates = null) {
+        if (!gate) return false;
+        if (excludeGate && gate === excludeGate) return true;
+        if (excludeGates && excludeGates.has(gate)) return true;
+        return false;
+    }
+
+    _virtualObstacleTouchesQubit(virtual, qubit) {
+        if (!virtual || !Array.isArray(virtual.qubits)) return false;
+        return virtual.qubits.includes(qubit);
+    }
+
+    cloneGate(gate) {
+        return {
+            type: gate.type,
+            qubit: gate.qubit,
+            target: gate.target,
+            column: gate.column,
+            params: gate.params ? JSON.parse(JSON.stringify(gate.params)) : {},
+            multiQubits: gate.multiQubits ? [...gate.multiQubits] : null
+        };
+    }
+
+    /** @returns {boolean} false if delta would place any wire out of range */
+    applyGateQubitDelta(gate, deltaQ, qubitLimit = this.numQubits) {
+        if (!deltaQ) return true;
+        for (const q of this.getQubitsInvolvedInGate(gate)) {
+            const next = q + deltaQ;
+            if (next < 0 || next >= qubitLimit) return false;
+        }
+        gate.qubit += deltaQ;
+        if (gate.target !== null && gate.target !== undefined) {
+            gate.target += deltaQ;
+        }
+        if (gate.multiQubits) {
+            gate.multiQubits = gate.multiQubits.map((q) => q + deltaQ);
+        }
+        const joint = gate.params && gate.params.jointQubits;
+        if (Array.isArray(joint)) {
+            gate.params.jointQubits = joint.map((q) => q + deltaQ);
+        }
+        return true;
+    }
+
+    gatesSamePlacement(a, b) {
+        if (!a || !b) return false;
+        if (a.type !== b.type || a.qubit !== b.qubit || a.column !== b.column) return false;
+        if (a.target !== b.target) return false;
+        const ma = a.multiQubits || null;
+        const mb = b.multiQubits || null;
+        if (JSON.stringify(ma) !== JSON.stringify(mb)) return false;
+        const pa = a.params || {};
+        const pb = b.params || {};
+        return JSON.stringify(pa) === JSON.stringify(pb);
+    }
+
+    /**
+     * Move an existing gate: the drop wire becomes the new anchor and the gate lands exactly on
+     * the hovered column, pushing any obstacles out of the way via the shared group cascade.
+     * Routing through moveCircuitGroup means a multi-qubit/controlled gate is checked against every
+     * wire it spans — it can no longer be dropped on top of a gate sitting under its control wire.
+     * @returns {boolean} success
+     */
+    moveGate(gate, newAnchorQubit, hoverColumn, excludeGates = null) {
+        if (!gate) return false;
+        const deltaQ = newAnchorQubit - gate.qubit;
+        const deltaCol = hoverColumn - gate.column;
+        return this.moveCircuitGroup([gate], [], deltaQ, deltaCol);
+    }
+
+    /** Leftmost REPEAT/END column at or after fromColumn (null if none). */
+    _minControlFlowColumnAtOrAfter(fromColumn, excludeCF = null) {
+        const cfExclude = excludeCF instanceof Set ? excludeCF : null;
+        let min = null;
+        for (const cf of this.controlFlow) {
+            if (cfExclude?.has(cf)) continue;
+            if (cf.column < fromColumn) continue;
+            if (min === null || cf.column < min) min = cf.column;
+        }
+        return min;
+    }
+
+    /** Whether a gate shifts during a bulk push (wire-local below CF, all wires at/after CF). */
+    _gateShouldBulkShift(fromColumn, gate, affectedQubits, shiftAllWires, minCfColumn) {
+        if (gate.column < fromColumn) return false;
+        if (shiftAllWires) return true;
+        if (minCfColumn !== null && gate.column >= minCfColumn) return true;
+        return this.gateTouchesQubitSet(gate, affectedQubits);
+    }
+
+    /**
+     * Minimal rightward cascade so existing gates/REPEAT/END make room for a dropped selection.
+     *
+     * Obstacles are handled as rigid COLUMN units: every gate sharing a column moves together by
+     * the same amount, so an aligned column (e.g. a row of H gates across all wires) never splits
+     * apart when only one of its wires is what collided. Each column slides to the smallest column
+     * >= its original that is free of:
+     *   - cells the selection will occupy (gates block their own wires; REPEAT/END block every wire),
+     *   - columns already repositioned in this pass (preserves order, prevents overlap),
+     * while never crossing a REPEAT/END barrier it was originally behind.
+     *
+     * Direction-agnostic (only ever pushes right) and never moves a column further than needed, so
+     * far-away gates stay put and every affected wire is handled — not just the dragged one.
+     *
+     * @returns {{gateMoves: Array, cfMoves: Array, needsShift: boolean}}
+     */
+    _resolveGroupObstacleMoves(gatePlacements, cfPlacements, excludeGates = null, excludeCF = null) {
+        const gateExclude = excludeGates instanceof Set ? excludeGates : null;
+        const cfExclude = excludeCF instanceof Set ? excludeCF : null;
+
+        // Cells/columns the selection will occupy (fixed — obstacles must avoid these).
+        const selGateCells = new Set();   // `${col}:${q}`
+        const selGateColumns = new Set(); // any column with a selection gate
+        for (const { candidate, targetCol } of gatePlacements || []) {
+            for (const q of this.getQubitsInvolvedInGate(candidate)) {
+                selGateCells.add(`${targetCol}:${q}`);
+            }
+            selGateColumns.add(targetCol);
+        }
+        const selCfCols = new Set();      // columns where the selection drops REPEAT/END (block all wires)
+        for (const { targetCol } of cfPlacements || []) {
+            selCfCols.add(targetCol);
+        }
+
+        // Group the non-selected obstacles into rigid per-column units.
+        const colUnits = new Map(); // originalColumn -> { col, gates, wires, cfRefs }
+        const unitFor = (col) => {
+            let u = colUnits.get(col);
+            if (!u) {
+                u = { col, gates: [], wires: new Set(), cfRefs: [] };
+                colUnits.set(col, u);
+            }
+            return u;
+        };
+        for (const gate of this.gates) {
+            if (gateExclude?.has(gate)) continue;
+            const u = unitFor(gate.column);
+            u.gates.push(gate);
+            for (const q of this.getQubitsInvolvedInGate(gate)) u.wires.add(q);
+        }
+        for (const cf of this.controlFlow) {
+            if (cfExclude?.has(cf)) continue;
+            unitFor(cf.column).cfRefs.push(cf);
+        }
+
+        // Occupancy accumulated as column units are placed.
+        const occCells = new Set(selGateCells);     // occupied (col,q) cells
+        const occColumns = new Set(selGateColumns); // columns holding any gate (a CF needs an empty column)
+        const blockedCols = new Set(selCfCols);     // columns owned by a REPEAT/END (exclusive)
+
+        const unitFeasible = (unit, c) => {
+            // A REPEAT/END column must own the whole column; a gate column only its own wires.
+            if (unit.cfRefs.length) {
+                return !blockedCols.has(c) && !occColumns.has(c);
+            }
+            if (blockedCols.has(c)) return false;
+            for (const q of unit.wires) {
+                if (occCells.has(`${c}:${q}`)) return false;
+            }
+            return true;
+        };
+
+        const units = [...colUnits.values()].sort((a, b) => a.col - b.col);
+
+        const gateMoves = [];
+        const cfMoves = [];
+        let cfFloor = -1; // new column of the most recent REPEAT/END barrier passed
+
+        for (const unit of units) {
+            let c = Math.max(unit.col, cfFloor + 1);
+            while (!unitFeasible(unit, c)) c++;
+
+            // Commit the entire column at c.
+            occColumns.add(c);
+            for (const gate of unit.gates) {
+                for (const q of this.getQubitsInvolvedInGate(gate)) occCells.add(`${c}:${q}`);
+            }
+            if (unit.cfRefs.length) {
+                blockedCols.add(c);
+                cfFloor = c;
+            }
+
+            if (c !== unit.col) {
+                for (const gate of unit.gates) gateMoves.push({ gate, fromCol: unit.col, toCol: c });
+                for (const cf of unit.cfRefs) cfMoves.push({ cf, fromCol: unit.col, toCol: c });
+            }
+        }
+
+        return { gateMoves, cfMoves, needsShift: gateMoves.length > 0 || cfMoves.length > 0 };
+    }
+
+    /** Preview group placement without mutating the circuit. */
+    simulateGroupPlacement(gates, deltaQ, deltaCol, controlFlowItems = [], excludeGates = null, qubitLimit = null) {
+        const limit = qubitLimit ?? this.numQubits;
+
+        const gatePlacements = [];
+        for (const gate of gates || []) {
+            const candidate = this.cloneGate(gate);
+            if (!this.applyGateQubitDelta(candidate, deltaQ, limit)) {
+                return { valid: false, needsShift: false, gateMoves: [], cfMoves: [] };
+            }
+            const targetCol = gate.column + deltaCol;
+            if (targetCol < 0) {
+                return { valid: false, needsShift: false, gateMoves: [], cfMoves: [] };
+            }
+            gatePlacements.push({ candidate, targetCol });
+        }
+
+        const cfPlacements = [];
+        for (const cf of controlFlowItems || []) {
+            const targetCol = cf.column + deltaCol;
+            if (targetCol < 0) {
+                return { valid: false, needsShift: false, gateMoves: [], cfMoves: [] };
+            }
+            cfPlacements.push({ cf, targetCol });
+        }
+
+        // Selection gates still live in this.gates during preview — exclude them as obstacles.
+        const excludeSet = excludeGates instanceof Set ? excludeGates : new Set((gates || []).filter(Boolean));
+        const excludeCF = new Set((controlFlowItems || []).filter(Boolean));
+
+        const { gateMoves, cfMoves, needsShift } =
+            this._resolveGroupObstacleMoves(gatePlacements, cfPlacements, excludeSet, excludeCF);
+
+        return { valid: true, needsShift, gateMoves, cfMoves };
+    }
+
+    /**
+     * Move gates and/or REPEAT/END together. Any obstacles at the destination are
+     * pushed right by the minimal cascade in _resolveGroupObstacleMoves.
+     */
+    moveCircuitGroup(gates, cfs, deltaQ, deltaCol) {
+        const gateGroup = [...new Set((gates || []).filter(Boolean))];
+        const cfGroup = [...new Set((cfs || []).filter(Boolean))];
+        if (!gateGroup.length && !cfGroup.length) return false;
+        if (deltaQ === 0 && deltaCol === 0) return true;
+
+        for (const gate of gateGroup) {
+            const probe = this.cloneGate(gate);
+            if (!this.applyGateQubitDelta(probe, deltaQ)) return false;
+            if (gate.column + deltaCol < 0) return false;
+        }
+        for (const cf of cfGroup) {
+            if (cf.column + deltaCol < 0) return false;
+        }
+
+        const gateUnchanged = gateGroup.every((gate) => {
+            const probe = this.cloneGate(gate);
+            this.applyGateQubitDelta(probe, deltaQ);
+            probe.column = gate.column + deltaCol;
+            return this.gatesSamePlacement(gate, probe);
+        });
+        const cfUnchanged = cfGroup.every((cf) => cf.column + deltaCol === cf.column);
+        if (gateUnchanged && cfUnchanged) return true;
+
+        const gateSnapshots = gateGroup.map((g) => this.cloneGate(g));
+        const cfSnapshots = cfGroup.map((cf) => ({ cf, column: cf.column }));
+
+        for (const gate of gateGroup) this.removeGateByRef(gate);
+        const cfSet = new Set(cfGroup);
+        this.controlFlow = this.controlFlow.filter((cf) => !cfSet.has(cf));
+
+        const gatePlacements = gateSnapshots.map((orig) => {
+            const candidate = this.cloneGate(orig);
+            this.applyGateQubitDelta(candidate, deltaQ);
+            return {
+                candidate,
+                targetCol: orig.column + deltaCol
+            };
+        });
+
+        const cfPlacements = cfSnapshots.map(({ cf, column }) => ({
+            cf,
+            targetCol: column + deltaCol
+        }));
+
+        // Selected items already removed above, so the remaining gates/CF are the obstacles.
+        const { gateMoves, cfMoves } = this._resolveGroupObstacleMoves(gatePlacements, cfPlacements, null, null);
+        for (const { gate, toCol } of gateMoves) gate.column = toCol;
+        for (const { cf, toCol } of cfMoves) cf.column = toCol;
+
+        for (const placement of gatePlacements) {
+            placement.candidate.column = placement.targetCol;
+            this.gates.push(placement.candidate);
+        }
+        for (const placement of cfPlacements) {
+            placement.cf.column = placement.targetCol;
+            this.controlFlow.push(placement.cf);
+        }
+
+        this.updateMaxColumn();
+        this.refreshRepeatEndPairings();
+        return true;
+    }
+
+    moveGateGroup(gates, deltaQ, deltaCol) {
+        return this.moveCircuitGroup(gates, [], deltaQ, deltaCol);
+    }
+
+    moveControlFlowGroup(cfs, deltaCol) {
+        return this.moveCircuitGroup([], cfs, 0, deltaCol);
+    }
+
     updateMaxColumn() {
         const gateMax = this.gates.length > 0 
             ? Math.max(...this.gates.map(g => g.column))
@@ -202,26 +519,50 @@ class QuantumCircuit {
     }
 
     /** Gates that shift right on insert-with-push. */
-    getGatesToShiftForInsert(qubit, fromColumn) {
+    getGatesToShiftForInsert(qubit, fromColumn, excludeGate = null, excludeGates = null) {
         // REPEAT/END span every wire — pushing them shifts the whole column timeline.
         if (this.getControlFlowAtColumn(fromColumn)) {
-            return this.gates.filter((gate) => gate.column >= fromColumn);
+            return this.gates.filter(
+                (gate) => !this._isExcludedGate(gate, excludeGate, excludeGates) && gate.column >= fromColumn
+            );
         }
+
         const affected = this.getAffectedQubitsForInsertShift(qubit, fromColumn);
+        const minCfColumn = this._minControlFlowColumnAtOrAfter(fromColumn);
+
         return this.gates.filter(
-            (gate) => gate.column >= fromColumn && this.gateTouchesQubitSet(gate, affected)
+            (gate) =>
+                !this._isExcludedGate(gate, excludeGate, excludeGates) &&
+                this._gateShouldBulkShift(fromColumn, gate, affected, false, minCfColumn)
         );
     }
 
     /** Column positions that block or absorb an insert on this wire. */
-    getInsertObstacleColumns(qubit, hoverColumn) {
+    getInsertObstacleColumns(
+        qubit,
+        hoverColumn,
+        excludeGate = null,
+        excludeGates = null,
+        virtualObstacles = null,
+        excludeControlFlow = null
+    ) {
         const cols = [];
         for (const gate of this.gates) {
+            if (this._isExcludedGate(gate, excludeGate, excludeGates)) continue;
             if (this.gateAffectsQubit(gate, qubit)) {
                 cols.push(gate.column);
             }
         }
+        if (Array.isArray(virtualObstacles)) {
+            for (const virtual of virtualObstacles) {
+                if (virtual.column >= hoverColumn && this._virtualObstacleTouchesQubit(virtual, qubit)) {
+                    cols.push(virtual.column);
+                }
+            }
+        }
+        const cfExclude = excludeControlFlow instanceof Set ? excludeControlFlow : null;
         for (const cf of this.controlFlow) {
+            if (cfExclude?.has(cf)) continue;
             cols.push(cf.column);
         }
         return [...new Set(cols)].filter((c) => c >= hoverColumn).sort((a, b) => a - b);
@@ -231,8 +572,22 @@ class QuantumCircuit {
      * Whether inserting at hoverColumn should push correlated gates / REPEAT|END forward.
      * Only when dropping on the same column as an existing obstacle (occupied slot).
      */
-    getInsertPlan(qubit, hoverColumn) {
-        const sorted = this.getInsertObstacleColumns(qubit, hoverColumn);
+    getInsertPlan(
+        qubit,
+        hoverColumn,
+        excludeGate = null,
+        excludeGates = null,
+        virtualObstacles = null,
+        excludeControlFlow = null
+    ) {
+        const sorted = this.getInsertObstacleColumns(
+            qubit,
+            hoverColumn,
+            excludeGate,
+            excludeGates,
+            virtualObstacles,
+            excludeControlFlow
+        );
         const next = sorted[0];
         if (next === undefined || hoverColumn !== next) {
             return { shouldShift: false, insertColumn: hoverColumn };
@@ -240,13 +595,48 @@ class QuantumCircuit {
         return { shouldShift: true, insertColumn: next };
     }
 
+    /** Whether placing REPEAT/END at hoverColumn needs a push (any gate or CF on that column). */
+    getControlFlowInsertPlan(hoverColumn, excludeControlFlow = null) {
+        const cfExclude = excludeControlFlow instanceof Set ? excludeControlFlow : null;
+        for (const cf of this.controlFlow) {
+            if (cfExclude?.has(cf)) continue;
+            if (cf.column === hoverColumn) {
+                return { shouldShift: true, insertColumn: hoverColumn };
+            }
+        }
+        if (this.gates.some((gate) => gate.column === hoverColumn)) {
+            return { shouldShift: true, insertColumn: hoverColumn };
+        }
+        return { shouldShift: false, insertColumn: hoverColumn };
+    }
+
+    /** Push every gate and CF at/after fromColumn — REPEAT/END span all wires. */
+    shiftForControlFlowInsert(fromColumn, excludeGates = null, excludeCF = null) {
+        for (const gate of this.gates) {
+            if (excludeGates?.has(gate)) continue;
+            if (gate.column >= fromColumn) gate.column += 1;
+        }
+        const cfExclude = excludeCF instanceof Set ? excludeCF : null;
+        for (const cf of this.controlFlow) {
+            if (cfExclude?.has(cf)) continue;
+            if (cf.column >= fromColumn) cf.column += 1;
+        }
+        this.refreshRepeatEndPairings();
+        this.updateMaxColumn();
+    }
+
     /**
      * Shift gates at column >= fromColumn (all wires if inserting before REPEAT/END,
      * otherwise the insert wire and multi-qubit partners); also REPEAT/END markers.
      */
-    shiftForInsertOnWire(qubit, fromColumn) {
-        for (const gate of this.getGatesToShiftForInsert(qubit, fromColumn)) {
+    shiftForInsertOnWire(qubit, fromColumn, excludeGate = null, excludeGates = null, virtualObstacles = null) {
+        for (const gate of this.getGatesToShiftForInsert(qubit, fromColumn, excludeGate, excludeGates)) {
             gate.column += 1;
+        }
+        if (Array.isArray(virtualObstacles)) {
+            for (const virtual of virtualObstacles) {
+                if (virtual.column >= fromColumn) virtual.column += 1;
+            }
         }
         for (const cf of this.controlFlow) {
             if (cf.column >= fromColumn) {

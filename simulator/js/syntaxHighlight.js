@@ -41,6 +41,66 @@ const QUBI_BUILTIN_COMPLETIONS = /** @type {QubiAcItem[]} */ ([
         label: '#define',
         desc: 'Define a custom unitary from a bracket matrix',
         examples: ['#define U [1 0; 0 1]', '#define R [0 -1i; 1i 0]', '#define I4 [1 0 0 0; 0 1 0 0; 0 0 1 0; 0 0 0 1]']
+    },
+    {
+        insert: '#settings',
+        label: '#settings',
+        desc: 'Per-file gate scheduling and other file settings',
+        examples: ['#settings Scheduling "always"']
+    }
+]);
+
+const QUBI_SETTINGS_SCHEDULING_COMPLETIONS = /** @type {QubiAcItem[]} */ ([
+    {
+        insert: '#settings Scheduling',
+        label: 'Scheduling',
+        desc: 'Gate scheduling mode for mapping Qubi code to circuit columns',
+        examples: ['#settings Scheduling "always"']
+    }
+]);
+
+const QUBI_SETTINGS_MODE_COMPLETIONS = /** @type {QubiAcItem[]} */ ([
+    {
+        insert: '#settings Scheduling "always"',
+        label: 'always',
+        desc: 'Maximum parallelism — pack gates whenever qubits do not conflict',
+        examples: ['H 0', 'Y 1  → same column']
+    },
+    {
+        insert: '#settings Scheduling "compressed"',
+        label: 'compressed',
+        desc: 'Per wire, slide each gate to the earliest free step — never before an earlier line on that qubit',
+        examples: [
+            'H 0',
+            'H (0,1)',
+            'X 1',
+            'H 2',
+            '→ col 0: H0 + H1 + H2; col 1: H0 + X1'
+        ]
+    },
+    {
+        insert: '#settings Scheduling "same_gate"',
+        label: 'same_gate',
+        desc: 'Pack all gates of the same type together (if qubits allow)',
+        examples: ['H 0', 'T 2', 'H 3  → H gates share a column, T separate']
+    },
+    {
+        insert: '#settings Scheduling "same_gate_continuous"',
+        label: 'same_gate_continuous',
+        desc: 'Pack consecutive runs of the same gate type only',
+        examples: ['H 0', 'H 1', 'T 2', 'H 3  → three timesteps']
+    },
+    {
+        insert: '#settings Scheduling "same_line"',
+        label: 'same_line',
+        desc: 'Parallel only within one line (e.g. H (0,1,2)), not across lines',
+        examples: ['H (0,1,2)  → one step; three H lines  → three steps']
+    },
+    {
+        insert: '#settings Scheduling "never"',
+        label: 'never',
+        desc: 'Sequential — one gate per timestep',
+        examples: ['H (0,1,2)  → three timesteps']
     }
 ]);
 
@@ -147,7 +207,7 @@ class QubiSyntaxHighlighter {
     }
 
     setCode(code, opts = {}) {
-        const { preserveUndo = false } = opts || {};
+        const { preserveUndo = false, focus = true } = opts || {};
         const text = code == null ? '' : String(code);
         if (!this.textarea) return;
 
@@ -155,28 +215,36 @@ class QubiSyntaxHighlighter {
             // Prefer an undoable edit that integrates with native Ctrl+Z.
             // execCommand is deprecated but still the most reliable cross-browser way
             // to produce a real undo step for programmatic inserts.
-            this.textarea.focus({ preventScroll: true });
+            if (focus) {
+                this.textarea.focus({ preventScroll: true });
+            }
             try {
                 this.textarea.setSelectionRange(0, this.textarea.value.length);
             } catch {
                 /* ignore */
             }
 
-            let usedUndoablePath = false;
-            try {
-                if (typeof document !== 'undefined' && typeof document.execCommand === 'function') {
-                    usedUndoablePath = document.execCommand('insertText', false, text);
+            if (focus) {
+                let usedUndoablePath = false;
+                try {
+                    if (typeof document !== 'undefined' && typeof document.execCommand === 'function') {
+                        usedUndoablePath = document.execCommand('insertText', false, text);
+                    }
+                } catch {
+                    usedUndoablePath = false;
                 }
-            } catch {
-                usedUndoablePath = false;
-            }
 
-            if (!usedUndoablePath) {
-                if (typeof this.textarea.setRangeText === 'function') {
-                    this.textarea.setRangeText(text, 0, this.textarea.value.length, 'end');
-                } else {
-                    this.textarea.value = text;
+                if (!usedUndoablePath) {
+                    if (typeof this.textarea.setRangeText === 'function') {
+                        this.textarea.setRangeText(text, 0, this.textarea.value.length, 'end');
+                    } else {
+                        this.textarea.value = text;
+                    }
                 }
+            } else if (typeof this.textarea.setRangeText === 'function') {
+                this.textarea.setRangeText(text, 0, this.textarea.value.length, 'end');
+            } else {
+                this.textarea.value = text;
             }
         } else {
             this.textarea.value = text;
@@ -349,6 +417,39 @@ class QubiSyntaxHighlighter {
             return { replaceStart, replaceEnd: cursor, partial, mode: 'directive' };
         }
 
+        const settingsMode = linePrefix.match(/^\s*#settings\s+Scheduling\s+"([^"]*)$/i);
+        if (settingsMode) {
+            return {
+                replaceStart: lineStart,
+                replaceEnd: cursor,
+                partial: settingsMode[1],
+                mode: 'settings-mode'
+            };
+        }
+
+        if (/^\s*#settings\s+Scheduling\s*$/i.test(linePrefix)) {
+            return {
+                replaceStart: lineStart,
+                replaceEnd: cursor,
+                partial: '',
+                mode: 'settings-mode'
+            };
+        }
+
+        const settingsSched = linePrefix.match(/^\s*(#settings(?:\s+Scheduling)?)\s*$/i);
+        if (settingsSched) {
+            const token = settingsSched[1];
+            const replaceStart = lineStart + linePrefix.indexOf('#');
+            return { replaceStart, replaceEnd: cursor, partial: token, mode: 'settings-scheduling' };
+        }
+
+        const settingsMid = linePrefix.match(/^\s*(#settings\s+\S*)$/i);
+        if (settingsMid && !/^#settings\s+Scheduling(\s+"[^"]*")?\s*$/i.test(settingsMid[1])) {
+            const token = settingsMid[1];
+            const replaceStart = lineStart + linePrefix.indexOf('#');
+            return { replaceStart, replaceEnd: cursor, partial: token, mode: 'settings-scheduling' };
+        }
+
         const gate = linePrefix.match(/^\s*([A-Za-z0-9]*)$/);
         if (!gate) return null;
         const partial = gate[1];
@@ -360,6 +461,25 @@ class QubiSyntaxHighlighter {
     filterCompletionItems(items, partial, mode) {
         const p = partial.toLowerCase();
         const out = [];
+        if (mode === 'settings-scheduling') {
+            for (const it of QUBI_SETTINGS_SCHEDULING_COMPLETIONS) {
+                if (!it.insert.toLowerCase().startsWith(p)) continue;
+                if (it.insert.toLowerCase() === p) continue;
+                out.push(it);
+            }
+            return out.slice(0, 14);
+        }
+        if (mode === 'settings-mode') {
+            const quote = partial.toLowerCase();
+            for (const it of QUBI_SETTINGS_MODE_COMPLETIONS) {
+                const modeName = it.label.toLowerCase();
+                if (quote && !modeName.startsWith(quote) && !it.insert.toLowerCase().includes(quote)) continue;
+                if (modeName === quote) continue;
+                out.push(it);
+            }
+            if (!quote) return QUBI_SETTINGS_MODE_COMPLETIONS.slice();
+            return out.slice(0, 14);
+        }
         for (const it of items) {
             const ins = it.insert;
             if (mode === 'directive') {
@@ -544,12 +664,15 @@ class QubiSyntaxHighlighter {
      * Used so applying "RX" replaces "RE" when the cursor is still inside that token.
      * @param {string} value
      * @param {number} tokenStart
-     * @param {'gate' | 'directive'} mode
+     * @param {'gate' | 'directive' | 'settings-scheduling' | 'settings-mode'} mode
      */
     getAutocompleteTokenEnd(value, tokenStart, mode) {
         const v = value;
         const n = v.length;
         if (tokenStart < 0 || tokenStart >= n) return tokenStart;
+        if (mode === 'settings-scheduling' || mode === 'settings-mode') {
+            return this._acReplaceEnd ?? tokenStart;
+        }
         if (mode === 'directive') {
             if (v[tokenStart] !== '#') return tokenStart;
             let i = tokenStart + 1;
@@ -1157,9 +1280,23 @@ class QubiSyntaxHighlighter {
             return null;
         }
 
+        // #settings Scheduling "…"
+        if (/^#settings\b/i.test(line)) {
+            const m = line.match(/^#settings\s+Scheduling\s+"([^"]+)"\s*$/i);
+            if (!m) {
+                return '#settings requires Scheduling "mode" (never, same_line, same_gate_continuous, same_gate, always)';
+            }
+            const raw = String(m[1]).trim();
+            const allowed = new Set(['never', 'same_line', 'same_gate_continuous', 'same_gate', 'always', 'compressed', 'sameType']);
+            if (!allowed.has(raw)) {
+                return `Invalid scheduling mode "${raw}". Use never, same_line, same_gate_continuous, same_gate, always, or compressed.`;
+            }
+            return null;
+        }
+
         // Unknown preprocessor directive
         if (/^#/.test(line)) {
-            return 'Unknown directive. Valid directives: #import, #include, #define';
+            return 'Unknown directive. Valid directives: #import, #include, #define, #settings';
         }
 
         // REPEAT N
@@ -1534,7 +1671,7 @@ class QubiSyntaxHighlighter {
         let remaining = line;
 
         // Preprocessor directives — color the entire line
-        const ppMatch = remaining.match(/^(\s*)(#(?:import|include|define)\b)(.*)/i);
+        const ppMatch = remaining.match(/^(\s*)(#(?:import|include|define|settings)\b)(.*)/i);
         if (ppMatch) {
             result += ppMatch[1]; // leading whitespace
             result += `<span class="token-preprocessor">${this.escapeHtml(ppMatch[2])}${this.escapeHtml(ppMatch[3])}</span>`;

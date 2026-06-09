@@ -62,7 +62,7 @@
         <div class="main-content">
             <!-- Left Sidebar - Gate Palette -->
             <aside class="sidebar">
-                <p class="mobile-gate-hint">Tap a gate, then tap a slot on the circuit to place it</p>
+                <p class="mobile-gate-hint">Tap or drag a gate, then drop it on a circuit slot</p>
                 <div class="sidebar-gates-panel">
                     <h2 class="sidebar-panel-title">Gates</h2>
                     <div class="gate-palette">
@@ -199,6 +199,16 @@
                             <button id="zoomInBtn" class="btn btn-small" title="Zoom In">+</button>
                         </div>
                         <div class="circuit-info">
+                            <div class="circuit-history-nav" role="group" aria-label="Edit history">
+                                <button type="button" id="circuitUndoBtn" class="btn btn-small circuit-history-btn"
+                                    title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+                                    <span class="circuit-history-btn-symbol" aria-hidden="true">&#x2190;</span>
+                                </button>
+                                <button type="button" id="circuitRedoBtn" class="btn btn-small circuit-history-btn"
+                                    title="Redo (Ctrl+Y)" aria-label="Redo" disabled>
+                                    <span class="circuit-history-btn-symbol" aria-hidden="true">&#x2192;</span>
+                                </button>
+                            </div>
                             <span id="circuitDepth">Depth: 0</span>
                             <span id="gateCount">Gates: 0</span>
                             <span id="stepInfo">Step: 0/0</span>
@@ -307,6 +317,11 @@
                                 <button type="button" class="qubi-splitbtn-item" role="menuitem" id="loadQubiFromZipItem">From zip (.zip)</button>
                             </div>
                         </span>
+                        <button type="button" id="qubiHistoryBtn" class="btn btn-small qubi-toolbar-btn qubi-history-btn" title="Version history" aria-label="Version history for current file">
+                            <svg class="qubi-history-btn-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path fill="currentColor" d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 1 1 7 7v-2a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+                            </svg>
+                        </button>
                         <input type="file" id="qubiFileInput" accept=".qubi" style="display: none;">
                         <input type="file" id="qubiFolderInput" accept=".qubi" webkitdirectory directory multiple style="display: none;">
                         <input type="file" id="qubiZipInput" accept=".zip" style="display: none;">
@@ -375,6 +390,66 @@
         </div>
     </div>
 
+    <!-- Qubi Version History Modal -->
+    <div id="qubiHistoryModal" class="modal qubi-history-modal" aria-hidden="true" role="dialog" aria-labelledby="qubiHistoryTitle" aria-modal="true">
+        <div class="qubi-history-backdrop" id="qubiHistoryBackdrop"></div>
+        <div class="modal-content qubi-history-content">
+            <header class="qubi-history-header">
+                <div class="qubi-history-header-text">
+                    <h3 id="qubiHistoryTitle">Version history</h3>
+                    <div class="qubi-history-file-row">
+                        <span id="qubiHistoryFileName" class="qubi-history-file-name">main.qubi</span>
+                        <span id="qubiHistoryBranchMeta" class="qubi-history-branch-meta" hidden></span>
+                    </div>
+                </div>
+                <button type="button" id="qubiHistoryCloseBtn" class="qubi-history-close-btn" title="Close" aria-label="Close version history">×</button>
+            </header>
+            <div class="qubi-history-body">
+                <aside class="qubi-history-timeline-wrap" aria-label="Version timeline">
+                    <div id="qubiHistoryTimeline" class="qubi-history-timeline"></div>
+                </aside>
+                <section class="qubi-history-diff-wrap" aria-label="Version snapshot">
+                    <div id="qubiHistoryDiff" class="qubi-history-diff"></div>
+                    <div id="qubiHistoryEmpty" class="qubi-history-empty" hidden>No versions saved yet for this file.</div>
+                </section>
+            </div>
+            <div id="qubiHistoryLostPanel" class="qubi-history-lost-panel" hidden>
+                <div class="qubi-history-lost-panel-inner">
+                    <header class="qubi-history-lost-header">
+                        <h4>Lost &amp; Found</h4>
+                        <button type="button" id="qubiHistoryLostCloseBtn" class="qubi-history-close-btn" title="Back" aria-label="Close Lost and Found">×</button>
+                    </header>
+                    <p class="qubi-history-lost-desc">Recovered histories from closed tabs or page refreshes. Import to open as a new file tab.</p>
+                    <div id="qubiHistoryLostList" class="qubi-history-lost-list"></div>
+                </div>
+            </div>
+            <div id="qubiHistoryConfirmPanel" class="qubi-history-confirm-panel" hidden role="alertdialog" aria-modal="true" aria-labelledby="qubiHistoryConfirmTitle" aria-describedby="qubiHistoryConfirmMessage">
+                <div class="qubi-history-confirm-card">
+                    <div class="qubi-history-confirm-icon-wrap" aria-hidden="true">
+                        <span class="qubi-history-confirm-icon">!</span>
+                    </div>
+                    <h4 id="qubiHistoryConfirmTitle" class="qubi-history-confirm-title">Clear version history?</h4>
+                    <p id="qubiHistoryConfirmMessage" class="qubi-history-confirm-message"></p>
+                    <div class="qubi-history-confirm-actions">
+                        <button type="button" id="qubiHistoryConfirmCancelBtn" class="btn btn-secondary">Cancel</button>
+                        <button type="button" id="qubiHistoryConfirmOkBtn" class="btn qubi-history-btn-danger">Clear history</button>
+                    </div>
+                </div>
+            </div>
+            <footer class="qubi-history-footer">
+                <div class="qubi-history-footer-left">
+                    <button type="button" id="qubiHistoryLostFoundBtn" class="btn btn-secondary btn-small">Lost &amp; Found</button>
+                    <button type="button" id="qubiHistoryClearBtn" class="btn btn-secondary btn-small">Clear History</button>
+                </div>
+                <p class="qubi-history-hint">Snapshots are saved locally in your browser as you edit.</p>
+                <div class="qubi-history-actions">
+                    <button type="button" id="qubiHistoryBranchBtn" class="btn btn-secondary">Create Branch</button>
+                    <button type="button" id="qubiHistoryRevertBtn" class="btn btn-primary">Revert to this version</button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
     <!-- Gate Info Modal -->
     <div id="gateInfoModal" class="modal">
         <div class="modal-content large-modal">
@@ -393,7 +468,7 @@
                 <h3>Quantum Examples</h3>
                 <div class="algo-modal-controls">
                     <div class="algo-search-wrapper">
-                        <span class="algo-search-icon">🔍</span>
+                        <span class="algo-search-icon sim-icon-wrap sim-icon-wrap--search" aria-hidden="true"><span class="site-icon-colored site-icon--purple" style="--site-icon-url: url('/images/emojis/magnifying_glass.png')"></span></span>
                         <input type="text" id="algoSearchInput" class="algo-search-input"
                             placeholder="Search algorithms..." autocomplete="off">
                     </div>
@@ -461,17 +536,17 @@
                 <p class="export-description">Choose an export format to preview.</p>
                 <div class="export-options">
                     <button id="exportPngBtn" class="export-option-btn" data-format="png">
-                        <span class="export-icon">🖼️</span>
+                        <span class="export-icon sim-icon-wrap sim-icon-wrap--export" aria-hidden="true"><span class="site-icon-colored site-icon--purple" style="--site-icon-url: url('/images/emojis/framed_picture.png')"></span></span>
                         <span class="export-label">PNG</span>
                         <span class="export-hint">High-quality image</span>
                     </button>
                     <button id="exportSvgBtn" class="export-option-btn" data-format="svg">
-                        <span class="export-icon">📐</span>
+                        <span class="export-icon sim-icon-wrap sim-icon-wrap--export" aria-hidden="true"><span class="site-icon-colored site-icon--blue" style="--site-icon-url: url('/images/emojis/protractor.png')"></span></span>
                         <span class="export-label">SVG</span>
                         <span class="export-hint">Scalable vector</span>
                     </button>
                     <button id="exportPdfBtn" class="export-option-btn" data-format="pdf">
-                        <span class="export-icon">📄</span>
+                        <span class="export-icon sim-icon-wrap sim-icon-wrap--export" aria-hidden="true"><span class="site-icon-colored site-icon--violet" style="--site-icon-url: url('/images/emojis/flipped_page.png')"></span></span>
                         <span class="export-label">PDF</span>
                         <span class="export-hint">Document format</span>
                     </button>
@@ -522,6 +597,10 @@
     <script src="js/nmr.js"></script>
     <script src="js/nmr-ui.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="js/sim-icons.js"></script>
+    <script src="js/angle-picker.js"></script>
+    <script src="js/qubi-history.js"></script>
+    <script src="js/qubi-undo.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/qubi-ai.js"></script>
 </body>

@@ -348,9 +348,21 @@ body.quadra-product-page {
 }
 
 .feature-icon {
-    font-size: 1.5em;
+    font-size: 0;
+    line-height: 0;
     width: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
+}
+
+.feature-icon-asset .site-icon-colored {
+    width: 32px;
+    height: 32px;
+    max-width: 100%;
+    max-height: 100%;
 }
 
 .cta-section {
@@ -457,7 +469,16 @@ body.quadra-product-page {
 }
 
 .coming-soon-text .icon {
-    font-size: 1.2em;
+    font-size: 0;
+    line-height: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.coming-soon-text .icon-asset .site-icon-colored {
+    width: 28px;
+    height: 28px;
 }
 
 .tech-diagram {

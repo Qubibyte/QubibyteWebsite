@@ -49,15 +49,19 @@ var blogs = [
         "caption": "How to Design an NMR Quantum Computer",
         "author": "Trent Rosenthal",
         "date": "May 21st, 2026",
-        "thumbnail": "/images/blog3thumb.png"
+        "thumbnail": "/images/blog3thumb.png",
+        "hiddenFromMedia": true
     },
 ];
 
 // Reverse order so latest post appears first
 blogs.reverse();
 
+/** Carousel / media listings (excludes hiddenFromMedia entries; /blog/N/ pages stay live). */
+const mediaBlogs = blogs.filter((blog) => !blog.hiddenFromMedia);
+
 // Preload AND decode all blog images before building carousel
-const preloadPromises = blogs.map(blog => {
+const preloadPromises = mediaBlogs.map(blog => {
     return new Promise((resolve) => {
         const img = new Image();
         img.src = blog.thumbnail;
@@ -91,7 +95,7 @@ function initBlogCarousel() {
 
     if (!blogCarouselRow || blogCarouselRow.children.length > 0) return;
 
-    const totalBlogs = blogs.length;
+    const totalBlogs = mediaBlogs.length;
 
     function getVisibleCount() {
         return window.innerWidth >= 992 ? 3 : 1;
@@ -155,7 +159,7 @@ function initBlogCarousel() {
     // On mobile (1-at-a-time), we still use the same DOM but cycle differently.
 
     // Prepend clones
-    blogs.forEach((blog, i) => {
+    mediaBlogs.forEach((blog, i) => {
         const clone = createCard(blog, i);
         clone.classList.add('blog-clone');
         blogCarouselRow.appendChild(clone); // will reorder below
@@ -164,14 +168,14 @@ function initBlogCarousel() {
     // We need: clones | originals | clones
     // First add originals
     const originals = [];
-    blogs.forEach((blog, i) => {
+    mediaBlogs.forEach((blog, i) => {
         const card = createCard(blog, i);
         originals.push(card);
     });
 
     // Append clones after
     const afterClones = [];
-    blogs.forEach((blog, i) => {
+    mediaBlogs.forEach((blog, i) => {
         const clone = createCard(blog, i);
         clone.classList.add('blog-clone');
         afterClones.push(clone);
@@ -181,7 +185,7 @@ function initBlogCarousel() {
     blogCarouselRow.innerHTML = '';
 
     // Before clones
-    blogs.forEach((blog, i) => {
+    mediaBlogs.forEach((blog, i) => {
         const clone = createCard(blog, i);
         clone.classList.add('blog-clone');
         blogCarouselRow.appendChild(clone);
@@ -255,7 +259,7 @@ function initBlogCarousel() {
 
     function updateBlogDetails() {
         const wrapped = ((logicalIndex % totalBlogs) + totalBlogs) % totalBlogs;
-        const blog = blogs[wrapped];
+        const blog = mediaBlogs[wrapped];
         if (!blog) return;
         let captionUrl = blog.type === 'youtube' ? blog.videoUrl : (blog.id ? `/blog/${blog.id}/` : '#');
         let captionTarget = blog.type === 'youtube' ? ' target="_blank"' : '';
@@ -353,7 +357,7 @@ function initBlogCarousel() {
 
     function refreshBlogCarouselLinks() {
         blogCarouselRow.querySelectorAll('.blog-card-col').forEach((col) => {
-            const blog = blogs[col.dataset.index];
+            const blog = mediaBlogs[col.dataset.index];
             if (!blog) return;
             const anchor = col.querySelector('.blog-card-link');
             if (!anchor) return;

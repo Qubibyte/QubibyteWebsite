@@ -169,8 +169,9 @@
 
         const ui = window.circuitUI;
         if (ui && ui.syntaxHighlighter) {
-            ui.setEditorCode(code, { preserveUndo: true, adjustQubits: true });
+            ui.setEditorCode(code, { preserveUndo: false, adjustQubits: true });
             ui.syncCodeToCircuit();
+            ui.qubiUndo?.reset(ui.activeQubiFileId, code);
         } else {
             editor.value = code;
             editor.dispatchEvent(new Event('input', { bubbles: true }));

@@ -137,7 +137,36 @@ body {
     }
 
     .panel-resize-handle {
-        display: none !important;
+        display: block !important;
+        width: 100% !important;
+        flex: none !important;
+        position: relative;
+        height: 8px;
+        min-height: 8px;
+        cursor: row-resize;
+        touch-action: none;
+        background: rgba(71, 85, 105, 0.45);
+        border-top: 1px solid rgba(99, 102, 241, 0.2);
+        border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+        border-left: none;
+        border-right: none;
+        z-index: 3;
+        overflow: visible;
+    }
+
+    .panel-resize-handle::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 50%;
+        height: 44px;
+        transform: translateY(-50%);
+    }
+
+    .panel-resize-handle.is-dragging,
+    .panel-resize-handle.is-dragging:hover {
+        background: rgba(99, 102, 241, 0.55);
     }
 
     /* ---- HEADER ---- */
@@ -305,6 +334,17 @@ body {
         gap: 0.5rem;
         font-size: 0.8rem;
         justify-content: center;
+    }
+
+    .circuit-history-nav {
+        padding-right: 0;
+        margin-right: 0;
+        border-right: none;
+    }
+
+    .circuit-history-btn {
+        min-width: 2.5rem;
+        min-height: 2.5rem;
     }
 
     .zoom-controls {
@@ -700,6 +740,12 @@ body {
     min-height: 0;
 }
 
+body.is-palette-pointer-drag,
+body.is-panel-resize-drag {
+    touch-action: none;
+    user-select: none;
+}
+
 /* Desktop-only drag handles between gate palette / circuit / code editor */
 .panel-resize-handle {
     display: none;
@@ -710,14 +756,36 @@ body {
         display: block;
         flex: 0 0 6px;
         width: 6px;
+        height: auto;
+        min-height: 0;
         cursor: col-resize;
         align-self: stretch;
         background: rgba(71, 85, 105, 0.35);
         border-left: 1px solid rgba(99, 102, 241, 0.12);
         border-right: 1px solid rgba(99, 102, 241, 0.12);
+        border-top: none;
+        border-bottom: none;
         touch-action: none;
         user-select: none;
         z-index: 2;
+        position: relative;
+        overflow: visible;
+    }
+
+    .panel-resize-handle::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 50%;
+        width: 44px;
+        transform: translateX(-50%);
+    }
+
+    @media (pointer: coarse), (max-height: 780px) {
+        .panel-resize-handle::before {
+            width: 48px;
+        }
     }
 
     .panel-resize-handle:hover {
@@ -1219,10 +1287,61 @@ body {
 
 .circuit-info {
     display: flex;
+    align-items: center;
     gap: 1.5rem;
     font-size: 0.875rem;
     color: var(--text-secondary);
     justify-self: end;
+}
+
+.circuit-history-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding-right: 0.75rem;
+    margin-right: 0.25rem;
+    border-right: 1px solid var(--border-color);
+}
+
+.circuit-history-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.125rem;
+    min-height: 2.125rem;
+    padding: 0.25rem 0.5rem;
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+    background: var(--surface-light);
+    line-height: 1;
+    touch-action: manipulation;
+}
+
+.circuit-history-btn-symbol {
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.circuit-history-btn:hover:not(:disabled) {
+    color: var(--primary-color);
+    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--border-color));
+    background: color-mix(in srgb, var(--primary-color) 8%, var(--surface-light));
+}
+
+.circuit-history-btn:focus-visible {
+    outline: none;
+    color: var(--primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 22%, transparent);
+}
+
+.circuit-history-btn:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    color: var(--text-secondary);
+    background: var(--surface-light);
+    border-color: var(--border-color);
 }
 
 .zoom-controls {
@@ -1464,6 +1583,38 @@ body {
 .qubi-tab .qubi-tab-close:hover {
     background: rgba(239, 68, 68, 0.15);
     border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Qubi version history trigger (editor toolbar) */
+.qubi-history-btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    padding-left: 0.55rem;
+    padding-right: 0.55rem;
+    color: var(--text-secondary);
+}
+
+.qubi-history-btn:hover {
+    color: var(--primary-color);
+}
+
+.qubi-history-btn:focus-visible {
+    outline: none;
+    color: var(--primary-color);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-color) 22%, transparent);
+}
+
+.qubi-history-btn-icon {
+    width: 16px;
+    height: 16px;
+    display: block;
+}
+
+.editor-toolbar .qubi-history-btn {
+    flex: 0 0 auto;
 }
 
 /* Qubi editor toolbar: keep Clear fixed width; Save/Load share remaining space */
@@ -2486,6 +2637,48 @@ body {
     max-width: 800px;
 }
 
+#settingsModal .modal-content.large-modal {
+    width: min(95vw, 640px);
+    min-width: 0;
+    max-width: min(95vw, 640px);
+    max-height: min(90vh, 720px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 1.25rem 1.5rem;
+}
+
+#settingsModal .settings-content {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0.5rem 0 0;
+    padding-right: 0.35rem;
+}
+
+#settingsModal .modal-buttons {
+    flex-shrink: 0;
+    margin-top: 1rem;
+}
+
+#settingsModal .modal-content h3 {
+    flex-shrink: 0;
+    margin-bottom: 0.25rem;
+}
+
+#settingsModal .settings-section {
+    margin-bottom: 1rem;
+    padding: 0.875rem;
+}
+
+#settingsModal .settings-section:last-child {
+    margin-bottom: 0;
+}
+
+#settingsModal .setting-hint code {
+    font-size: 0.7rem;
+}
+
 /* ===== Algorithm Modal Premium Design ===== */
 .algo-modal {
     width: 90vw;
@@ -2536,9 +2729,13 @@ body {
     left: 0.625rem;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 0.8rem;
+    font-size: 0;
+    line-height: 0;
     pointer-events: none;
-    opacity: 0.6;
+    opacity: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .algo-search-input {
@@ -2574,9 +2771,11 @@ body {
     gap: 0.5rem;
 }
 
-.algo-no-results span {
-    font-size: 2rem;
-    opacity: 0.4;
+.algo-no-results span,
+.algo-no-results .sim-icon-wrap {
+    font-size: 0;
+    line-height: 0;
+    opacity: 1;
 }
 
 .algo-no-results p {
@@ -2637,7 +2836,11 @@ body {
 }
 
 .algo-category-icon {
-    font-size: 0.875rem;
+    font-size: 0;
+    line-height: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .algo-category-grid {
@@ -2692,7 +2895,8 @@ body {
 }
 
 .algo-item-icon {
-    font-size: 1.5rem;
+    font-size: 0;
+    line-height: 0;
     width: 2.25rem;
     height: 2.25rem;
     display: flex;
@@ -2790,7 +2994,8 @@ body {
 }
 
 .algo-detail-icon {
-    font-size: 2rem;
+    font-size: 0;
+    line-height: 0;
     width: 3.25rem;
     height: 3.25rem;
     display: flex;
@@ -3478,4 +3683,743 @@ body {
     margin-top: 0.35rem;
     padding-top: 0.35rem;
     border-top: 1px solid rgba(239, 68, 68, 0.12);
+}
+
+/* ===== PNG emoji icons (mask + gradient) ===== */
+.site-icon-colored {
+    --site-icon-fill: linear-gradient(165deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    display: block;
+    flex-shrink: 0;
+    background: var(--site-icon-fill);
+    -webkit-mask-image: var(--site-icon-url);
+    mask-image: var(--site-icon-url);
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-mode: alpha;
+    mask-mode: alpha;
+    pointer-events: none;
+    user-select: none;
+}
+
+.site-icon-colored.site-icon--purple { --site-icon-fill: linear-gradient(165deg, #554a9e 0%, #7a6fc9 100%); }
+.site-icon-colored.site-icon--blue { --site-icon-fill: linear-gradient(165deg, #0570a8 0%, #1a9fe0 100%); }
+.site-icon-colored.site-icon--cyan { --site-icon-fill: linear-gradient(165deg, #0a7ea4 0%, #3eb8e8 100%); }
+.site-icon-colored.site-icon--violet { --site-icon-fill: linear-gradient(165deg, #9a5faa 0%, #c487c7 100%); }
+.site-icon-colored.site-icon--red { --site-icon-fill: linear-gradient(165deg, #dc2626 0%, #f87171 100%); }
+.site-icon-colored.site-icon--gold { --site-icon-fill: linear-gradient(165deg, #d97706 0%, #fbbf24 100%); }
+.site-icon-colored.site-icon--yellow { --site-icon-fill: linear-gradient(165deg, #ca8a04 0%, #fde047 100%); }
+
+html[data-theme="light"] .site-icon-colored.site-icon--purple { --site-icon-fill: #4f458f; }
+html[data-theme="light"] .site-icon-colored.site-icon--blue { --site-icon-fill: #056a9e; }
+html[data-theme="light"] .site-icon-colored.site-icon--cyan { --site-icon-fill: #087a9e; }
+html[data-theme="light"] .site-icon-colored.site-icon--violet { --site-icon-fill: #8a5296; }
+html[data-theme="light"] .site-icon-colored.site-icon--red { --site-icon-fill: #c62828; }
+html[data-theme="light"] .site-icon-colored.site-icon--gold { --site-icon-fill: #b45309; }
+html[data-theme="light"] .site-icon-colored.site-icon--yellow { --site-icon-fill: #a16207; }
+
+html:not([data-theme="light"]) .site-icon-colored.site-icon--purple { filter: drop-shadow(0 2px 6px rgba(85, 74, 158, 0.35)); }
+html:not([data-theme="light"]) .site-icon-colored.site-icon--blue { filter: drop-shadow(0 2px 6px rgba(6, 135, 201, 0.35)); }
+html:not([data-theme="light"]) .site-icon-colored.site-icon--cyan { filter: drop-shadow(0 2px 6px rgba(14, 140, 190, 0.32)); }
+html:not([data-theme="light"]) .site-icon-colored.site-icon--violet { filter: drop-shadow(0 2px 6px rgba(171, 111, 175, 0.32)); }
+html:not([data-theme="light"]) .site-icon-colored.site-icon--red { filter: drop-shadow(0 2px 6px rgba(220, 38, 38, 0.38)); }
+html:not([data-theme="light"]) .site-icon-colored.site-icon--gold { filter: drop-shadow(0 2px 6px rgba(217, 119, 6, 0.34)); }
+html:not([data-theme="light"]) .site-icon-colored.site-icon--yellow { filter: drop-shadow(0 2px 6px rgba(202, 138, 4, 0.34)); }
+
+.sim-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0;
+    line-height: 0;
+    flex-shrink: 0;
+}
+
+.sim-icon-wrap--search .site-icon-colored { width: 14px; height: 14px; opacity: 0.75; }
+.sim-icon-wrap--algo-cat .site-icon-colored { width: 14px; height: 14px; }
+.sim-icon-wrap--algo-item .site-icon-colored { width: 22px; height: 22px; }
+.sim-icon-wrap--algo-detail .site-icon-colored { width: 32px; height: 32px; }
+.sim-icon-wrap--algo-empty .site-icon-colored { width: 40px; height: 40px; opacity: 0.45; }
+.sim-icon-wrap--export .site-icon-colored { width: 36px; height: 36px; }
+
+/* ===== Qubi version history modal ===== */
+:root {
+    --qubi-diff-add-bg: color-mix(in srgb, var(--success) 16%, transparent);
+    --qubi-diff-del-bg: color-mix(in srgb, var(--danger) 16%, transparent);
+    --qubi-diff-ctx-bg: color-mix(in srgb, var(--text-secondary) 6%, transparent);
+    --qubi-diff-collapsed-bg: color-mix(in srgb, var(--primary-color) 10%, transparent);
+}
+
+.qubi-history-modal {
+    padding: 0;
+    background: transparent;
+    align-items: stretch;
+    justify-content: stretch;
+}
+
+.qubi-history-modal.active {
+    display: flex;
+}
+
+.qubi-history-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.72);
+}
+
+.qubi-history-content {
+    position: relative;
+    z-index: 1;
+    margin: auto;
+    width: min(960px, calc(100vw - 1.5rem));
+    max-height: min(88vh, 900px);
+    padding: 0 !important;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0;
+}
+
+.qubi-history-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.qubi-history-header h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1.15rem;
+    background: linear-gradient(135deg, #a78bfa 0%, #818cf8 50%, #60a5fa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+html[data-theme="light"] .qubi-history-header h3 {
+    background: linear-gradient(135deg, #554A9E 0%, #6B5FC7 55%, #056a9e 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.qubi-history-file-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.qubi-history-file-name {
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+}
+
+.qubi-history-branch-meta {
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    padding: 0.15rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+}
+
+.qubi-history-close-btn {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--background) 70%, transparent);
+    color: var(--text-secondary);
+    font-size: 1.35rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.qubi-history-close-btn:hover {
+    color: var(--text-primary);
+    border-color: color-mix(in srgb, var(--primary-color) 45%, transparent);
+}
+
+.qubi-history-body {
+    display: grid;
+    grid-template-columns: minmax(200px, 260px) minmax(0, 1fr);
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.qubi-history-timeline-wrap {
+    border-right: 1px solid var(--border-color);
+    overflow: auto;
+    min-height: 0;
+    background: color-mix(in srgb, var(--surface-light) 35%, var(--surface));
+}
+
+.qubi-history-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 0.75rem;
+}
+
+.qubi-history-entry {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    width: 100%;
+    text-align: left;
+    padding: 0.55rem 0.65rem;
+    border-radius: 0.55rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text-primary);
+    cursor: pointer;
+    font: inherit;
+}
+
+.qubi-history-entry:hover {
+    background: color-mix(in srgb, var(--primary-color) 8%, transparent);
+    border-color: color-mix(in srgb, var(--primary-color) 18%, transparent);
+}
+
+.qubi-history-entry.is-selected {
+    background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+    border-color: color-mix(in srgb, var(--primary-color) 45%, transparent);
+    box-shadow: inset 3px 0 0 var(--primary-color);
+}
+
+.qubi-history-entry-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+}
+
+.qubi-history-entry-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.qubi-history-head-badge {
+    flex: 0 0 auto;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 0.12rem 0.35rem;
+    border-radius: 999px;
+    color: var(--primary-color);
+    border: 1px solid color-mix(in srgb, var(--primary-color) 45%, transparent);
+    background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+}
+
+.qubi-history-entry-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+}
+
+.qubi-history-entry-stats {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-left: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.qubi-history-line-count {
+    font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.qubi-history-rename-input {
+    width: 100%;
+    padding: 0.15rem 0.35rem;
+    border-radius: 0.35rem;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 55%, transparent);
+    background: color-mix(in srgb, var(--background) 80%, transparent);
+    color: var(--text-primary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    font-family: inherit;
+    outline: none;
+}
+
+.qubi-history-rename-input:focus {
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+
+.qubi-history-stat {
+    font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+}
+
+.qubi-history-stat--add { color: var(--success); }
+.qubi-history-stat--del { color: var(--danger); }
+.qubi-history-stat--same { color: var(--text-secondary); font-weight: 500; }
+
+.qubi-history-diff-wrap {
+    overflow: hidden;
+    min-height: 0;
+    min-width: 0;
+    background: var(--code-editor-bg, var(--background));
+    display: flex;
+    flex-direction: column;
+}
+
+.qubi-history-diff {
+    min-height: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.qubi-history-diff-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(8px);
+}
+
+.qubi-history-diff-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.qubi-history-diff-summary {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.qubi-history-diff-lines-count {
+    font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+}
+
+.qubi-history-diff-jump-hint {
+    margin-left: auto;
+    font-size: 0.68rem;
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.qubi-history-code-scroll {
+    flex: 1;
+    min-height: 0;
+    max-height: min(48vh, 440px);
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+.qubi-history-code-lines {
+    font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.76rem;
+    line-height: 1.45;
+}
+
+.qubi-history-code-line {
+    display: flex;
+    align-items: flex-start;
+    border-left: 3px solid transparent;
+}
+
+.qubi-history-code-line-num {
+    flex: 0 0 2.75rem;
+    text-align: right;
+    padding: 0.06rem 0.5rem 0.06rem 0.35rem;
+    color: var(--text-secondary);
+    user-select: none;
+    opacity: 0.85;
+}
+
+.qubi-history-code-line-text {
+    flex: 1;
+    min-width: 0;
+    padding: 0.06rem 0.75rem 0.06rem 0;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.qubi-history-code-line.is-changed {
+    background: var(--qubi-diff-add-bg);
+    border-left-color: var(--success);
+}
+
+.qubi-history-code-line.is-first-change {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--success) 35%, transparent);
+}
+
+.qubi-history-code-line.is-empty .qubi-history-code-line-text {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+.qubi-history-diff-empty,
+.qubi-history-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.qubi-history-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1.25rem 1.1rem;
+    border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
+    background: var(--surface);
+}
+
+.qubi-history-footer-left {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.qubi-history-footer-left .btn {
+    min-height: 34px;
+}
+
+.qubi-history-lost-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    background: color-mix(in srgb, var(--surface) 97%, transparent);
+    backdrop-filter: blur(4px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.qubi-history-lost-panel[hidden] {
+    display: none !important;
+}
+
+.qubi-history-lost-panel-inner {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+    padding: 1rem 1.25rem 1.25rem;
+}
+
+.qubi-history-lost-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.qubi-history-lost-header h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.qubi-history-lost-desc {
+    margin: 0 0 0.75rem;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+}
+
+.qubi-history-lost-list {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.qubi-history-lost-item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    padding: 0.65rem 0.75rem;
+    border-radius: 0.55rem;
+    border: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-light) 40%, var(--background));
+}
+
+.qubi-history-lost-item-name {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+}
+
+.qubi-history-lost-item-meta {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    margin-top: 0.2rem;
+}
+
+.qubi-history-lost-item-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.qubi-history-lost-empty {
+    padding: 2rem 1rem;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+/* Clear-history confirmation (in-modal) */
+.qubi-history-confirm-panel {
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: color-mix(in srgb, var(--background) 55%, transparent);
+    backdrop-filter: blur(6px);
+}
+
+.qubi-history-confirm-panel[hidden] {
+    display: none !important;
+}
+
+.qubi-history-confirm-card {
+    width: min(420px, 100%);
+    padding: 1.35rem 1.35rem 1.15rem;
+    border-radius: 0.75rem;
+    border: 1px solid color-mix(in srgb, var(--danger) 35%, var(--border-color));
+    background: var(--surface);
+    box-shadow:
+        0 16px 40px var(--shadow-lg),
+        0 0 0 1px color-mix(in srgb, var(--primary-color) 12%, transparent);
+    text-align: center;
+}
+
+.qubi-history-confirm-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    margin: 0 auto 0.75rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--danger) 14%, transparent);
+    border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger) 8%, transparent);
+}
+
+.qubi-history-confirm-icon {
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--danger);
+}
+
+.qubi-history-confirm-title {
+    margin: 0 0 0.55rem;
+    font-size: 1.05rem;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, #fca5a5 0%, #f87171 45%, #ef4444 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+html[data-theme="light"] .qubi-history-confirm-title {
+    background: linear-gradient(135deg, #b91c1c 0%, #dc2626 55%, #ef4444 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+.qubi-history-confirm-message {
+    margin: 0 0 1.1rem;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--text-secondary);
+    text-align: left;
+}
+
+.qubi-history-confirm-message strong {
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.qubi-history-confirm-filename {
+    font-family: ui-monospace, 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.78rem;
+    padding: 0.08rem 0.35rem;
+    border-radius: 0.35rem;
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary-color) 22%, transparent);
+    color: var(--text-primary);
+}
+
+.qubi-history-confirm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: flex-end;
+}
+
+.qubi-history-confirm-actions .btn {
+    min-height: 38px;
+    min-width: 6.5rem;
+}
+
+.qubi-history-btn-danger {
+    background: var(--danger);
+    color: #fff;
+    border: 1px solid color-mix(in srgb, var(--danger) 80%, #000);
+}
+
+.qubi-history-btn-danger:hover:not(:disabled) {
+    filter: brightness(1.05);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 22%, transparent);
+}
+
+.qubi-history-btn-danger:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 30%, transparent);
+}
+
+.qubi-history-hint {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--text-secondary);
+    max-width: 28rem;
+}
+
+.qubi-history-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.qubi-history-actions .btn {
+    min-height: 38px;
+}
+
+body.qubi-history-open {
+    overflow: hidden;
+}
+
+@media (max-width: 768px) {
+    .qubi-history-content {
+        width: calc(100vw - 0.75rem);
+        max-height: calc(100vh - 0.75rem);
+        margin: 0.375rem auto;
+    }
+
+    .qubi-history-body {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(140px, 34vh) minmax(180px, 1fr);
+    }
+
+    .qubi-history-timeline-wrap {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .editor-toolbar .qubi-history-btn {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    .qubi-history-close-btn {
+        width: 44px;
+        height: 44px;
+    }
+
+    .qubi-history-actions {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .qubi-history-actions .btn {
+        flex: 1 1 auto;
+        min-height: 44px;
+    }
+
+    .qubi-history-footer-left {
+        width: 100%;
+    }
+
+    .qubi-history-footer-left .btn {
+        flex: 1 1 auto;
+        min-height: 44px;
+    }
+
+    .qubi-history-code-scroll {
+        max-height: min(38vh, 320px);
+    }
+
+    .qubi-history-lost-item-actions {
+        width: 100%;
+    }
+
+    .qubi-history-lost-item-actions .btn {
+        flex: 1 1 auto;
+        min-height: 44px;
+    }
+
+    .qubi-history-confirm-panel {
+        padding: 0.75rem;
+    }
+
+    .qubi-history-confirm-actions {
+        width: 100%;
+    }
+
+    .qubi-history-confirm-actions .btn {
+        flex: 1 1 calc(50% - 0.25rem);
+        min-height: 44px;
+        min-width: 0;
+    }
+
+    .qubi-history-hint {
+        width: 100%;
+        max-width: none;
+    }
+}
+
+@media (max-height: 780px) {
+    .qubi-history-body {
+        grid-template-rows: minmax(120px, 30vh) minmax(160px, 1fr);
+    }
 }

@@ -262,6 +262,110 @@ function qubiReadMaxQubits() {
     return qubiDefaultMaxQubits();
 }
 
+const QUBI_SCHEDULING_MODES = new Set([
+    'never',
+    'same_line',
+    'same_gate_continuous',
+    'same_gate',
+    'always',
+    'compressed'
+]);
+
+const QUBI_SCHEDULING_SETTINGS = new Set(['default', ...QUBI_SCHEDULING_MODES]);
+
+/** @returns {'never'|'same_line'|'same_gate_continuous'|'same_gate'|'always'|'compressed'} */
+function qubiNormalizeCodeGateParallelism(value) {
+    const v = String(value ?? '').trim();
+    if (v === 'sameType') return 'same_gate';
+    if (QUBI_SCHEDULING_MODES.has(v)) return v;
+    return 'always';
+}
+
+/** @returns {'default'|'never'|'same_line'|'same_gate_continuous'|'same_gate'|'always'|'compressed'} */
+function qubiNormalizeSchedulingSetting(value) {
+    const v = String(value ?? '').trim();
+    if (v === 'sameType') return 'same_gate';
+    if (QUBI_SCHEDULING_SETTINGS.has(v)) return v;
+    return 'default';
+}
+
+/** Map panel / stored setting to executor scheduling mode. */
+function qubiSchedulingExecutionMode(setting) {
+    const normalized = qubiNormalizeSchedulingSetting(setting);
+    if (normalized === 'default') return 'always';
+    return qubiNormalizeCodeGateParallelism(normalized);
+}
+
+/** @returns {string} Line to embed in Qubi source. */
+function qubiSchedulingSettingLine(mode) {
+    const normalized = qubiNormalizeCodeGateParallelism(mode);
+    return `#settings Scheduling "${normalized}"`;
+}
+
+/**
+ * Read `#settings Scheduling "…"` from source and return code with those lines removed.
+ * @returns {{ scheduling: string | null, code: string }}
+ */
+function qubiExtractCodeSettings(code) {
+    const lines = String(code ?? '').split('\n');
+    const kept = [];
+    let scheduling = null;
+    for (const line of lines) {
+        const m = line.match(/^\s*#settings\s+Scheduling\s+"([^"]+)"\s*(?:\/\/.*)?$/i);
+        if (m) {
+            scheduling = qubiNormalizeCodeGateParallelism(m[1]);
+            continue;
+        }
+        kept.push(line);
+    }
+    return { scheduling, code: kept.join('\n') };
+}
+
+/**
+ * Insert, replace, or remove the scheduling directive.
+ * @param {string} code
+ * @param {'default'|'never'|'same_line'|'same_gate_continuous'|'same_gate'|'always'|'compressed'} setting
+ */
+function qubiApplySchedulingToCode(code, setting) {
+    const { code: body } = qubiExtractCodeSettings(code);
+    const trimmed = body.replace(/^\n+/, '');
+    const normalized = qubiNormalizeSchedulingSetting(setting);
+
+    if (normalized === 'default') {
+        return trimmed;
+    }
+
+    const line = qubiSchedulingSettingLine(normalized);
+    if (!trimmed) {
+        return `${line}\n`;
+    }
+    return `${line}\n${trimmed}`;
+}
+
+function qubiReadCodeGateParallelism() {
+    try {
+        const stored = localStorage.getItem('quantumSimulatorSettings');
+        if (stored) {
+            const parsed = JSON.parse(stored);
+            return qubiSchedulingExecutionMode(parsed.codeGateParallelism);
+        }
+    } catch (_) { /* ignore */ }
+    return 'always';
+}
+
+/** All wire indices touched by one parsed GATE instruction. */
+function qubiInstructionQubits(instruction) {
+    if (!instruction || instruction.type !== 'GATE') return [];
+    if (instruction.parallelBracketSegments?.length) {
+        const qs = [];
+        for (const seg of instruction.parallelBracketSegments) {
+            for (const q of seg) qs.push(q);
+        }
+        return qs;
+    }
+    return instruction.qubits ? [...instruction.qubits] : [];
+}
+
 /** Valid indices are 0 … maxQubitCount - 1 (maxQubitCount = setting "Max Qubits"). */
 function qubiQubitIndexOutOfRangeMessage(q, maxQubitCount) {
     if (!Number.isInteger(q) || q < 0) return null;
@@ -669,7 +773,8 @@ class QubiExecutor {
      * @param {(gateName:string)=>void} [opts.onDefineGate]
      */
     execute(code, opts = {}) {
-        const { code: preprocessed } = this.preprocess(code, opts);
+        const { scheduling: codeScheduling, code: codeWithoutSettings } = qubiExtractCodeSettings(code);
+        const { code: preprocessed } = this.preprocess(codeWithoutSettings, opts);
         const instructions = this.parser.parse(preprocessed);
         const maxQubits = opts.maxQubits ?? qubiReadMaxQubits();
         const rangeErr = qubiFindQubitRangeError(instructions, maxQubits);
@@ -692,8 +797,19 @@ class QubiExecutor {
         }
         
         // Build circuit visually (without expanding repeats)
+        this.gateParallelism = qubiNormalizeCodeGateParallelism(
+            codeScheduling
+                ?? qubiSchedulingExecutionMode(opts.codeGateParallelism)
+                ?? qubiReadCodeGateParallelism()
+        );
+        this._compressedColumnQubits = this.gateParallelism === 'compressed' ? new Map() : null;
+        this._compressedBlockedColumns = this.gateParallelism === 'compressed' ? new Set() : null;
+        this._compressedLastCol = this.gateParallelism === 'compressed' ? new Map() : null;
         let column = 0;
         column = this.buildVisualCircuit(instructions, column);
+        this._compressedColumnQubits = null;
+        this._compressedBlockedColumns = null;
+        this._compressedLastCol = null;
         
         return this.circuit;
     }
@@ -932,26 +1048,289 @@ class QubiExecutor {
     }
     
     buildVisualCircuit(instructions, startColumn) {
+        const mode = this.gateParallelism ?? 'always';
+        if (mode === 'same_gate') {
+            return this._buildVisualCircuitSameGate(instructions, startColumn);
+        }
+        if (mode === 'compressed') {
+            return this._buildVisualCircuitCompressed(instructions, startColumn);
+        }
+        return this._buildVisualCircuitPacked(instructions, startColumn, mode);
+    }
+
+    _compressedColumnIsFree(col, qubits) {
+        if (this._compressedBlockedColumns?.has(col)) return false;
+        const used = this._compressedColumnQubits?.get(col);
+        if (!used || !used.size) return true;
+        if (!qubits.length) return true;
+        return !qubits.some((q) => used.has(q));
+    }
+
+    _compressedMarkColumn(col, qubits) {
+        if (!this._compressedColumnQubits) return;
+        if (!this._compressedColumnQubits.has(col)) {
+            this._compressedColumnQubits.set(col, new Set());
+        }
+        const used = this._compressedColumnQubits.get(col);
+        for (const q of qubits) used.add(q);
+    }
+
+    _compressedBlockColumn(col) {
+        this._compressedBlockedColumns?.add(col);
+    }
+
+    _compressedMinColumnForQubits(qubits, startColumn) {
+        let minCol = startColumn;
+        if (!this._compressedLastCol) return minCol;
+        for (const q of qubits) {
+            const prev = this._compressedLastCol.get(q);
+            if (prev !== undefined) minCol = Math.max(minCol, prev + 1);
+        }
+        return minCol;
+    }
+
+    _compressedFindEarliestFrom(minCol, qubits) {
+        let col = minCol;
+        while (!this._compressedColumnIsFree(col, qubits)) {
+            col++;
+        }
+        return col;
+    }
+
+    _compressedPlacementParts(instruction) {
+        if (this._isAtomicMultiQubitInstruction(instruction)) {
+            return [instruction];
+        }
+        return this._splitInstructionForSequentialColumns(instruction);
+    }
+
+    _compressedPlaceInstruction(instruction, startColumn) {
+        const parts = this._compressedPlacementParts(instruction);
+        let maxCol = startColumn;
+
+        for (const part of parts) {
+            const qubits = qubiInstructionQubits(part);
+            const minCol = this._compressedMinColumnForQubits(qubits, startColumn);
+            const col = this._compressedFindEarliestFrom(minCol, qubits);
+            this.executeGate(part, col);
+            this._compressedMarkColumn(col, qubits);
+            if (this._compressedLastCol) {
+                for (const q of qubits) {
+                    this._compressedLastCol.set(q, col);
+                }
+            }
+            maxCol = Math.max(maxCol, col + 1);
+        }
+
+        return maxCol;
+    }
+
+    _buildVisualCircuitCompressed(instructions, startColumn) {
         let column = startColumn;
-        
+
         for (const instruction of instructions) {
             if (instruction.type === 'REPEAT') {
-                // Add REPEAT control flow block
+                const repCol = column;
+                this.circuit.addControlFlow('REPEAT', repCol, { count: instruction.count });
+                this._compressedBlockColumn(repCol);
+                column = repCol + 1;
+
+                column = this.buildVisualCircuit(instruction.instructions, column);
+
+                const endCol = column;
+                this.circuit.addControlFlow('END', endCol, {});
+                this._compressedBlockColumn(endCol);
+                column = endCol + 1;
+            } else if (instruction.type === 'GATE') {
+                column = Math.max(column, this._compressedPlaceInstruction(instruction, startColumn));
+            }
+        }
+
+        return column;
+    }
+
+    _buildVisualCircuitPacked(instructions, startColumn, mode) {
+        let column = startColumn;
+        const packState = { qubits: new Set(), gateTypes: new Set(), lastGateType: null };
+
+        const clearPackState = () => {
+            packState.qubits.clear();
+            packState.gateTypes.clear();
+            packState.lastGateType = null;
+        };
+
+        const flushPackedColumn = () => {
+            if (packState.qubits.size > 0) {
+                column++;
+                clearPackState();
+            }
+        };
+
+        const canPackGate = (instruction) => {
+            if (mode === 'never' || mode === 'same_line') return false;
+            const qs = qubiInstructionQubits(instruction);
+            for (const q of qs) {
+                if (packState.qubits.has(q)) return false;
+            }
+            if (mode === 'same_gate_continuous') {
+                if (packState.lastGateType !== null && instruction.gate !== packState.lastGateType) {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        const markPackedGate = (instruction) => {
+            for (const q of qubiInstructionQubits(instruction)) {
+                packState.qubits.add(q);
+            }
+            packState.gateTypes.add(instruction.gate);
+            packState.lastGateType = instruction.gate;
+        };
+
+        for (const instruction of instructions) {
+            if (instruction.type === 'REPEAT') {
+                flushPackedColumn();
                 this.circuit.addControlFlow('REPEAT', column, { count: instruction.count });
                 column++;
-                
-                // Recursively build inner instructions
+                clearPackState();
+
                 column = this.buildVisualCircuit(instruction.instructions, column);
-                
+
+                flushPackedColumn();
+                this.circuit.addControlFlow('END', column, {});
+                column++;
+                clearPackState();
+            } else if (instruction.type === 'GATE') {
+                if (mode === 'never') {
+                    flushPackedColumn();
+                    column = this._executeGateSequentialColumns(instruction, column);
+                    clearPackState();
+                } else if (mode === 'same_line') {
+                    flushPackedColumn();
+                    this.executeGate(instruction, column);
+                    column++;
+                    clearPackState();
+                } else {
+                    if (packState.qubits.size === 0 || !canPackGate(instruction)) {
+                        flushPackedColumn();
+                    }
+                    this.executeGate(instruction, column);
+                    markPackedGate(instruction);
+                }
+            }
+        }
+
+        flushPackedColumn();
+        return column;
+    }
+
+    _buildVisualCircuitSameGate(instructions, startColumn) {
+        let column = startColumn;
+        /** @type {Map<string, Array<{ col: number, qubits: Set<number> }>>} */
+        const typeSlots = new Map();
+
+        const placeGate = (instruction) => {
+            const gateType = instruction.gate;
+            const qs = qubiInstructionQubits(instruction);
+            let slot = null;
+            const slots = typeSlots.get(gateType) || [];
+            for (const candidate of slots) {
+                if (!qs.some((q) => candidate.qubits.has(q))) {
+                    slot = candidate;
+                    break;
+                }
+            }
+            if (!slot) {
+                slot = { col: column++, qubits: new Set() };
+                if (!typeSlots.has(gateType)) typeSlots.set(gateType, []);
+                typeSlots.get(gateType).push(slot);
+            }
+            this.executeGate(instruction, slot.col);
+            for (const q of qs) slot.qubits.add(q);
+        };
+
+        for (const instruction of instructions) {
+            if (instruction.type === 'REPEAT') {
+                typeSlots.clear();
+                this.circuit.addControlFlow('REPEAT', column, { count: instruction.count });
+                column++;
+                column = this.buildVisualCircuit(instruction.instructions, column);
+                typeSlots.clear();
                 this.circuit.addControlFlow('END', column, {});
                 column++;
             } else if (instruction.type === 'GATE') {
-                this.executeGate(instruction, column);
-                column++;
+                placeGate(instruction);
             }
-            // Skip END tokens in parsed instructions - they're handled with REPEAT
         }
-        
+
+        return column;
+    }
+
+    /** Split broadcast-style gates into sequential columns (never scheduling). */
+    _splitInstructionForSequentialColumns(instruction) {
+        const { gate, qubits, parallelBracketSegments } = instruction;
+        if (parallelBracketSegments?.length) {
+            if (this._isAtomicMultiQubitInstruction(instruction)) {
+                return [instruction];
+            }
+            const parts = [];
+            for (const seg of parallelBracketSegments) {
+                if (seg.length > 1 && this._isBroadcastSingleQubitGate(gate)) {
+                    for (const q of seg) {
+                        parts.push({
+                            ...instruction,
+                            parallelBracketSegments: [[q]]
+                        });
+                    }
+                } else {
+                    parts.push({
+                        ...instruction,
+                        parallelBracketSegments: [seg]
+                    });
+                }
+            }
+            return parts.length ? parts : [instruction];
+        }
+        const qList = qubits || [];
+        if (qList.length > 1 && this._isBroadcastSingleQubitGate(gate)) {
+            return qList.map((q) => ({
+                ...instruction,
+                qubits: [q]
+            }));
+        }
+        return [instruction];
+    }
+
+    _isBroadcastSingleQubitGate(gate) {
+        return new Set(['H', 'X', 'Y', 'Z', 'S', 'T', 'I', 'RX', 'RY', 'RZ', 'MEASURE']).has(gate)
+            || (typeof GateMatrices !== 'undefined'
+                && GateMatrices[gate]
+                && Math.round(Math.sqrt(GateMatrices[gate].length)) === 1);
+    }
+
+    _isAtomicMultiQubitInstruction(instruction) {
+        const gate = instruction.gate;
+        if (['CX', 'CY', 'CZ', 'SWAP', 'CSWAP'].includes(gate)) return true;
+        const segs = instruction.parallelBracketSegments;
+        if (!segs?.length) return false;
+        if (typeof GateMatrices !== 'undefined' && GateMatrices[gate]) {
+            const dim = Math.round(Math.sqrt(GateMatrices[gate].length));
+            if (dim > 1) {
+                const expected = Math.round(Math.log2(dim));
+                const flat = segs.flat();
+                return flat.length === expected;
+            }
+        }
+        return false;
+    }
+
+    _executeGateSequentialColumns(instruction, startColumn) {
+        let column = startColumn;
+        for (const part of this._splitInstructionForSequentialColumns(instruction)) {
+            this.executeGate(part, column);
+            column++;
+        }
         return column;
     }
 
@@ -1367,6 +1746,12 @@ class QubiExecutor {
 
 if (typeof globalThis !== 'undefined') {
     globalThis.QubiParser = QubiParser;
+    globalThis.qubiNormalizeCodeGateParallelism = qubiNormalizeCodeGateParallelism;
+    globalThis.qubiNormalizeSchedulingSetting = qubiNormalizeSchedulingSetting;
+    globalThis.qubiSchedulingExecutionMode = qubiSchedulingExecutionMode;
+    globalThis.qubiExtractCodeSettings = qubiExtractCodeSettings;
+    globalThis.qubiApplySchedulingToCode = qubiApplySchedulingToCode;
+    globalThis.qubiSchedulingSettingLine = qubiSchedulingSettingLine;
 }
 
 // Export
@@ -1380,7 +1765,13 @@ if (typeof module !== 'undefined' && module.exports) {
         qubiParallelQubitConflictMessage,
         qubiReadMaxQubits,
         qubiFindQubitRangeError,
-        QubiRangeError
+        QubiRangeError,
+        qubiNormalizeCodeGateParallelism,
+        qubiNormalizeSchedulingSetting,
+        qubiSchedulingExecutionMode,
+        qubiExtractCodeSettings,
+        qubiApplySchedulingToCode,
+        qubiSchedulingSettingLine
     };
 }
 

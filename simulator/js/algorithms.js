@@ -119,7 +119,7 @@ function generateGroversAlgorithmWithComments(numQubits, target) {
 const QuantumAlgorithms = {
     bellState: {
         name: "Bell State",
-        icon: "🔗",
+        icon: "link",
         category: "Entanglement",
         description: "Creates maximally entangled Bell state between two qubits",
         longDescription: "A Bell state is one of four maximally entangled two-qubit quantum states that form the Bell basis. They are the simplest examples of quantum entanglement. When two qubits are in a Bell state, measuring one instantly determines the state of the other, regardless of distance — the phenomenon Einstein called 'spooky action at a distance'.",
@@ -190,7 +190,7 @@ const QuantumAlgorithms = {
 
     ghzState: {
         name: "GHZ State",
-        icon: "🌐",
+        icon: "globe_meridian",
         category: "Entanglement",
         description: "Creates Greenberger-Horne-Zeilinger multi-qubit entangled state",
         longDescription: "The GHZ state generalizes Bell states to three or more qubits. Named after Greenberger, Horne, and Zeilinger, it creates an equal superposition of all qubits being |0⟩ and all being |1⟩. GHZ states are maximally entangled and are crucial for quantum error correction, secret sharing, and tests of quantum non-locality.",
@@ -231,7 +231,7 @@ const QuantumAlgorithms = {
 
     wState: {
         name: "W State",
-        icon: "🌊",
+        icon: "water_wave",
         category: "Entanglement",
         description: "Creates a W state - entanglement robust to qubit loss",
         longDescription: "The W state is a multi-qubit entangled state where exactly one qubit is in |1⟩ and the rest are |0⟩, in an equal superposition of all such possibilities. Unlike GHZ states, W states are robust: if one qubit is lost, the remaining qubits are still entangled. This makes W states valuable for quantum networks and fault-tolerant protocols.",
@@ -286,7 +286,7 @@ const QuantumAlgorithms = {
 
     superdense: {
         name: "Superdense Coding",
-        icon: "📡",
+        icon: "satellite_dish",
         category: "Communication",
         description: "Sends 2 classical bits using 1 qubit via pre-shared entanglement",
         longDescription: "Superdense coding is a quantum communication protocol that allows transmission of two classical bits of information by sending only one qubit, provided the sender and receiver share a pre-entangled Bell pair. Alice encodes her 2-bit message by applying gates to her qubit, then sends it to Bob, who decodes by performing a Bell measurement.",
@@ -345,7 +345,7 @@ const QuantumAlgorithms = {
 
     teleportation: {
         name: "Quantum Teleportation",
-        icon: "✨",
+        icon: "sparkles",
         category: "Communication",
         description: "Teleports a quantum state from one qubit to another using entanglement",
         longDescription: "Quantum teleportation transfers the complete quantum state of a qubit to a distant qubit without physically moving the qubit itself. It uses a shared Bell pair and two classical bits of communication. The original qubit's state is destroyed in the process (consistent with the no-cloning theorem). This protocol is essential for quantum networks and distributed quantum computing.",
@@ -408,7 +408,7 @@ const QuantumAlgorithms = {
 
     deutschJozsa: {
         name: "Deutsch-Jozsa Algorithm",
-        icon: "⚖️",
+        icon: "balance_scale",
         category: "Algorithm",
         description: "Determines if a function is constant or balanced in a single query",
         longDescription: "The Deutsch-Jozsa algorithm was one of the first to demonstrate quantum computational advantage. Given a black-box function that is either constant (same output for all inputs) or balanced (outputs 0 for half the inputs and 1 for the other half), this algorithm determines which type it is with 100% certainty using only ONE function evaluation — whereas a classical algorithm would need up to 2^(n-1)+1 evaluations.",
@@ -480,7 +480,7 @@ const QuantumAlgorithms = {
 
     bernsteinVazirani: {
         name: "Bernstein-Vazirani",
-        icon: "🔑",
+        icon: "key",
         category: "Algorithm",
         description: "Finds a hidden binary string in a single query",
         longDescription: "The Bernstein-Vazirani algorithm finds a secret string s encoded in a function f(x) = s·x mod 2 (bitwise dot product). Classically, finding an n-bit secret string requires n queries. Quantum mechanically, it takes only ONE query. This is achieved through quantum parallelism and phase kickback from the oracle.",
@@ -535,7 +535,7 @@ const QuantumAlgorithms = {
 
     grovers: {
         name: "Grover's Algorithm",
-        icon: "🔍",
+        icon: "magnifying_glass",
         category: "Algorithm",
         description: "Quantum search algorithm — finds marked items with quadratic speedup",
         longDescription: "Grover's algorithm provides a quadratic speedup for unstructured search problems. Given a search space of N items, it finds a marked item in O(√N) evaluations instead of O(N) classically. The algorithm works by repeatedly applying an oracle (which marks the target) followed by a diffusion operator (which amplifies the target's amplitude). After ~π/4·√N iterations, measuring yields the target with high probability.",
@@ -571,7 +571,7 @@ const QuantumAlgorithms = {
 
     qft: {
         name: "Quantum Fourier Transform",
-        icon: "📊",
+        icon: "graph_bar",
         category: "Algorithm",
         description: "Transforms computational basis to frequency basis",
         longDescription: "The Quantum Fourier Transform (QFT) is the quantum analogue of the discrete Fourier transform. It maps computational basis states to a frequency domain representation. The QFT is a key subroutine in many quantum algorithms including Shor's factoring algorithm, quantum phase estimation, and quantum simulation. While a classical FFT requires O(n·2ⁿ) operations, the QFT needs only O(n²) gates.",
@@ -621,7 +621,7 @@ const QuantumAlgorithms = {
 
     phaseKickbackCX: {
         name: "Phase Kickback (CX)",
-        icon: "⚡",
+        icon: "lightning_bolt",
         category: "Concept",
         description: "Demonstrates phase kickback with CX — phase transfers from target to control",
         longDescription: "Phase kickback is a fundamental quantum phenomenon where applying a controlled gate causes the eigenvalue phase of the target qubit's state to 'kick back' onto the control qubit. This is the key mechanism behind many quantum algorithms. In this demo, a Z phase on the target qubit transfers to the control qubit through a CX gate.",
@@ -640,7 +640,7 @@ const QuantumAlgorithms = {
 
     phaseKickbackCZ: {
         name: "Phase Kickback (CZ)",
-        icon: "⚡",
+        icon: "lightning_bolt",
         category: "Concept",
         description: "Demonstrates phase kickback with CZ — symmetric phase interaction",
         longDescription: "The CZ gate applies a phase flip when both qubits are |1⟩. Unlike CX, the CZ gate is symmetric — it doesn't matter which qubit is 'control' and which is 'target'. This demo shows how a qubit in |1⟩ causes a phase flip on another qubit in superposition via CZ, illustrating the symmetry of this interaction.",
@@ -659,7 +659,7 @@ const QuantumAlgorithms = {
 
     phaseKickbackOracle: {
         name: "Phase Kickback Oracle",
-        icon: "🎯",
+        icon: "bullseye_target",
         category: "Concept",
         description: "Shows how phase kickback marks states in quantum search algorithms",
         longDescription: "This demo shows the oracle marking mechanism used in Grover's algorithm and other quantum search protocols. The oracle applies a multi-controlled Z gate that flips the phase of exactly one computational basis state. When applied to a uniform superposition, this marks the target state with a −1 phase, which can later be amplified by the diffusion operator.",
@@ -678,7 +678,7 @@ const QuantumAlgorithms = {
 
     swapTest: {
         name: "SWAP Test",
-        icon: "🔄",
+        icon: "rotating_arrows",
         category: "Concept",
         description: "Measures the overlap between two quantum states without measuring them directly",
         longDescription: "The SWAP test is a quantum algorithm that determines how similar two quantum states are without directly measuring either state. It uses a controlled-SWAP (Fredkin gate) with an ancilla qubit. After measurement, the ancilla qubit is |0⟩ with probability (1 + |⟨ψ|φ⟩|²)/2. If the states are identical, the ancilla is always |0⟩; if orthogonal, it's |0⟩ or |1⟩ with equal probability.",
@@ -739,7 +739,7 @@ const QuantumAlgorithms = {
 
     bitFlipCode: {
         name: "Bit-Flip Error Correction",
-        icon: "🛡️",
+        icon: "shield",
         category: "Error Correction",
         description: "3-qubit code that detects and corrects single bit-flip errors",
         longDescription: "The 3-qubit bit-flip code is the simplest quantum error correcting code. It encodes one logical qubit into three physical qubits by entangling them. If a single bit-flip (X) error occurs on any one qubit, syndrome measurements on the other two qubits can detect and localize the error, allowing correction without disturbing the encoded information.",
